@@ -77,6 +77,16 @@ country, hash — never names or emails) in your private ops repo. If you *want*
 radical transparency, drop that `ledger/ledger.json` into your storefront repo
 and the builder adds a public `/trust` page for it. Off by default.
 
+## The themes
+
+The free core ships `stand` (warm paper). Pro adds four more — every one a
+complete, hand-tuned design, switchable with one config line:
+
+| | |
+|---|---|
+| ![terminal](assets/previews/terminal.png) | ![brutalist](assets/previews/brutalist.png) |
+| ![editorial](assets/previews/editorial.png) | ![midnight](assets/previews/midnight.png) |
+
 ## Free core vs Pro
 
 The free core is a **complete store** — one theme, checkout, fulfillment,
