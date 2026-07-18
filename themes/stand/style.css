@@ -169,3 +169,8 @@ tr.attn td { color: var(--accent); }
 .prose blockquote { border-left: 3px solid var(--line); margin: 1.2rem 0; padding: 0.2rem 1.2rem; color: var(--ink-soft); }
 .ledger-total { font-size: 1.1rem; }
 .trust h1 + p { color: var(--ink-soft); }
+
+/* prose images & preview galleries */
+.prose figure { margin: 1.4rem 0; }
+.prose img, .gallery img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; display: block; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.8rem; margin: 1.4rem 0; }

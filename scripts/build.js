@@ -180,6 +180,10 @@ write(path.join(DIST, 'ledger', 'ledger.json'), JSON.stringify(ledger, null, 2))
 }
 
 // ---------- static passthroughs ----------
+const assetsDir = path.join(ROOT, 'assets');
+if (fs.existsSync(assetsDir)) {
+  fs.cpSync(assetsDir, path.join(DIST, 'assets'), { recursive: true });
+}
 const staticDir = path.join(ROOT, 'static');
 if (fs.existsSync(staticDir)) {
   for (const f of fs.readdirSync(staticDir)) fs.copyFileSync(path.join(staticDir, f), path.join(DIST, f));

@@ -42,6 +42,19 @@ function renderMarkdown(src) {
       continue;
     }
 
+    // standalone image lines; consecutive ones group into a gallery grid
+    if (/^!\[[^\]]*\]\([^)\s]+\)\s*$/.test(line)) {
+      const imgs = [];
+      while (i < lines.length && /^!\[[^\]]*\]\([^)\s]+\)\s*$/.test(lines[i])) {
+        const m = /^!\[([^\]]*)\]\(([^)\s]+)\)\s*$/.exec(lines[i++]);
+        const src = /^(https?:\/\/|\/|\.)/.test(m[2]) ? m[2] : '';
+        if (src) imgs.push(`<img src="${src}" alt="${escapeHtml(m[1])}" loading="lazy">`);
+      }
+      if (imgs.length > 1) out.push(`<div class="gallery">${imgs.join('')}</div>`);
+      else if (imgs.length === 1) out.push(`<figure>${imgs[0]}</figure>`);
+      continue;
+    }
+
     const heading = /^(#{1,4})\s+(.*)$/.exec(line);
     if (heading) {
       const level = heading[1].length;

@@ -135,3 +135,12 @@ test('repo owner is recognized as already-has-access', () => {
   assert.ok(!isRepoOwner('o/r', 'someone'));
   assert.ok(!isRepoOwner('o/r', null));
 });
+
+test('markdown: standalone images render, group into gallery, unsafe src dropped', () => {
+  const one = renderMarkdown('![terminal theme](./assets/previews/terminal.png)');
+  assert.ok(one.includes('<figure><img src="./assets/previews/terminal.png" alt="terminal theme"'));
+  const gal = renderMarkdown('![a](./x.png)\n![b](./y.png)');
+  assert.ok(gal.includes('class="gallery"') && gal.includes('x.png') && gal.includes('y.png'));
+  const bad = renderMarkdown('![x](javascript:alert(1))');
+  assert.ok(!bad.includes('javascript:'), bad);
+});

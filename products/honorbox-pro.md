@@ -29,6 +29,11 @@ dark-mode aware, no template smell: `terminal` (phosphor-on-black for CLI tools)
 `brutalist` (loud, typographic), `editorial` (serif, magazine-calm), and
 `midnight` (deep-blue product-launch look). Switch with one config line.
 
+![terminal theme — phosphor CRT](./assets/previews/terminal.png)
+![brutalist theme — loud type, hard shadows](./assets/previews/brutalist.png)
+![editorial theme — serif calm](./assets/previews/editorial.png)
+![midnight theme — deep blue](./assets/previews/midnight.png)
+
 **The license-key module.** If you sell software, you need keys. Pro ships a
 GitHub Action that signs an ed25519 license for each buyer at fulfillment time,
 plus drop-in verification snippets for JavaScript and Python — your app checks
