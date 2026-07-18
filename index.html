@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HonorBox — No platform. No monthly fee. No server. A static storefront on GitHub Pages, checkout through your own Stripe, and a GitHub Action that delivers the goods while you sleep.</title>
+<meta name="description" content="No platform. No monthly fee. No server. A static storefront on GitHub Pages, checkout through your own Stripe, and a GitHub Action that delivers the goods while you sleep.">
+<link rel="canonical" href="https://honorboxx.github.io/honorbox/">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="stylesheet" href="./style.css">
+<meta property="og:title" content="HonorBox — No platform. No monthly fee. No server. A static storefront on GitHub Pages, checkout through your own Stripe, and a GitHub Action that delivers the goods while you sleep.">
+<meta property="og:description" content="No platform. No monthly fee. No server. A static storefront on GitHub Pages, checkout through your own Stripe, and a GitHub Action that delivers the goods while you sleep.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f6f1e7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#191512" media="(prefers-color-scheme: dark)">
+</head>
+<body class="home">
+<header class="site-head">
+  <a class="brand" href="./"><svg class="brand-mark" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="10.2" width="17.6" height="11.2" rx="2.7" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="7.4" y="9.1" width="9.2" height="2.2" rx="1.1" fill="var(--accent)" stroke="none"/><rect x="-1.15" y="-2.8" width="2.3" height="5.6" rx="1.15" fill="var(--accent)" stroke="none" transform="translate(12.7 4.6) rotate(-22)"/></svg>HonorBox</a>
+  <nav class="site-nav"><a href="./">Store</a><a href="https://github.com/Honorboxx/honorbox">GitHub</a></nav>
+</header>
+<main>
+<section class="hero">
+  <p class="kicker">The unattended store for developers</p>
+  <h1>Sell digital products with just Stripe + GitHub.</h1>
+  <p class="lede">No platform. No monthly fee. No server. A static storefront on GitHub Pages, checkout through your own Stripe, and a GitHub Action that delivers the goods while you sleep.</p>
+  <div class="hero-ctas">
+    <a class="btn btn-buy btn-big" href="https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00">Buy HonorBox Pro — $29</a>
+    <a class="btn btn-ghost" href="https://github.com/Honorboxx/honorbox">Star the free core</a>
+  </div>
+  <p class="hero-sub">This store runs on the engine it sells. Fork it and open your own stand.</p>
+</section><section class="products"><article class="product-card">
+  <div class="pc-head">
+    <span class="badge">Launch price</span>
+    <h3><a href="./honorbox-pro.html">HonorBox Pro</a></h3>
+    <p class="pc-tagline">Premium themes, an offline license-key system, and multi-product power for your HonorBox store.</p>
+  </div>
+  <ul class="pc-features"><li>4 premium storefront themes (dark terminal, brutalist, editorial, midnight)</li><li>Store doctor — preflight your config, payment links, and fulfillment permissions before launch</li><li>Ops bots — instant issue acknowledgment + a refund guard that auto-revokes access</li><li>Stats — tracker-free sales analytics rendered from your Stripe data, one command</li><li>License-key module — ed25519 keys signed in CI, verified offline in your app (JS + Python)</li><li>Multi-product catalog patterns and a launch-pricing &amp; EU-VAT playbook</li><li>Priority support label on the issue tracker</li></ul>
+  <div class="pc-buy">
+    <span class="price">$29<small> one-time · lifetime access &amp; updates</small></span>
+    <a class="btn btn-buy" href="https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00">Buy HonorBox Pro — $29</a>
+  </div>
+</article></section><section class="steps"><h2>How the honor box works</h2><ol class="steps-list"><li><h3>Fork the stand</h3><p>Fork the free, MIT-licensed engine. Your storefront builds to GitHub Pages — hosting costs nothing, forever.</p></li><li><h3>Put out your goods</h3><p>Create a Stripe Payment Link for your product and drop the URL in one config file. Buyers pay you directly; nobody stands between you and your Stripe balance.</p></li><li><h3>Let the box collect</h3><p>A scheduled GitHub Action polls Stripe, invites each buyer's GitHub account to your private product repo, and keeps your books. No webhooks, no server, no database.</p></li></ol></section>
+<section class="compare"><h2>What the middlemen charge</h2><p class="muted">Fees as published July 2026. HonorBox is not a merchant of record — you sell on your own Stripe account and handle your own tax obligations (see FAQ).</p><div class="table-scroll"><table><tr><th></th><th>Gumroad</th><th>Lemon Squeezy</th><th>HonorBox</th></tr><tr><td class="rowhead">Platform fee</td><td>10% + 30¢</td><td>5% + 50¢</td><td>0%</td></tr><tr><td class="rowhead">Monthly cost</td><td>$0</td><td>$0</td><td>$0</td></tr><tr><td class="rowhead">Payment processing</td><td>included above</td><td>included above</td><td>Stripe's standard rate only</td></tr><tr><td class="rowhead">Your own Stripe account</td><td>no</td><td>no</td><td>yes — funds go straight to you</td></tr><tr><td class="rowhead">Server to maintain</td><td>—</td><td>—</td><td>none (Pages + Actions)</td></tr><tr><td class="rowhead">Handles VAT for you</td><td>yes</td><td>yes</td><td>no — you're the merchant</td></tr></table></div></section>
+<section class="faq"><h2>Straight answers</h2><details><summary>What exactly do I get when I buy Pro?</summary><p>Your GitHub account is invited to the private honorbox-pro repository — usually within 30 minutes, always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive, email honorbox@proton.me or open an issue and it will be fixed or refunded.</p></details><details><summary>Why is there no instant download?</summary><p>Delivery is a private-repo invite because it's the only channel that stays access-controlled. A cron job runs the fulfillment — that's the honest cost of a $0/month stack, and it's usually minutes.</p></details><details><summary>Do I need HonorBox Pro to use the engine?</summary><p>No. The free core is a complete store: one theme, checkout, fulfillment, docs. Pro adds the premium themes, multi-product catalog patterns, and the offline license-key module — and buying it funds the free core.</p></details><details><summary>What about VAT and sales tax?</summary><p>HonorBox is not a merchant of record. You sell on your own Stripe account, so tax obligations are yours — fine for most small sellers under registration thresholds, and Stripe Tax can automate it beyond that. The docs cover this honestly instead of pretending it away.</p></details><details><summary>Refunds?</summary><p>30 days, no questions asked, refunded through Stripe to your original payment method. Repository access ends when a refund is issued.</p></details><details><summary>Who's behind this?</summary><p>HonorBox is an independent project. Support: honorbox@proton.me or GitHub issues — both are answered fast.</p></details></section>
+<section class="note"><p>This store dogfoods its own engine — the checkout you go through is the same one your buyers would. If something feels off, that's a bug report we want.</p></section>
+</main>
+<footer class="site-foot">
+  <p class="foot-links"><a href="./gumroad-alternatives.html">Gumroad alternatives for developers (2026)</a> · <a href="./privacy.html">Privacy</a> · <a href="./refunds.html">Refunds</a> · <a href="./terms.html">Terms</a></p>
+  <p class="foot-legal">© 2026 · HonorBox · honorbox@proton.me · Payments by Stripe · Runs on <a href="https://github.com/Honorboxx/honorbox">HonorBox</a></p>
+</footer>
+</body>
+</html>
