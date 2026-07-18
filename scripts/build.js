@@ -92,7 +92,12 @@ function productCard(p) {
 function section(s) {
   if (s.type === 'steps') {
     return `<section class="steps"><h2>${escapeHtml(s.title)}</h2><ol class="steps-list">${s.items
-      .map((it) => `<li><h3>${escapeHtml(it.title)}</h3><p>${escapeHtml(it.text)}</p></li>`)
+      .map((it) => {
+        const h = it.href
+          ? `<a href="${it.href}">${escapeHtml(it.title)}</a>`
+          : escapeHtml(it.title);
+        return `<li><h3>${h}</h3><p>${escapeHtml(it.text)}</p></li>`;
+      })
       .join('')}</ol></section>`;
   }
   if (s.type === 'compare') {

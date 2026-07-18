@@ -13,35 +13,113 @@
       "type": "steps",
       "title": "How the honor box works",
       "items": [
-        { "title": "Fork the stand", "text": "Fork the free, MIT-licensed engine. Your storefront builds to GitHub Pages — hosting costs nothing, forever." },
-        { "title": "Put out your goods", "text": "Create a Stripe Payment Link for your product and drop the URL in one config file. Buyers pay you directly; nobody stands between you and your Stripe balance." },
-        { "title": "Let the box collect", "text": "A scheduled GitHub Action polls Stripe, invites each buyer's GitHub account to your private product repo, and keeps your books. No webhooks, no server, no database." }
+        {
+          "title": "Fork the stand",
+          "text": "Fork the free, MIT-licensed engine. Your storefront builds to GitHub Pages — hosting costs nothing, forever."
+        },
+        {
+          "title": "Put out your goods",
+          "text": "Create a Stripe Payment Link for your product and drop the URL in one config file. Buyers pay you directly; nobody stands between you and your Stripe balance."
+        },
+        {
+          "title": "Let the box collect",
+          "text": "A scheduled GitHub Action polls Stripe, invites each buyer's GitHub account to your private product repo, and keeps your books. No webhooks, no server, no database."
+        }
       ]
     },
     {
       "type": "compare",
       "title": "What the middlemen charge",
       "note": "Fees as published July 2026. HonorBox is not a merchant of record — you sell on your own Stripe account and handle your own tax obligations (see FAQ).",
-      "columns": ["", "Gumroad", "Lemon Squeezy", "HonorBox"],
+      "columns": [
+        "",
+        "Gumroad",
+        "Lemon Squeezy",
+        "HonorBox"
+      ],
       "rows": [
-        ["Platform fee", "10% + 30¢", "5% + 50¢", "0%"],
-        ["Monthly cost", "$0", "$0", "$0"],
-        ["Payment processing", "included above", "included above", "Stripe's standard rate only"],
-        ["Your own Stripe account", "no", "no", "yes — funds go straight to you"],
-        ["Server to maintain", "—", "—", "none (Pages + Actions)"],
-        ["Handles VAT for you", "yes", "yes", "no — you're the merchant"]
+        [
+          "Platform fee",
+          "10% + 30¢",
+          "5% + 50¢",
+          "0%"
+        ],
+        [
+          "Monthly cost",
+          "$0",
+          "$0",
+          "$0"
+        ],
+        [
+          "Payment processing",
+          "included above",
+          "included above",
+          "Stripe's standard rate only"
+        ],
+        [
+          "Your own Stripe account",
+          "no",
+          "no",
+          "yes — funds go straight to you"
+        ],
+        [
+          "Server to maintain",
+          "—",
+          "—",
+          "none (Pages + Actions)"
+        ],
+        [
+          "Handles VAT for you",
+          "yes",
+          "yes",
+          "no — you're the merchant"
+        ]
       ]
     },
     {
       "type": "faq",
       "title": "Straight answers",
       "items": [
-        { "q": "What exactly do I get when I buy Pro?", "a": "Your GitHub account is invited to the private honorbox-pro repository — usually within 30 minutes, always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive, email honorbox@proton.me or open an issue and it will be fixed or refunded." },
-        { "q": "Why is there no instant download?", "a": "Delivery is a private-repo invite because it's the only channel that stays access-controlled. A cron job runs the fulfillment — that's the honest cost of a $0/month stack, and it's usually minutes." },
-        { "q": "Do I need HonorBox Pro to use the engine?", "a": "No. The free core is a complete store: one theme, checkout, fulfillment, docs. Pro adds the premium themes, multi-product catalog patterns, and the offline license-key module — and buying it funds the free core." },
-        { "q": "What about VAT and sales tax?", "a": "HonorBox is not a merchant of record. You sell on your own Stripe account, so tax obligations are yours — fine for most small sellers under registration thresholds, and Stripe Tax can automate it beyond that. The docs cover this honestly instead of pretending it away." },
-        { "q": "Refunds?", "a": "30 days, no questions asked, refunded through Stripe to your original payment method. Repository access ends when a refund is issued." },
-        { "q": "Who's behind this?", "a": "HonorBox is an independent project. Support: honorbox@proton.me or GitHub issues — both are answered fast." }
+        {
+          "q": "What exactly do I get when I buy Pro?",
+          "a": "Your GitHub account is invited to the private honorbox-pro repository — usually within 30 minutes, always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive, email honorbox@proton.me or open an issue and it will be fixed or refunded."
+        },
+        {
+          "q": "Why is there no instant download?",
+          "a": "Delivery is a private-repo invite because it's the only channel that stays access-controlled. A cron job runs the fulfillment — that's the honest cost of a $0/month stack, and it's usually minutes."
+        },
+        {
+          "q": "Do I need HonorBox Pro to use the engine?",
+          "a": "No. The free core is a complete store: one theme, checkout, fulfillment, docs. Pro adds the premium themes, multi-product catalog patterns, and the offline license-key module — and buying it funds the free core."
+        },
+        {
+          "q": "What about VAT and sales tax?",
+          "a": "HonorBox is not a merchant of record. You sell on your own Stripe account, so tax obligations are yours — fine for most small sellers under registration thresholds, and Stripe Tax can automate it beyond that. The docs cover this honestly instead of pretending it away."
+        },
+        {
+          "q": "Refunds?",
+          "a": "30 days, no questions asked, refunded through Stripe to your original payment method. Repository access ends when a refund is issued."
+        },
+        {
+          "q": "Who's behind this?",
+          "a": "HonorBox is an independent project. Support: honorbox@proton.me or GitHub issues — both are answered fast."
+        }
+      ]
+    },
+    {
+      "type": "steps",
+      "title": "Guides",
+      "items": [
+        {
+          "title": "Gumroad alternatives (2026)",
+          "text": "What the platforms charge, what they're worth, and when DIY wins. Honest fee math included.",
+          "href": "./gumroad-alternatives.html"
+        },
+        {
+          "title": "Selling with Stripe Payment Links",
+          "text": "The complete guide — checkout, delivery options, refunds, and the tax paragraph nobody writes.",
+          "href": "./sell-with-stripe-payment-links.html"
+        }
       ]
     },
     {
