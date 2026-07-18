@@ -49,11 +49,16 @@ minutes: [`scripts/fulfill.js`](scripts/fulfill.js).
 
 ## Quickstart
 
-1. **Use this template**, edit `store.config.json` (name, copy, your URLs)
-   and `products/*.md` (your product).
-2. **Stripe**: create a Product + Price + Payment Link; add a required custom
-   field `github_username`; paste the link into your product's `payment_link`
-   and into `store.config.json` → `fulfillment`.
+1. **Use this template**, edit `store.config.json` (name, copy, your URLs).
+2. **One command creates your product on Stripe** — Product, Price, and a
+   Payment Link with the delivery field, wired straight into your config:
+
+   ```bash
+   STRIPE_SECRET_KEY=sk_... node scripts/init.js \
+     --name "My Tool" --price 2900 --repo you/my-tool-access
+   ```
+
+   (Prefer clicking? The manual dashboard steps are in [docs/setup.md](docs/setup.md).)
 3. **Pages**: copy `setup/workflows/deploy.yml` into `.github/workflows/`, enable
    GitHub Pages (Actions source), push — the store deploys.
 4. **Fulfillment**: create a *private* ops repo, copy

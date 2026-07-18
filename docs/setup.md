@@ -20,6 +20,11 @@ Stripe account (charges enabled).
 
 ## 2. Stripe
 
+**Fast path:** `STRIPE_SECRET_KEY=sk_... node scripts/init.js --name "My Tool"
+--price 2900 --repo you/product-access` creates the Product, Price, and a
+correctly-configured Payment Link, and wires `store.config.json` +
+`products/<id>.md` for you. Skip to §3. The manual path:
+
 1. Dashboard → Products → **Add product**: name, price (one-time), currency.
 2. Create a **Payment Link** for that price:
    - Add a **custom field**: label "GitHub username (for delivery)",

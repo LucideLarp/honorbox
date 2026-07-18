@@ -10,6 +10,7 @@ features:
   - 4 premium storefront themes (dark terminal, brutalist, editorial, midnight)
   - Store doctor — preflight your config, payment links, and fulfillment permissions before launch
   - Ops bots — instant issue acknowledgment + a refund guard that auto-revokes access
+  - Stats — tracker-free sales analytics rendered from your Stripe data, one command
   - License-key module — ed25519 keys signed in CI, verified offline in your app (JS + Python)
   - Multi-product catalog patterns and a launch-pricing & EU-VAT playbook
   - Priority support label on the issue tracker
@@ -43,6 +44,11 @@ your product repo is accidentally public. Run it before launch; sleep after.
 get an instant honest acknowledgment and labels, and every Stripe refund
 automatically revokes the buyer's repo access and pending invites. No
 refund-fraud babysitting.
+
+**Stats without trackers.** One command renders gross, net, AOV, refund rate,
+revenue by week, and buyers by country into a single offline HTML report —
+computed from your Stripe account. Your storefront never loads an analytics
+script.
 
 **Multi-product patterns.** Catalog layout, per-product payment links, per-product
 private repos, and a fulfillment config that routes each sale to the right grant.
