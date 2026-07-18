@@ -1,0 +1,157 @@
+#!/usr/bin/env node
+// HonorBox fulfillment engine.
+//
+// Polls Stripe Checkout Sessions and, for each new paid session matching a
+// configured grant, invites the buyer's GitHub username (checkout custom
+// field) to the product's private repo. Appends an anonymized ledger row.
+// State (cursor + processed ids + failures) is written to disk; committing
+// is the calling workflow's job. No webhooks, no server, no dependencies.
+//
+// Env:  STRIPE_SECRET_KEY  (required)
+//       GH_FULFILL_TOKEN   (required: token with admin on the product repos)
+// Usage: node scripts/fulfill.js --config store.config.json \
+//          --state state/fulfill-state.json --ledger ledger/ledger.json
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const {
+  pickNewPaidSessions,
+  extractGithubUsername,
+  validUsername,
+  matchGrant,
+  ledgerRow,
+  nextCursor,
+  isRepoOwner,
+} = require('./lib/fulfill-core.js');
+
+const OVERLAP_SECONDS = 6 * 3600; // re-scan window; idempotency via processed ids
+
+function arg(name, fallback) {
+  const i = process.argv.indexOf(`--${name}`);
+  return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+}
+
+function readJson(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJson(file, obj) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
+}
+
+async function stripeGet(pathname, params, key) {
+  const url = new URL(`https://api.stripe.com${pathname}`);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const res = await fetch(url, {
+    headers: { Authorization: `Basic ${Buffer.from(key + ':').toString('base64')}` },
+  });
+  if (!res.ok) throw new Error(`Stripe ${pathname} -> ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function listSessionsSince(createdGt, key) {
+  const sessions = [];
+  let startingAfter = null;
+  for (;;) {
+    const params = { limit: '100', 'created[gt]': String(createdGt), 'expand[]': 'data.line_items' };
+    if (startingAfter) params.starting_after = startingAfter;
+    const page = await stripeGet('/v1/checkout/sessions', params, key);
+    sessions.push(...page.data);
+    if (!page.has_more || page.data.length === 0) break;
+    startingAfter = page.data[page.data.length - 1].id;
+  }
+  return sessions;
+}
+
+async function inviteCollaborator(repo, username, token) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/collaborators/${username}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'honorbox-fulfill',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({ permission: 'pull' }),
+  });
+  // 201 = invitation created, 204 = already a collaborator (or invite updated)
+  if (res.status === 201 || res.status === 204) return res.status;
+  throw new Error(`GitHub invite ${repo} <- ${username} -> ${res.status}: ${await res.text()}`);
+}
+
+async function main() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const ghToken = process.env.GH_FULFILL_TOKEN;
+  if (!stripeKey || !ghToken) {
+    console.error('Missing STRIPE_SECRET_KEY or GH_FULFILL_TOKEN');
+    process.exit(2);
+  }
+
+  const configPath = arg('config', 'store.config.json');
+  const statePath = arg('state', 'state/fulfill-state.json');
+  const ledgerPath = arg('ledger', 'ledger/ledger.json');
+
+  const config = readJson(configPath, null);
+  if (!config || !Array.isArray(config.fulfillment) || config.fulfillment.length === 0) {
+    console.error(`No fulfillment grants configured in ${configPath}`);
+    process.exit(2);
+  }
+
+  const state = readJson(statePath, { cursor: 0, processed: [], failures: [] });
+  const ledger = readJson(ledgerPath, { rows: [] });
+  const newSales = []; // usernames fulfilled THIS run (for license issuing etc.)
+
+  const since = Math.max(0, (state.cursor || 0) - OVERLAP_SECONDS);
+  const sessions = await listSessionsSince(since, stripeKey);
+  const fresh = pickNewPaidSessions(sessions, state.processed, config.fulfillment);
+  console.log(`sessions scanned=${sessions.length} new_paid=${fresh.length}`);
+
+  for (const s of fresh) {
+    const grant = matchGrant(s, config.fulfillment);
+    const username = extractGithubUsername(s);
+    const entry = { session: s.id, ts: new Date().toISOString() };
+    try {
+      if (!validUsername(username)) {
+        throw new Error(`invalid github username: ${JSON.stringify(username)}`);
+      }
+      if (isRepoOwner(grant.repo, username)) {
+        console.log(`fulfilled ${s.id}: ${username} owns ${grant.repo}, no invite needed`);
+      } else {
+        const code = await inviteCollaborator(grant.repo, username, ghToken);
+        console.log(`fulfilled ${s.id}: invited ${username} -> ${grant.repo} (HTTP ${code})`);
+      }
+      ledger.rows.push(ledgerRow(s, grant));
+      newSales.push(username);
+    } catch (err) {
+      console.error(`FAILED ${s.id}: ${err.message}`);
+      state.failures.push({ ...entry, error: String(err.message) });
+      ledger.rows.push({ ...ledgerRow(s, grant), needs_attention: true });
+    }
+    state.processed.push(s.id);
+  }
+
+  state.cursor = nextCursor(sessions, state.cursor);
+  // Bound growth: processed ids older than the overlap window can never recur.
+  if (state.processed.length > 5000) state.processed = state.processed.slice(-5000);
+
+  ledger.updated = new Date().toISOString();
+  ledger.total_sales = ledger.rows.filter((r) => !r.needs_attention).length;
+
+  writeJson(statePath, state);
+  writeJson(ledgerPath, ledger);
+  writeJson(path.join(path.dirname(statePath), 'new-sales.json'), newSales);
+  console.log(`done. ledger_rows=${ledger.rows.length} failures_total=${state.failures.length}`);
+  // Signal "attention needed" to the workflow without failing the run.
+  if (fresh.length > 0) fs.writeFileSync(path.join(path.dirname(statePath), 'HAD_ACTIVITY'), '1');
+}
+
+main().catch((err) => {
+  console.error(err.stack || String(err));
+  process.exit(1);
+});

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 88" role="img" aria-label="HonorBox">
+  <style>
+    .ink { stroke: #23201b; }
+    .fill-ink { fill: #23201b; }
+    @media (prefers-color-scheme: dark) {
+      .ink { stroke: #ece5d8; }
+      .fill-ink { fill: #ece5d8; }
+    }
+  </style>
+  <!-- mark: coin dropping into an honor box -->
+  <g transform="translate(8,8)">
+    <circle cx="36" cy="13" r="8.6" fill="none" class="ink" stroke-width="5"/>
+    <rect x="9" y="28.8" width="54" height="34.2" rx="7" fill="none" class="ink" stroke-width="5"/>
+    <path d="M9 43.8h54" class="ink" stroke-width="5"/>
+    <rect x="25.2" y="25.8" width="21.6" height="6" rx="3" fill="#b5482a"/>
+  </g>
+  <!-- wordmark -->
+  <text x="94" y="60" font-family="Iowan Old Style, Palatino Nova, Palatino, Georgia, serif"
+        font-size="42" font-weight="700" letter-spacing="-0.5" class="fill-ink">HonorBox</text>
+</svg>

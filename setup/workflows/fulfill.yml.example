@@ -1,0 +1,67 @@
+# HonorBox fulfillment workflow — TEMPLATE.
+#
+# Run this in a PRIVATE repo (your "ops" repo), not in your public storefront
+# repo: it holds your Stripe secret key and your fulfillment state.
+#
+# Setup (see docs/setup.md for the full walkthrough):
+#   1. Create a private ops repo and copy this file to .github/workflows/fulfill.yml
+#   2. Vendor scripts/fulfill.js + scripts/lib/ and your store.config.json into it
+#   3. Add secrets: STRIPE_SECRET_KEY (a restricted key is strongly recommended:
+#      only "Checkout Sessions: Read"), GH_FULFILL_TOKEN (a fine-grained PAT with
+#      admin on your private product repo(s) for collaborator invites)
+#   4. Optionally set PUBLIC_STORE_REPO to publish the anonymized ledger to your
+#      storefront's trust page.
+
+name: Fulfill orders
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fulfill
+  cancel-in-progress: false
+
+jobs:
+  fulfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Poll Stripe and fulfill
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          GH_FULFILL_TOKEN: ${{ secrets.GH_FULFILL_TOKEN }}
+        run: |
+          node scripts/fulfill.js \
+            --config store.config.json \
+            --state state/fulfill-state.json \
+            --ledger ledger/ledger.json
+      - name: Commit state and ledger
+        run: |
+          git config user.name "honorbox-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state/ ledger/
+          git diff --cached --quiet || git commit -m "fulfill: $(date -u +%FT%TZ)"
+          git push
+      - name: Publish ledger to storefront
+        if: ${{ vars.PUBLIC_STORE_REPO != '' }}
+        env:
+          GH_FULFILL_TOKEN: ${{ secrets.GH_FULFILL_TOKEN }}
+          PUBLIC_STORE_REPO: ${{ vars.PUBLIC_STORE_REPO }}
+        run: |
+          if [ -f state/HAD_ACTIVITY ]; then
+            git clone --depth 1 "https://x-access-token:${GH_FULFILL_TOKEN}@github.com/${PUBLIC_STORE_REPO}.git" store
+            cp ledger/ledger.json store/ledger/ledger.json
+            cd store
+            git config user.name "honorbox-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add ledger/ledger.json
+            git diff --cached --quiet || { git commit -m "ledger: update"; git push; }
+          fi
