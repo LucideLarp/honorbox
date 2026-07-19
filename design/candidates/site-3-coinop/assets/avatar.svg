@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88" role="img" aria-label="HonorBox">
+  <rect width="88" height="88" fill="#1d4a37"/>
+  <!-- the insert-coin gesture — tilted brass coin dropping toward the slot on the honor box -->
+  <g transform="translate(8,10)">
+    <rect x="9" y="31" width="54" height="33" rx="8" fill="none" stroke="#f3f6ee" stroke-width="5"/>
+    <rect x="22" y="27" width="28" height="7" rx="3.5" fill="#c9a03b"/>
+    <rect x="-3.5" y="-8" width="7" height="16" rx="3.5" fill="#c9a03b" transform="translate(36 12) rotate(-22)"/>
+  </g>
+</svg>
