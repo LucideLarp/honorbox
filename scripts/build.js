@@ -171,7 +171,7 @@ function buyButton(p, big = false) {
   if (!p.payment_link || typeof p.payment_link !== 'string') {
     return `<span class="btn btn-disabled" title="Checkout not configured yet">Checkout coming soon</span>`;
   }
-  return `<a class="btn btn-buy${big ? ' btn-big' : ''}" href="${escapeHtml(p.payment_link)}">Buy ${escapeHtml(p.name)} — ${escapeHtml(p.price)}</a>`;
+  return `<a class="btn btn-buy${big ? ' btn-big' : ''}" href="${escapeHtml(p.payment_link)}">Buy ${escapeHtml(p.name)} · ${escapeHtml(p.price)}</a>`;
 }
 
 // variant: '' (default) | 'flagship' | 'companion'. Additive modifier classes
@@ -315,7 +315,7 @@ function main() {
       body_class: bodyClass,
     });
     // Social cards: the layouts hardcode og:title/og:description/og:type, so
-    // set them in place (og:title without the " — Store" suffix; the site
+    // set them in place (og:title without the " · Store" suffix; the site
     // name lives in og:site_name) and append what they lack.
     const shareTitle = ogTitle || title;
     out = setMeta(out, 'property', 'og:type', ogType);
@@ -341,7 +341,7 @@ function main() {
   <p class="lede">${escapeHtml(config.tagline)}</p>
   <div class="hero-ctas">
     ${products[0] ? buyButton(products[0], true) : ''}
-    ${config.repo ? `<a class="btn btn-ghost" href="https://github.com/${escapeHtml(config.repo)}">Star the free core</a>` : ''}
+    ${config.repo ? `<a class="btn btn-ghost" href="https://github.com/${escapeHtml(config.repo)}">Read the engine on GitHub</a>` : ''}
   </div>
   <p class="hero-sub">${escapeHtml(config.subline || '')}</p>
 </section>`;
@@ -354,7 +354,7 @@ function main() {
   write(path.join(DIST, 'index.html'), page({
     // meta_title (config-optional) wins verbatim: Google shows ~60 chars and
     // the name+tagline default blows well past it.
-    title: config.meta_title || `${config.name} — ${config.tagline}`,
+    title: config.meta_title || `${config.name} · ${config.tagline}`,
     ogTitle: config.headline || config.name,
     slug: 'index',
     content: home,
@@ -375,7 +375,7 @@ function main() {
     const bodyImage = firstRasterImage(p.body);
     const ogImage = bodyImage ? absUrl(site, bodyImage) : defaultOgImage;
     write(path.join(DIST, `${p.id}.html`), page({
-      title: p.meta_title || `${p.name} — ${config.name}`,
+      title: p.meta_title || `${p.name} · ${config.name}`,
       ogTitle: p.name,
       // frontmatter description > tagline > first paragraph (page() falls
       // back to config.tagline last)
@@ -398,7 +398,7 @@ function main() {
     write(
       path.join(DIST, `${p.slug}.html`),
       page({
-        title: p.meta_title || `${p.title} — ${config.name}`,
+        title: p.meta_title || `${p.title} · ${config.name}`,
         ogTitle: p.title,
         description: desc,
         slug: p.slug,
@@ -419,12 +419,12 @@ function main() {
       .reverse()
       .map(
         (r) =>
-          `<tr${r.needs_attention ? ' class="attn"' : ''}><td>${escapeHtml(r.ts.slice(0, 10))}</td><td>${escapeHtml(r.product)}</td><td class="num">${r.amount.toFixed(2)} ${escapeHtml(r.currency)}</td><td>${escapeHtml(r.country || '—')}</td><td class="num">${escapeHtml(r.ref)}</td></tr>`
+          `<tr${r.needs_attention ? ' class="attn"' : ''}><td>${escapeHtml(r.ts.slice(0, 10))}</td><td>${escapeHtml(r.product)}</td><td class="num">${r.amount.toFixed(2)} ${escapeHtml(r.currency)}</td><td>${escapeHtml(r.country || 'n/a')}</td><td class="num">${escapeHtml(r.ref)}</td></tr>`
       )
       .join('');
     const trust = `<article class="prose trust">
 <h1>Public ledger</h1>
-<p>Every sale this store makes is committed here by the fulfillment bot — date, product, amount,
+<p>Every sale this store makes is committed here by the fulfillment bot: date, product, amount,
 buyer country, and an anonymous reference. No names, no emails.</p>
 <p class="ledger-total"><strong>${ledger.total_sales || 0}</strong> sales recorded · last updated ${escapeHtml((ledger.updated || 'never').slice(0, 16).replace('T', ' '))} UTC</p>
 <div class="table-scroll"><table class="ledger">
@@ -434,9 +434,9 @@ ${ledgerRows || '<tr><td colspan="5" class="muted">No sales yet. The box is open
 <p class="muted">Raw data: <a href="./ledger/ledger.json">ledger.json</a> · Updated on every fulfillment run.</p>
 </article>`;
     write(path.join(DIST, 'trust.html'), page({
-      title: `Public ledger — ${config.name}`,
+      title: `Public ledger · ${config.name}`,
       ogTitle: 'Public ledger',
-      description: 'Every sale this store makes — date, product, amount, and buyer country — committed publicly by the fulfillment bot. No names, no emails.',
+      description: 'Every sale this store makes (date, product, amount, buyer country), committed publicly by the fulfillment bot. No names, no emails.',
       slug: 'trust',
       content: trust,
     }));
@@ -463,7 +463,7 @@ ${ledgerRows || '<tr><td colspan="5" class="muted">No sales yet. The box is open
     ...pages.map((p) => ({ path: `${p.slug}.html`, lastmod: buildDate, priority: guides.has(p.slug) ? 0.7 : 0.3 })),
   ];
   write(path.join(DIST, 'sitemap.xml'), sitemapXml(site, sitemapEntries));
-  write(path.join(DIST, '404.html'), page({ title: `Not found — ${config.name}`, slug: '404', content: `<article class="prose"><h1>Nothing at this stand</h1><p>That page doesn't exist. <a href="./">Back to the store.</a></p></article>`, noindex: true }));
+  write(path.join(DIST, '404.html'), page({ title: `Not found · ${config.name}`, slug: '404', content: `<article class="prose"><h1>Nothing at this stand</h1><p>That page doesn't exist. <a href="./">Back to the store.</a></p></article>`, noindex: true }));
   write(path.join(DIST, '.nojekyll'), '');
 
   console.log(`built dist/: ${products.length} product(s), ${pages.length} page(s), ledger page: ${hasLedger ? 'on' : 'off'}`);

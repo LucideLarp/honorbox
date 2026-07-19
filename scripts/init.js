@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // HonorBox init — from zero to a sellable product in one command.
 //
-//   STRIPE_SECRET_KEY=sk_... node scripts/init.js \
+//   STRIPE_SECRET_KEY=rk_... node scripts/init.js \
 //     --name "My Tool" --price 2900 --currency usd --repo you/my-tool-access
 //
 // Creates on your Stripe account:  Product -> Price -> Payment Link with the

@@ -20,8 +20,9 @@ Stripe account (charges enabled).
 
 ## 2. Stripe
 
-**Fast path:** `STRIPE_SECRET_KEY=sk_... node scripts/init.js --name "My Tool"
---price 2900 --repo you/product-access` creates the Product, Price, and a
+**Fast path:** `STRIPE_SECRET_KEY=rk_... node scripts/init.js --name "My Tool"
+--price 2900 --repo you/product-access` (a temporary restricted key; scopes in
+[least-privilege.md](least-privilege.md)) creates the Product, Price, and a
 correctly-configured Payment Link, and wires `store.config.json` +
 `products/<id>.md` for you. Skip to §3. The manual path:
 
@@ -68,8 +69,11 @@ Keep secrets and state **out of your public repo**:
      API keys → Create restricted key) with only **Checkout Sessions: Read**.
      Don't use your full secret key if you don't have to.
    - `GH_FULFILL_TOKEN`: a fine-grained PAT scoped to your private product
-     repo(s) with **Administration: Read & write** (for collaborator invites)
-     and **Contents: Read & write** on the ops/storefront repos (to push ledger).
+     repo(s) with **Administration: Read & write** (for collaborator invites).
+     The ops-repo state commit uses the workflow's own `GITHUB_TOKEN`, not this
+     PAT; add **Contents: Read & write** on the *storefront* repo only if you
+     enable the public-ledger option below. Full scope map:
+     [least-privilege.md](least-privilege.md).
 4. (Optional, off by default) Actions **variable** `PUBLIC_STORE_REPO` =
    `you/yourstore` to publish the anonymized ledger to a public trust page on
    your storefront. Skip it to keep sales data private.

@@ -59,11 +59,13 @@ minutes: [`scripts/fulfill.js`](scripts/fulfill.js).
    Payment Link with the delivery field, wired straight into your config:
 
    ```bash
-   STRIPE_SECRET_KEY=sk_... node scripts/init.js \
+   STRIPE_SECRET_KEY=rk_... node scripts/init.js \
      --name "My Tool" --price 2900 --repo you/my-tool-access
    ```
 
-   (Prefer clicking? The manual dashboard steps are in [docs/setup.md](docs/setup.md).)
+   (`rk_` = a temporary restricted key; scopes in
+   [docs/least-privilege.md](docs/least-privilege.md). Prefer clicking? The
+   manual dashboard steps are in [docs/setup.md](docs/setup.md).)
 3. **Pages**: copy `setup/workflows/deploy.yml` into `.github/workflows/`, enable
    GitHub Pages (Actions source), push. The store deploys.
 4. **Fulfillment**: create a *private* ops repo, copy
@@ -74,6 +76,13 @@ minutes: [`scripts/fulfill.js`](scripts/fulfill.js).
 
 Full walkthrough: [docs/setup.md](docs/setup.md) ·
 Architecture and threat model: [docs/how-it-works.md](docs/how-it-works.md)
+
+> **Scared of "secret key in a GitHub Action"? Good instinct.** HonorBox needs
+> neither your full Stripe key nor a broad GitHub token: a restricted Stripe key
+> with one read-only permission and a fine-grained PAT scoped to the product
+> repo alone run the whole engine. Exact toggles, what breaks if you over-cut,
+> and what a leaked key could and couldn't do:
+> [docs/least-privilege.md](docs/least-privilege.md).
 
 ## Optional: a public ledger
 

@@ -19,7 +19,8 @@
 #     Repository access: ONLY your private ops repo
 #     Permissions: Actions: Read and write, and nothing else. It can start
 #     workflow runs there; it cannot read code, read secrets, or push.
-#     (Fine-grained PATs expire after at most 1 year; calendar the rotation.)
+#     (Set a real expiry, 6-12 months, and calendar the rotation. GitHub now
+#     allows non-expiring fine-grained PATs; don't use one.)
 # And ONE variable (Settings → Variables → Actions):
 #   OPS_REPO = "you/yourstore-ops"
 # Optional variables:

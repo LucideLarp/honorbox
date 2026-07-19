@@ -16,32 +16,32 @@
       "items": [
         {
           "img": "./assets/previews/terminal.png",
-          "alt": "The same storefront in the terminal theme — phosphor green type on black",
-          "caption": "terminal — phosphor-on-black, for CLI tools",
+          "alt": "The same storefront in the terminal theme: phosphor green type on black",
+          "caption": "terminal: phosphor-on-black, for CLI tools",
           "href": "./honorbox-pro.html",
           "width": 1360,
           "height": 900
         },
         {
           "img": "./assets/previews/editorial.png",
-          "alt": "The same storefront in the editorial theme — serif type, magazine rules",
-          "caption": "editorial — serif, magazine-calm",
+          "alt": "The same storefront in the editorial theme: serif type, magazine rules",
+          "caption": "editorial: serif, magazine-calm",
           "href": "./honorbox-pro.html",
           "width": 1360,
           "height": 900
         },
         {
           "img": "./assets/previews/brutalist.png",
-          "alt": "The same storefront in the brutalist theme — loud type, hard shadows",
-          "caption": "brutalist — loud, typographic",
+          "alt": "The same storefront in the brutalist theme: loud type, hard shadows",
+          "caption": "brutalist: loud, typographic",
           "href": "./honorbox-pro.html",
           "width": 1360,
           "height": 900
         },
         {
           "img": "./assets/previews/midnight.png",
-          "alt": "The same storefront in the midnight theme — deep blue, product-launch look",
-          "caption": "midnight — deep-blue product-launch",
+          "alt": "The same storefront in the midnight theme: deep blue, product-launch look",
+          "caption": "midnight: deep-blue product-launch",
           "href": "./honorbox-pro.html",
           "width": 1360,
           "height": 900
@@ -54,11 +54,11 @@
       "items": [
         {
           "title": "Fork the stand",
-          "text": "Fork the free, MIT-licensed engine and edit one config file. Your storefront builds to GitHub Pages — hosting costs $0, forever."
+          "text": "Fork the free, MIT-licensed engine and edit one config file. Your storefront builds to GitHub Pages; hosting costs $0, forever."
         },
         {
           "title": "Put out your goods",
-          "text": "Create a Stripe Payment Link for each product and drop the URL in the config. Buyers pay you directly on your own Stripe account — nobody stands between you and your balance."
+          "text": "Create a Stripe Payment Link for each product and drop the URL in the config. Buyers pay you directly on your own Stripe account. Nobody stands between you and your balance."
         },
         {
           "title": "Let the box collect",
@@ -68,12 +68,12 @@
     },
     {
       "type": "note",
-      "text": "Who sells this way: indie hackers and SaaS builders, template and boilerplate makers, coding-course creators, CLI and API authors, open-source maintainers funding their work, agencies productizing internal tools, students selling a first project. The one hard requirement: your buyers need GitHub accounts, because delivery is a repo invite. Selling physical goods, ebooks for lay readers, or to a general consumer audience? A merchant-of-record platform will serve you better — the first guide below compares them honestly."
+      "text": "Who sells this way: indie hackers and SaaS builders, template and boilerplate makers, coding-course creators, CLI and API authors, open-source maintainers funding their work, agencies productizing internal tools, students selling a first project. The one hard requirement: your buyers need GitHub accounts, because delivery is a repo invite. Selling physical goods, ebooks for lay readers, or to a general consumer audience? A merchant-of-record platform will serve you better; the first guide below compares them."
     },
     {
       "type": "compare",
-      "title": "What the middlemen charge",
-      "note": "Fees as published July 2026. HonorBox is not a merchant of record — you sell on your own Stripe account and handle your own tax obligations (see FAQ).",
+      "title": "The fees, side by side",
+      "note": "Fees as published July 2026. HonorBox is not a merchant of record: you sell on your own Stripe account and handle your own tax obligations (see FAQ).",
       "columns": [
         "",
         "Gumroad",
@@ -103,19 +103,19 @@
           "Your own Stripe account",
           "no",
           "no",
-          "yes — funds go straight to you"
+          "yes; funds go straight to you"
         ],
         [
           "Server to maintain",
-          "—",
-          "—",
+          "n/a",
+          "n/a",
           "none (Pages + Actions)"
         ],
         [
           "Handles VAT for you",
           "yes",
           "yes",
-          "no — you're the merchant"
+          "no; you're the merchant"
         ]
       ]
     },
@@ -125,23 +125,27 @@
       "items": [
         {
           "q": "What exactly do I get when I buy?",
-          "a": "Your GitHub account is invited to the product's private repository — usually within minutes, always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive, email honorbox@proton.me or open an issue and it will be fixed or refunded."
+          "a": "Your GitHub account is invited to the product's private repository, usually within minutes and always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive, email honorbox@proton.me or open an issue and it will be fixed or refunded."
         },
         {
           "q": "Why is there no instant download?",
-          "a": "Delivery is a private-repo invite because it's the only channel that stays access-controlled — revocable on refund, with updates included. A scheduled job runs the fulfillment; that's the honest cost of a $0/month stack, and it's usually minutes."
+          "a": "Because the product is private-repo access, which a download link can't be: per-buyer grants, clean revocation on refund, updates included forever. A scheduled job sends the invite, usually within minutes, with zero infrastructure to run or break. Sellers who want seconds can turn on the optional webhook mode. A download URL is instant, and then uncontrollable."
         },
         {
           "q": "Do my buyers need GitHub accounts?",
-          "a": "Yes. Delivery is a repo invite, so every buyer needs one. Fine for code, templates, courses aimed at technical people, and tools — the wrong channel for lay-reader ebooks, physical goods, or general consumers. Better to know that before your first failed delivery, not after."
+          "a": "Yes. Delivery is a repo invite, so every buyer needs one. Fine for code, templates, courses aimed at technical people, and tools. The wrong channel for lay-reader ebooks, physical goods, or general consumers. Better to know that before your first failed delivery."
         },
         {
           "q": "Do I need HonorBox Pro to use the engine?",
-          "a": "No. The free core is a complete store: one theme, checkout, fulfillment, docs. Pro adds the premium themes, multi-product catalog patterns, and the offline license-key module — and buying it funds the free core."
+          "a": "No. The free core is a complete store: one theme, checkout, fulfillment, docs. Pro adds the offline license-key module, the premium themes, and multi-product catalog patterns. Buying it funds the free core."
+        },
+        {
+          "q": "Does the fulfillment bot need my full Stripe secret key?",
+          "a": "No. A restricted key that can only read Checkout Sessions runs the whole poll; it cannot move money, refund, or create anything. Pair it with a fine-grained GitHub token valid for just the product repo. The least-privilege guide in the docs shows the exact toggles."
         },
         {
           "q": "What about VAT and sales tax?",
-          "a": "HonorBox is not a merchant of record. You sell on your own Stripe account, so tax obligations are yours — fine for most small sellers under registration thresholds, and Stripe Tax can automate it beyond that. The docs cover this honestly instead of pretending it away."
+          "a": "HonorBox is not a merchant of record. You sell on your own Stripe account, so tax obligations are yours. That's workable for most small sellers under registration thresholds, and Stripe Tax can automate it beyond that. The tax doc walks through what a small seller actually owes."
         },
         {
           "q": "Refunds?",
@@ -149,7 +153,7 @@
         },
         {
           "q": "Who's behind this?",
-          "a": "HonorBox is an independent project. Support: honorbox@proton.me or GitHub issues — both are answered fast."
+          "a": "HonorBox is an independent project. Support: honorbox@proton.me or GitHub issues; both are answered fast."
         }
       ]
     },
@@ -159,29 +163,29 @@
       "items": [
         {
           "title": "Gumroad alternatives (2026)",
-          "text": "Gumroad, Lemon Squeezy, Payhip, Paddle, plain Stripe, DIY — the real fees, the honest math, and when each one wins.",
+          "text": "Gumroad, Lemon Squeezy, Payhip, Paddle, plain Stripe, DIY: the real fees and when each one wins.",
           "href": "./gumroad-alternatives.html"
         },
         {
           "title": "Lemon Squeezy vs Gumroad vs DIY (2026)",
-          "text": "The two big platforms against your own Stripe account — fees verified on their live pricing pages, per-sale math shown, and a fair list of when not to DIY.",
+          "text": "The two big platforms against your own Stripe account: fees from their live pricing pages, the per-sale math, and when not to DIY.",
           "href": "./lemon-squeezy-vs-gumroad-vs-diy.html"
         },
         {
           "title": "Sell digital products with Stripe Payment Links",
-          "text": "The complete guide — checkout, delivery options, refunds, and the tax paragraph nobody writes.",
+          "text": "The complete guide: checkout, delivery options, refunds, and the tax paragraph nobody writes.",
           "href": "./sell-with-stripe-payment-links.html"
         },
         {
           "title": "Deliver digital products through GitHub",
-          "text": "Private-repo delivery done right — access control, revocation, invite limits, and token discipline.",
+          "text": "Private-repo delivery done right: access control, revocation, invite limits, and token discipline.",
           "href": "./deliver-digital-products-github.html"
         }
       ]
     },
     {
       "type": "note",
-      "text": "This store dogfoods its own engine — the checkout you go through is the same one your buyers would. If something feels off, that's a bug report we want."
+      "text": "This store dogfoods its own engine. The checkout you go through is the same one your buyers would. If something feels off, that's a bug report we want."
     }
   ],
   "fulfillment": [
