@@ -2,7 +2,7 @@
 title: Terms
 ---
 
-Plain-language terms for buying from this store. Last updated 2026-07-18.
+Plain-language terms for buying from this store. Last updated 2026-07-19.
 
 ## The seller
 
@@ -12,17 +12,18 @@ your card details. Contact: **honorbox@proton.me**.
 
 ## What you're buying
 
-**HonorBox Pro** is access to a private GitHub repository containing themes,
-code modules, and written guides. Delivery is an invitation to that repository,
-sent to the GitHub username you provide at checkout — usually within a few minutes,
-always within a few hours. Access is permanent and includes future updates to
-the repository.
+Each product — [HonorBox Pro](./honorbox-pro.html) ($29) and
+[Crew](./crew.html) ($19) — is access to a private GitHub repository
+containing code, themes, agents, and written guides. Delivery is an invitation
+to that product's repository, sent to the GitHub username you provide at
+checkout — usually within minutes, always within a few hours. Access is
+permanent and includes future updates to the repository.
 
 ## License
 
-Pro content is licensed **per developer**. You may use it in any number of
+Paid content is licensed **per developer**. You may use it in any number of
 stores and projects you own or build for clients. You may not republish,
-redistribute, or resell the Pro content itself, in whole or substantial part.
+redistribute, or resell the paid content itself, in whole or substantial part.
 The free HonorBox core is separate and MIT-licensed.
 
 ## Refunds
@@ -30,7 +31,7 @@ The free HonorBox core is separate and MIT-licensed.
 30 days from purchase, no questions asked. Email honorbox@proton.me, reply to
 your Stripe receipt, or open an issue on the public repository, and the payment
 will be refunded in full to the original payment method. **Repository access
-and the Pro license end when a refund is issued.** Refunds are honored in good
+and the license end when a refund is issued.** Refunds are honored in good
 faith; orders that abuse the policy (for example, repeat purchase-and-refund
 patterns) may be declined and disputed through Stripe.
 

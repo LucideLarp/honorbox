@@ -1,7 +1,7 @@
 ---
 id: crew
 name: Crew
-tagline: An engineered agent team for Claude Code — drilled, tested as a system, installed in one command.
+tagline: 10 specialist agents and 14 discipline skills for Claude Code — designed as one system, installed in one command.
 price: $19
 price_note: one-time · lifetime access & updates
 badge: New
@@ -52,7 +52,7 @@ fresh, upgraded, and conflicted setups.
 ## How delivery works
 
 Checkout asks for your GitHub username. The fulfillment bot invites that
-account to the private `Honorboxx/crew-full` repository — usually within 30
+account to the private `Honorboxx/crew-full` repository — usually within
 minutes, always within a few hours. Access is permanent; updates land in the
 same repo.
 

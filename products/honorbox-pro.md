@@ -1,7 +1,7 @@
 ---
 id: honorbox-pro
 name: HonorBox Pro
-tagline: Premium themes, an offline license-key system, and multi-product power for your HonorBox store.
+tagline: Four premium themes, an offline license-key module, ops bots, tracker-free sales stats, and multi-product patterns for your HonorBox store.
 price: $29
 price_note: one-time · lifetime access & updates
 badge: Launch price
@@ -65,8 +65,9 @@ actually owes, when registration thresholds bite, and when to turn on Stripe Tax
 ## Who should buy this — and who shouldn't
 
 **Buy Pro if** you sell software that needs license keys (the ed25519 module
-alone is days of correct-crypto work you skip), you run or plan multiple
-products, or you want a storefront that doesn't look like every other fork.
+alone is days of correct-crypto work you skip), you sell or plan multiple
+products — templates, courses, tools, a whole catalog — or you want a
+storefront that doesn't look like every other fork.
 
 Before buying you can audit: a full Pro theme
 ([`terminal`, public in the free repo](https://github.com/Honorboxx/honorbox/tree/main/themes/terminal))
@@ -85,8 +86,11 @@ deliberate.
 ## How delivery works
 
 Checkout asks for your GitHub username. The fulfillment bot invites that account
-to the private `Honorboxx/honorbox-pro` repository — usually within a few minutes, always
-within a few hours. You keep access permanently; updates land in the same repo.
+to the private `Honorboxx/honorbox-pro` repository — usually within minutes,
+always within a few hours. You keep access permanently; updates land in the
+same repo. It's the same private-repo delivery we recommend in
+[the GitHub delivery guide](./deliver-digital-products-github.html) — you're
+watching the engine you'd be buying.
 
 ## The honest terms
 

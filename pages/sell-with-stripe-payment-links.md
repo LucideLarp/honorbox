@@ -1,5 +1,5 @@
 ---
-title: Selling digital products with Stripe Payment Links — the complete guide
+title: Sell digital products with Stripe Payment Links — the complete guide
 ---
 
 Stripe Payment Links are the fastest way to charge money on the internet: no
@@ -8,28 +8,28 @@ code, no server, a URL you can put anywhere. This guide covers actually
 for you: delivery. Useful whether or not you use our tool; we mark the one
 section where we're selling you something.
 
-## 1. Product and price (2 minutes)
+## 1. Create the product and price (2 minutes)
 
 Dashboard → Products → Add product. One-time price, your currency. For digital
-goods sold internationally, most indie devs price in USD — buyers everywhere
+goods sold internationally, most indie sellers price in USD — buyers everywhere
 are used to it and Stripe converts.
 
-## 2. The Payment Link
+## 2. Create the Payment Link
 
 Create a Payment Link from that price. Three settings that matter for digital
 goods:
 
-- **Collect a delivery handle.** Add a custom field — for software sold to
-  developers, a GitHub username; for other goods, whatever identifies where
-  the product goes. Without this you'll fulfill by replying to receipt emails
-  forever.
+- **Collect a delivery handle.** Add a custom field — for products delivered
+  through GitHub, the buyer's GitHub username; for other goods, whatever
+  identifies where the product goes. Without this you'll fulfill by replying
+  to receipt emails forever.
 - **Confirmation message.** After payment, the buyer sees a hosted message.
-  Say exactly what happens next and how long it takes ("your invite arrives
-  within 30 minutes"), and how to reach you if it doesn't. Vague messages
-  create support tickets and disputes.
+  Say exactly what happens next and how long it takes ("your repo invite
+  usually arrives within minutes, always within a few hours"), and how to
+  reach you if it doesn't. Vague messages create support tickets and disputes.
 - **Promotion codes toggle** if you ever want launch coupons.
 
-## 3. Delivery — the honest part
+## 3. Deliver the digital product — the honest part
 
 A completed Payment Link checkout gives you money and a `checkout.session`
 object. It does not give the buyer anything. Your options, in increasing
@@ -49,7 +49,11 @@ order of infrastructure:
    the buyer's GitHub username from the custom field, and invites them to a
    private repo with the goods. Access-controlled per buyer, revocable on
    refund, no server, no webhook endpoint, no mailer. The cost: delivery
-   takes minutes, not milliseconds. [How it works](https://honorboxx.github.io/honorbox/).
+   takes minutes, not milliseconds, and buyers need GitHub accounts.
+   [See it running on this store](./index.html) — our own checkout is this
+   exact pipeline.
+
+Option 4 in depth: [Deliver digital products through GitHub](./deliver-digital-products-github.html).
 
 ## 4. Receipts, refunds, disputes
 
@@ -60,7 +64,7 @@ order of infrastructure:
   a $15 fee plus the payment) than several refunds.
 - Refund fast. A refund request answered in an hour rarely becomes a dispute.
 
-## 5. Tax, in one paragraph
+## 5. Tax on digital products, in one paragraph
 
 With Payment Links you are the merchant of record: VAT/sales tax on digital
 goods is your responsibility, unlike on Gumroad or Lemon Squeezy where the
@@ -70,14 +74,16 @@ one, and read the rules for your own country once. Our
 [plain-language tax explainer](https://github.com/Honorboxx/honorbox/blob/main/docs/tax.md)
 goes one level deeper without the hand-waving. Not tax advice.
 
-## 6. The checklist
+## 6. The launch checklist
 
-- [ ] Product + one-time price created
-- [ ] Payment Link with a delivery-handle custom field
-- [ ] Confirmation message states delivery method and latency
-- [ ] Delivery automated (any of options 2–4)
-- [ ] Receipt emails on, refund policy written
-- [ ] Stripe Tax threshold monitoring on
+- Product + one-time price created
+- Payment Link with a delivery-handle custom field
+- Confirmation message states delivery method and latency
+- Delivery automated (any of options 2–4)
+- Receipt emails on, refund policy written
+- Stripe Tax threshold monitoring on
 
-Related: [Gumroad alternatives for developers](./gumroad-alternatives.html) —
-what the platforms charge and when they're worth it.
+## Related
+
+- [Gumroad alternatives (2026) — fees, trade-offs, and when DIY wins](./gumroad-alternatives.html)
+- [Deliver digital products through GitHub — the practical guide](./deliver-digital-products-github.html)

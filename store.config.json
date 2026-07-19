@@ -1,9 +1,9 @@
 {
   "name": "HonorBox",
-  "kicker": "The unattended store for developers",
+  "kicker": "For everyone whose buyers live on GitHub",
   "headline": "Sell digital products with just Stripe + GitHub.",
-  "tagline": "No platform. No monthly fee. No server. A static storefront on GitHub Pages, checkout through your own Stripe, and a GitHub Action that delivers the goods while you sleep.",
-  "subline": "This store runs on the engine it sells. Fork it and open your own stand.",
+  "tagline": "0% platform fee, $0/month, no server. A static storefront on GitHub Pages, checkout through your own Stripe account, and a GitHub Action that delivers every sale while you sleep.",
+  "subline": "This store runs on the engine it sells. Fork the free core and open your own stand.",
   "url": "https://honorboxx.github.io/honorbox",
   "theme": "stand",
   "seller": "HonorBox · honorbox@proton.me",
@@ -15,17 +15,21 @@
       "items": [
         {
           "title": "Fork the stand",
-          "text": "Fork the free, MIT-licensed engine. Your storefront builds to GitHub Pages — hosting costs nothing, forever."
+          "text": "Fork the free, MIT-licensed engine and edit one config file. Your storefront builds to GitHub Pages — hosting costs $0, forever."
         },
         {
           "title": "Put out your goods",
-          "text": "Create a Stripe Payment Link for your product and drop the URL in one config file. Buyers pay you directly; nobody stands between you and your Stripe balance."
+          "text": "Create a Stripe Payment Link for each product and drop the URL in the config. Buyers pay you directly on your own Stripe account — nobody stands between you and your balance."
         },
         {
           "title": "Let the box collect",
           "text": "A scheduled GitHub Action polls Stripe, invites each buyer's GitHub account to your private product repo, and keeps your books. No webhooks, no server, no database."
         }
       ]
+    },
+    {
+      "type": "note",
+      "text": "Who sells this way: indie hackers and SaaS builders, template and boilerplate makers, coding-course creators, CLI and API authors, open-source maintainers funding their work, agencies productizing internal tools, students selling a first project. The one hard requirement: your buyers need GitHub accounts, because delivery is a repo invite. Selling physical goods, ebooks for lay readers, or to a general consumer audience? A merchant-of-record platform will serve you better — the first guide below compares them honestly."
     },
     {
       "type": "compare",
@@ -81,12 +85,16 @@
       "title": "Straight answers",
       "items": [
         {
-          "q": "What exactly do I get when I buy Pro?",
-          "a": "Your GitHub account is invited to the private honorbox-pro repository — usually within a few minutes, always within the hour. You keep access permanently, updates included. If the invite doesn't arrive, email honorbox@proton.me or open an issue and it will be fixed or refunded."
+          "q": "What exactly do I get when I buy?",
+          "a": "Your GitHub account is invited to the product's private repository — usually within minutes, always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive, email honorbox@proton.me or open an issue and it will be fixed or refunded."
         },
         {
           "q": "Why is there no instant download?",
-          "a": "Delivery is a private-repo invite because it's the only channel that stays access-controlled. A cron job runs the fulfillment — that's the honest cost of a $0/month stack, and it's usually minutes."
+          "a": "Delivery is a private-repo invite because it's the only channel that stays access-controlled — revocable on refund, with updates included. A scheduled job runs the fulfillment; that's the honest cost of a $0/month stack, and it's usually minutes."
+        },
+        {
+          "q": "Do my buyers need GitHub accounts?",
+          "a": "Yes. Delivery is a repo invite, so every buyer needs one. Fine for code, templates, courses aimed at technical people, and tools — the wrong channel for lay-reader ebooks, physical goods, or general consumers. Better to know that before your first failed delivery, not after."
         },
         {
           "q": "Do I need HonorBox Pro to use the engine?",
@@ -112,17 +120,17 @@
       "items": [
         {
           "title": "Gumroad alternatives (2026)",
-          "text": "What the platforms charge, what they're worth, and when DIY wins. Honest fee math included.",
+          "text": "Gumroad, Lemon Squeezy, Payhip, Paddle, plain Stripe, DIY — the real fees, the honest math, and when each one wins.",
           "href": "./gumroad-alternatives.html"
         },
         {
-          "title": "Selling with Stripe Payment Links",
+          "title": "Sell digital products with Stripe Payment Links",
           "text": "The complete guide — checkout, delivery options, refunds, and the tax paragraph nobody writes.",
           "href": "./sell-with-stripe-payment-links.html"
         },
         {
-          "title": "Delivering through GitHub",
-          "text": "Private-repo delivery done right — access control, revocation, invite limits, and the token discipline.",
+          "title": "Deliver digital products through GitHub",
+          "text": "Private-repo delivery done right — access control, revocation, invite limits, and token discipline.",
           "href": "./deliver-digital-products-github.html"
         }
       ]

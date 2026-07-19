@@ -2,7 +2,8 @@
 title: Privacy
 ---
 
-Last updated 2026-07-18. Short, because we collect almost nothing.
+This store collects almost nothing: no analytics, no cookies, no trackers —
+checkout data lives with Stripe. Last updated 2026-07-18.
 
 ## What this site collects
 
