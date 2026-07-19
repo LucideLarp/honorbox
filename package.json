@@ -6,7 +6,7 @@
   "private": true,
   "engines": { "node": ">=20" },
   "scripts": {
-    "test": "node --test scripts/test/core.test.js scripts/test/dispatch.test.js",
+    "test": "node --test scripts/test/core.test.js scripts/test/dispatch.test.js scripts/test/fulfill-driver.test.js",
     "build": "node scripts/build.js"
   }
 }

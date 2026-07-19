@@ -48,7 +48,10 @@ async function stripeGet(pathname, params, key) {
   const url = new URL(`https://api.stripe.com${pathname}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const res = await fetch(url, {
-    headers: { Authorization: `Basic ${Buffer.from(key + ':').toString('base64')}` },
+    headers: {
+      Authorization: `Basic ${Buffer.from(key + ':').toString('base64')}`,
+      'Stripe-Version': '2024-06-20', // pin: the account default may be a broken preview
+    },
   });
   if (!res.ok) throw new Error(`Stripe ${pathname} -> ${res.status}: ${await res.text()}`);
   return res.json();
@@ -159,7 +162,11 @@ async function main() {
   if (fresh.length > 0) fs.writeFileSync(path.join(path.dirname(statePath), 'HAD_ACTIVITY'), '1');
 }
 
-main().catch((err) => {
-  console.error(err.stack || String(err));
-  process.exit(1);
-});
+module.exports = { readJson, stripeGet, listSessionsSince, inviteCollaborator, main };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err.stack || String(err));
+    process.exit(1);
+  });
+}
