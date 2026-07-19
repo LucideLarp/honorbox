@@ -119,6 +119,11 @@
           "title": "Selling with Stripe Payment Links",
           "text": "The complete guide — checkout, delivery options, refunds, and the tax paragraph nobody writes.",
           "href": "./sell-with-stripe-payment-links.html"
+        },
+        {
+          "title": "Delivering through GitHub",
+          "text": "Private-repo delivery done right — access control, revocation, invite limits, and the token discipline.",
+          "href": "./deliver-digital-products-github.html"
         }
       ]
     },
