@@ -332,6 +332,14 @@ test('excerpt and social card share the renderer\'s link shape', () => {
   // a link is not an image, and the scheme gate still applies
   assert.equal(firstRasterImage('[a](./notimg.png)'), null);
   assert.equal(firstRasterImage('![a](javascript:x.png)'), null);
+
+  // a cache-busted or fragment-bearing URL is still a raster image: missing it
+  // meant the page shipped with no social card at all, silently
+  assert.equal(firstRasterImage('![a](./hero.png?v=2)'), './hero.png?v=2');
+  assert.equal(firstRasterImage('![a](https://x.test/c.jpg?w=1200&h=630)'), 'https://x.test/c.jpg?w=1200&h=630');
+  assert.equal(firstRasterImage('![a](./hero.png#top)'), './hero.png#top');
+  // and a query string cannot smuggle a non-raster file past the check
+  assert.equal(firstRasterImage('![a](./doc.pdf?x=.png)'), null);
 });
 
 test('markdown: a nested list nests instead of flattening into one item', () => {

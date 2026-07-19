@@ -253,14 +253,17 @@ function excerpt(src, max = 160) {
 
 // First raster image referenced in a markdown body — social-card material.
 // SVG is skipped (link-preview scrapers don't render it); same scheme gate
-// as the renderer.
+// as the renderer. The extension test ignores any ?query or #fragment, so a
+// cache-busted "cover.png?v=2" still qualifies: missing one means the page
+// silently ships with no social card.
 function firstRasterImage(src) {
   // own instance: LINKISH is module-level and exec() would share its lastIndex
   const re = new RegExp(LINKISH.source, 'g');
   let m;
   while ((m = re.exec(String(src == null ? '' : src)))) {
     const [, bang, , href] = m;
-    if (bang && safeUrl(href) && /\.(png|jpe?g|webp|gif)$/i.test(href)) return href;
+    const bare = href.split(/[?#]/)[0];
+    if (bang && safeUrl(href) && /\.(png|jpe?g|webp|gif)$/i.test(bare)) return href;
   }
   return null;
 }
