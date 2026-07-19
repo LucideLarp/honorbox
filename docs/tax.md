@@ -20,9 +20,9 @@ What that means in practice (this is orientation, not tax advice):
   toggle) once you've registered where you need to; it also monitors your
   thresholds. It doesn't file for you (Stripe supports filing in some regions
   through partners).
-- **B2B sales** with a valid VAT ID are typically reverse-charged in the EU —
+- **B2B sales** with a valid VAT ID are typically reverse-charged in the EU;
   Stripe Tax handles the VAT-ID collection if enabled.
 
 Rules change and depend on where you live. If your store starts making real
 money: enable Stripe Tax, check your local threshold once, and spend one hour
-with an accountant. It's the honest cost of keeping 100% of the platform fee.
+with an accountant. That hour is the cost of keeping 100% of the platform fee.

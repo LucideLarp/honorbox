@@ -1,11 +1,11 @@
-# HonorBox instant-delivery workflow — TEMPLATE (optional).
+# HonorBox instant-delivery workflow: TEMPLATE (optional).
 #
 # Companion to fulfill.yml.example: the SAME job, a different trigger. A tiny
 # webhook relay (webhook-mode/ in the HonorBox repo) turns each paid Stripe
 # checkout into a repository_dispatch, so this runs seconds after payment
 # instead of on the next poll.
 #
-# KEEP the scheduled fulfill.yml — it stays as the safety net for when the
+# KEEP the scheduled fulfill.yml; it stays as the safety net for when the
 # relay, Stripe webhooks, or Actions hiccup. Both workflows run the same
 # fulfill.js against the same committed state: the processed-session set and
 # the ledger-ref guard make whichever fires second a clean no-op, and the
@@ -13,7 +13,7 @@
 # commit. A sale is delivered exactly once, by whichever runs first.
 #
 # Setup: copy to .github/workflows/fulfill-on-sale.yml in your PRIVATE ops
-# repo. No new secrets here — it uses the same two as fulfill.yml. The new
+# repo. No new secrets here; it uses the same two as fulfill.yml. The new
 # pieces (relay + webhook secret + dispatch token) live on the relay side:
 # see docs/instant-delivery.md.
 
@@ -27,7 +27,7 @@ permissions:
   contents: write
 
 concurrency:
-  # Shared with the scheduled fulfill.yml on purpose — concurrency groups are
+  # Shared with the scheduled fulfill.yml on purpose; concurrency groups are
   # repo-scoped, so a sale-triggered run and a poll run queue behind each
   # other instead of double-committing state.
   group: fulfill
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
-      - name: Fulfill the sale (same poller logic — truth comes from Stripe, not the webhook)
+      - name: Fulfill the sale (same poller logic; truth comes from Stripe, not the webhook)
         env:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           GH_FULFILL_TOKEN: ${{ secrets.GH_FULFILL_TOKEN }}

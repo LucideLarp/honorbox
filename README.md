@@ -2,19 +2,19 @@
 
 **Sell digital products with just Stripe + GitHub. No platform, no monthly fee, no server.**
 
-HonorBox turns a GitHub repo into an unattended store — a roadside honor box for
-the internet:
+HonorBox turns a GitHub repo into an unattended store, a roadside honor box
+for the internet:
 
-- **Storefront** — a fast static site, built by a zero-dependency Node script,
+- **Storefront:** a fast static site, built by a zero-dependency Node script,
   hosted free on GitHub Pages.
-- **Checkout** — Stripe Payment Links on *your own* Stripe account. Buyers pay
+- **Checkout:** Stripe Payment Links on *your own* Stripe account. Buyers pay
   you directly. No middleman fee, ever.
-- **Fulfillment** — a scheduled GitHub Action polls Stripe, invites each buyer's
+- **Fulfillment:** a scheduled GitHub Action polls Stripe, invites each buyer's
   GitHub account to your private product repo, and keeps your books. No
   webhooks required, no database, no server to babysit (opt-in webhook mode
   available when you want near-instant delivery).
 
-**Live demo: [the HonorBox store](https://honorboxx.github.io/honorbox/)** — this
+**Live demo: [the HonorBox store](https://honorboxx.github.io/honorbox/).** This
 repo *is* a working store selling
 [HonorBox Pro](https://honorboxx.github.io/honorbox/honorbox-pro.html). The
 checkout you see there is the engine in this repo, unmodified.
@@ -23,14 +23,18 @@ checkout you see there is the engine in this repo, unmodified.
 
 | | Gumroad | Lemon Squeezy | HonorBox |
 |---|---|---|---|
-| Platform fee | 10% + 30¢ | 5% + 50¢ | **0%** |
+| Platform fee | 10% + 50¢ ² | 5% + 50¢ | **0%** |
 | Monthly cost | $0 | $0 | **$0** |
 | Your own Stripe account | no | no | **yes** |
-| Server to maintain | — | — | **none** |
-| Handles VAT for you | yes | yes | no — you're the merchant¹ |
+| Server to maintain | n/a | n/a | **none** |
+| Handles VAT for you | yes | yes | no; you're the merchant ¹ |
 
 ¹ HonorBox is not a merchant of record. Fine for most small self-serve sellers;
-[docs/tax.md](docs/tax.md) explains the tradeoff honestly instead of hiding it.
+[docs/tax.md](docs/tax.md) spells out the trade-off.
+² Plus card processing (2.9% + 30¢), charged on top per
+[Gumroad's fee page](https://gumroad.com/help/article/66-gumroads-fees).
+Lemon Squeezy's fee includes processing; with HonorBox you pay Stripe's
+standard rate and nothing else. Fees as published July 2026.
 
 ## How it works
 
@@ -51,7 +55,7 @@ minutes: [`scripts/fulfill.js`](scripts/fulfill.js).
 ## Quickstart
 
 1. **Use this template**, edit `store.config.json` (name, copy, your URLs).
-2. **One command creates your product on Stripe** — Product, Price, and a
+2. **One command creates your product on Stripe**: Product, Price, and a
    Payment Link with the delivery field, wired straight into your config:
 
    ```bash
@@ -61,7 +65,7 @@ minutes: [`scripts/fulfill.js`](scripts/fulfill.js).
 
    (Prefer clicking? The manual dashboard steps are in [docs/setup.md](docs/setup.md).)
 3. **Pages**: copy `setup/workflows/deploy.yml` into `.github/workflows/`, enable
-   GitHub Pages (Actions source), push — the store deploys.
+   GitHub Pages (Actions source), push. The store deploys.
 4. **Fulfillment**: create a *private* ops repo, copy
    [`setup/workflows/fulfill.yml.example`](setup/workflows/fulfill.yml.example)
    plus `scripts/`, add `STRIPE_SECRET_KEY` (restricted key recommended) and a
@@ -74,14 +78,14 @@ Architecture and threat model: [docs/how-it-works.md](docs/how-it-works.md)
 ## Optional: a public ledger
 
 The fulfillment engine keeps an anonymized sales ledger (date, product, amount,
-country, hash — never names or emails) in your private ops repo. If you *want*
+country, hash; never names or emails) in your private ops repo. If you *want*
 radical transparency, drop that `ledger/ledger.json` into your storefront repo
 and the builder adds a public `/trust` page for it. Off by default.
 
 ## The themes
 
-The free core ships `stand` (warm paper) **and `terminal`** (phosphor CRT) —
-the latter is a full Pro theme published here as an auditable sample of the
+The free core ships `stand` (warm paper) **and `terminal`** (phosphor CRT).
+The latter is a full Pro theme published here as an auditable sample of the
 paid pack's code quality. Pro adds three more, each a complete hand-tuned
 design, switchable with one config line:
 
@@ -92,17 +96,17 @@ design, switchable with one config line:
 
 ## Free core vs Pro
 
-The free core is a **complete store** — one theme, checkout, fulfillment,
+The free core is a **complete store**: one theme, checkout, fulfillment,
 docs. [HonorBox Pro ($29, one-time)](https://honorboxx.github.io/honorbox/honorbox-pro.html)
-adds four premium themes, multi-product catalog patterns, an offline ed25519
-license-key module, and a commerce playbook — and buying it funds the free core.
+adds an offline ed25519 license-key module, four premium themes, multi-product
+catalog patterns, and a commerce playbook. Buying it funds the free core.
 
 ## Stability promise
 
 `store.config.json`, the product frontmatter, and the fulfillment grant format
 are **stable**: breaking changes only in a major version, always with an
-UPGRADING note and a migration path. Fast iteration happens behind the config,
-not through it.
+UPGRADING note and a migration path. Fast iteration happens behind the config;
+the format holds still.
 
 ## Development
 

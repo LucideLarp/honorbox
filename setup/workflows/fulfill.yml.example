@@ -1,4 +1,4 @@
-# HonorBox fulfillment workflow — TEMPLATE.
+# HonorBox fulfillment workflow: TEMPLATE.
 #
 # Run this in a PRIVATE repo (your "ops" repo), not in your public storefront
 # repo: it holds your Stripe secret key and your fulfillment state.

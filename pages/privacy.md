@@ -2,12 +2,12 @@
 title: Privacy
 ---
 
-This store collects almost nothing: no analytics, no cookies, no trackers —
-checkout data lives with Stripe. Last updated 2026-07-18.
+This store collects almost nothing: no analytics, no cookies, no trackers.
+Checkout data lives with Stripe. Last updated 2026-07-18.
 
 ## What this site collects
 
-Nothing. The storefront is a static site on GitHub Pages — no analytics, no
+Nothing. The storefront is a static site on GitHub Pages: no analytics, no
 cookies, no trackers, no forms. GitHub may log standard web-server access data
 as the host (see GitHub's privacy statement).
 
@@ -16,7 +16,8 @@ as the host (see GitHub's privacy statement).
 Checkout happens on Stripe. Stripe collects your payment details, email address,
 billing country, and the GitHub username you enter for delivery. Stripe's
 privacy policy governs that data. The seller can see your email, country, and
-GitHub username in the Stripe dashboard — never your card number.
+GitHub username in the Stripe dashboard. Your card number is never visible to
+the seller.
 
 ## What fulfillment stores
 

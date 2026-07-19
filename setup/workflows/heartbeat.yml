@@ -1,37 +1,37 @@
-# HonorBox fulfillment heartbeat — TEMPLATE (optional).
+# HonorBox fulfillment heartbeat: TEMPLATE (optional).
 #
 # A second, independent scheduler for the fulfillment poll. GitHub cron is
 # best-effort: a `*/10` schedule routinely fires late (minutes to hours on a
 # quiet repo). Two crons in two different repos drift independently, and a
-# `workflow_dispatch`-triggered run starts promptly once fired — so this
+# `workflow_dispatch`-triggered run starts promptly once fired, so this
 # tightens worst-case delivery without any always-on machine and without any
 # new account. It is a cadence tightener, not a guarantee; for
 # seconds-after-checkout delivery see docs/instant-delivery.md (webhook mode).
 #
-# Install in any repo that is NOT your ops repo — your public storefront fork
+# Install in any repo that is NOT your ops repo. Your public storefront fork
 # is the natural home (a cron in the ops repo itself would just share the ops
 # repo's queue). Every 5 minutes it asks the ops repo to run its fulfillment
 # workflow; the run is a no-op unless there are unfulfilled sales
 # (processed-set + ledger-ref idempotency).
 #
 # Needs ONE secret in THIS repo (Settings → Secrets → Actions):
-#   OPS_DISPATCH_TOKEN — fine-grained PAT:
+#   OPS_DISPATCH_TOKEN: fine-grained PAT:
 #     Repository access: ONLY your private ops repo
-#     Permissions: Actions: Read and write — and nothing else. It can start
+#     Permissions: Actions: Read and write, and nothing else. It can start
 #     workflow runs there; it cannot read code, read secrets, or push.
-#     (Fine-grained PATs expire — max 1 year; calendar the rotation.)
+#     (Fine-grained PATs expire after at most 1 year; calendar the rotation.)
 # And ONE variable (Settings → Variables → Actions):
 #   OPS_REPO = "you/yourstore-ops"
 # Optional variables:
 #   OPS_WORKFLOW = workflow file to nudge (default fulfill.yml)
 #   OPS_BRANCH   = branch that workflow lives on (default main)
 #
-# Honest limits:
-#   - This cron drifts too — it's redundancy, not precision.
+# Limits:
+#   - This cron drifts too; it adds redundancy, not precision.
 #   - On PUBLIC repos GitHub disables schedules after 60 days without repo
 #     activity (you get an email; any push re-arms it).
 #   - Each nudge burns ~½ minute of the ops repo's Actions quota if it runs;
-#     private-repo free tier is 2,000 min/month — */5 nudging an always-run
+#     private-repo free tier is 2,000 min/month. */5 nudging an always-run
 #     workflow fits, but don't tighten the cron below 5 minutes (GitHub's
 #     minimum anyway).
 
@@ -42,7 +42,7 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch:
 
-permissions: {} # needs nothing from THIS repo — not even the default token
+permissions: {} # needs nothing from THIS repo, not even the default token
 
 concurrency:
   group: heartbeat
