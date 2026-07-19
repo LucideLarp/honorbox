@@ -12,11 +12,11 @@ your card details. Contact: **honorbox@proton.me**.
 
 ## What you're buying
 
-Each product — [HonorBox Pro](./honorbox-pro.html) ($29) and
-[Crew](./crew.html) ($19) — is access to a private GitHub repository
+Each product, [HonorBox Pro](./honorbox-pro.html) ($29) and
+[Crew](./crew.html) ($19), is access to a private GitHub repository
 containing code, themes, agents, and written guides. Delivery is an invitation
 to that product's repository, sent to the GitHub username you provide at
-checkout — usually within minutes, always within a few hours. Access is
+checkout, usually within minutes and always within a few hours. Access is
 permanent and includes future updates to the repository.
 
 ## License
