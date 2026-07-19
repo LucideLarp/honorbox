@@ -1,12 +1,12 @@
 {
   "name": "honorbox",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sell digital products with just Stripe + GitHub. No platform, no monthly fee, no server.",
   "license": "MIT",
   "private": true,
   "engines": { "node": ">=20" },
   "scripts": {
-    "test": "node --test scripts/test/core.test.js",
+    "test": "node --test scripts/test/core.test.js scripts/test/dispatch.test.js",
     "build": "node scripts/build.js"
   }
 }
