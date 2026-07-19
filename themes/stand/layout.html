@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>{{title}}</title>
 <meta name="description" content="{{description}}">
 <link rel="canonical" href="{{canonical}}">
@@ -15,11 +16,12 @@
 <meta name="theme-color" content="#191512" media="(prefers-color-scheme: dark)">
 </head>
 <body class="{{body_class}}">
+<a class="skip-link" href="#main">Skip to content</a>
 <header class="site-head">
   <a class="brand" href="./"><svg class="brand-mark" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="10.2" width="17.6" height="11.2" rx="2.7" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="7.4" y="9.1" width="9.2" height="2.2" rx="1.1" fill="var(--accent)" stroke="none"/><rect x="-1.15" y="-2.8" width="2.3" height="5.6" rx="1.15" fill="var(--accent)" stroke="none" transform="translate(12.7 4.6) rotate(-22)"/></svg>{{store_name}}</a>
   <nav class="site-nav">{{nav}}</nav>
 </header>
-<main>
+<main id="main">
 {{content}}
 </main>
 <footer class="site-foot">
