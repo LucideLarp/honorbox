@@ -138,7 +138,12 @@ async function main() {
         console.log(`fulfilled ${s.id}: ${username} owns ${grant.repo}, no invite needed`);
       } else {
         const code = await inviteCollaborator(grant.repo, username, ghToken);
-        console.log(`fulfilled ${s.id}: invited ${username} -> ${grant.repo} (HTTP ${code})`);
+        // 201 created an invitation; 204 means the account was already a
+        // collaborator. Reporting both as "invited" made a seller's own
+        // test-buy read like a real delivery and hid the difference that
+        // matters when a buyer says no invite arrived.
+        const outcome = code === 201 ? `invited ${username} to` : `${username} already had access to`;
+        console.log(`fulfilled ${s.id}: ${outcome} ${grant.repo} (HTTP ${code})`);
       }
       ledger.rows.push(row);
       ledgerRefs.add(row.ref);

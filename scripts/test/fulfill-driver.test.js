@@ -78,6 +78,15 @@ async function runMain(dir, routes) {
   return { calls, readState: (f) => JSON.parse(fs.readFileSync(path.join(dir, 'state', f), 'utf8')) };
 }
 
+// console.log capture: the fulfillment log IS the operator interface, so
+// what it claims about a delivery is worth asserting.
+function captureLog() {
+  const lines = [];
+  const orig = console.log;
+  console.log = (...a) => lines.push(a.join(' '));
+  return { lines, restore: () => { console.log = orig; } };
+}
+
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'hb-fulfill-'));
 
 test('stripe requests pin Stripe-Version 2024-06-20', async () => {
@@ -200,4 +209,36 @@ test('HAD_ACTIVITY is cleared again on a quiet run', async () => {
   // second run: same session comes back inside the overlap window, already processed
   await runMain(dir, [stripe([s]), github]);
   assert.ok(!fs.existsSync(path.join(dir, 'state', 'HAD_ACTIVITY')), 'quiet run must clear the flag');
+});
+
+test('the log distinguishes a real invite from an account that already had access', async () => {
+  // GitHub answers PUT /collaborators with 201 (invitation created) or 204
+  // (already a collaborator). Both used to print "invited", so a seller
+  // test-buying their own product saw a line that read like a real delivery,
+  // and a buyer reporting "no invite arrived" could not be told apart from a
+  // buyer who already had the repo.
+  const dir1 = tmp();
+  const cap1 = captureLog();
+  try {
+    await runMain(dir1, [
+      { match: 'api.stripe.com', res: () => jsonRes({ data: [paidSession('cs_201', 1_700_000_000)], has_more: false }) },
+      { match: 'api.github.com', res: () => jsonRes({}, 201) },
+    ]);
+  } finally { cap1.restore(); }
+  const line201 = cap1.lines.find((l) => l.includes('cs_201'));
+  assert.ok(line201, cap1.lines.join('\n'));
+  assert.match(line201, /invited octocat to o\/r \(HTTP 201\)/);
+
+  const dir2 = tmp();
+  const cap2 = captureLog();
+  try {
+    await runMain(dir2, [
+      { match: 'api.stripe.com', res: () => jsonRes({ data: [paidSession('cs_204', 1_700_000_000)], has_more: false }) },
+      { match: 'api.github.com', res: () => jsonRes({}, 204) },
+    ]);
+  } finally { cap2.restore(); }
+  const line204 = cap2.lines.find((l) => l.includes('cs_204'));
+  assert.ok(line204, cap2.lines.join('\n'));
+  assert.match(line204, /octocat already had access to o\/r \(HTTP 204\)/);
+  assert.ok(!/invited/.test(line204), `204 must not claim an invite: ${line204}`);
 });
