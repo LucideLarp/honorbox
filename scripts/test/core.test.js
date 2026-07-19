@@ -88,6 +88,24 @@ test('cursor advances to newest, never backwards', () => {
   assert.equal(nextCursor([], 42), 42);
 });
 
+test('re-scan overlap covers the full 24h checkout-session lifetime', () => {
+  // Stripe Checkout Sessions can complete up to 24h after creation (the
+  // expires_at ceiling). The poll query is created > cursor - OVERLAP, and
+  // the cursor advances on every run, so a session that is still open when
+  // a NEWER sale moves the cursor must remain inside the window until it
+  // expires. Otherwise: buyer opens checkout, pays 7h later, sale is
+  // permanently missed. Scenario:
+  const { OVERLAP_SECONDS } = require('../lib/fulfill-core.js');
+  const t0 = 1_700_000_000;
+  const straggler = session({ id: 'cs_slow', created: t0, status: 'open', payment_status: 'unpaid' });
+  const sale = session({ id: 'cs_fast', created: t0 + 23 * 3600 });
+  const cursor = nextCursor([straggler, sale], t0);
+  assert.ok(
+    typeof OVERLAP_SECONDS === 'number' && cursor - OVERLAP_SECONDS <= straggler.created,
+    `overlap ${OVERLAP_SECONDS}s leaves a still-completable session outside the scan window`
+  );
+});
+
 test('grant matching is by payment link', () => {
   assert.equal(matchGrant(session(), GRANTS).repo, 'o/r');
   assert.equal(matchGrant(session({ payment_link: null }), GRANTS), null);

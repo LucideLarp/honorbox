@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const {
+  OVERLAP_SECONDS, // re-scan window: outlives a session's 24h lifetime
   pickNewPaidSessions,
   extractGithubUsername,
   validUsername,
@@ -24,8 +25,6 @@ const {
   nextCursor,
   isRepoOwner,
 } = require('./lib/fulfill-core.js');
-
-const OVERLAP_SECONDS = 6 * 3600; // re-scan window; idempotency via processed ids
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);

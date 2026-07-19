@@ -4,6 +4,12 @@
 
 const crypto = require('crypto');
 
+// Poll re-scan window. Checkout Sessions can complete up to 24h after
+// creation (Stripe's expires_at ceiling), and the cursor tracks creation
+// time, so the window must outlive a session: 24h + 1h slack. Re-scans are
+// free (processed-id set), a missed sale is not.
+const OVERLAP_SECONDS = 25 * 3600;
+
 // GitHub username: 1-39 chars, alphanumeric + hyphen, no leading/trailing
 // hyphen, no consecutive hyphens.
 const USERNAME_RE = /^[a-zA-Z0-9](?:-?[a-zA-Z0-9]){0,38}$/;
@@ -82,6 +88,7 @@ function isRepoOwner(repo, username) {
 }
 
 module.exports = {
+  OVERLAP_SECONDS,
   isRepoOwner,
   validUsername,
   extractGithubUsername,
