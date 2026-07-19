@@ -3,7 +3,7 @@
 "You want my Stripe secret key in a GitHub Action?" — no. HonorBox never
 needs your full secret key, and it never needs a broad GitHub token. The
 engine's whole API surface is two calls, both visible in
-[`scripts/fulfill.js`](../scripts/fulfill.js) (~170 lines, read it):
+[`scripts/fulfill.js`](../scripts/fulfill.js) (~180 lines, read it):
 
 | Call | Why | Secret |
 |---|---|---|

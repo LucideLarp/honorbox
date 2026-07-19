@@ -49,7 +49,7 @@ buyer ──▶ storefront (GitHub Pages, static)
                      ──▶ appends your (private) sales ledger
 ```
 
-The fulfillment engine is ~170 lines of dependency-free Node. Read it in ten
+The fulfillment engine is ~180 lines of dependency-free Node. Read it in ten
 minutes: [`scripts/fulfill.js`](scripts/fulfill.js).
 
 ## Quickstart

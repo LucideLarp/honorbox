@@ -36,17 +36,9 @@ function arg(name, fallback) {
 
 function readJson(file, fallback) {
   let raw;
-  try {
-    raw = fs.readFileSync(file, 'utf8');
-  } catch {
-    return fallback; // no file yet: fresh install
-  }
-  try {
-    return JSON.parse(raw);
-  } catch (e) {
-    // corrupt state must stop the run, not silently reset cursor/processed
-    throw new Error(`${file}: ${e.message}`);
-  }
+  try { raw = fs.readFileSync(file, 'utf8'); } catch { return fallback; } // no file yet: fresh install
+  // a corrupt file must stop the run, not silently reset cursor/processed
+  try { return JSON.parse(raw); } catch (e) { throw new Error(`${file}: ${e.message}`); }
 }
 
 function writeJson(file, obj) {
@@ -57,11 +49,9 @@ function writeJson(file, obj) {
 async function stripeGet(pathname, params, key) {
   const url = new URL(`https://api.stripe.com${pathname}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  // Stripe-Version pinned: the account default may be a broken preview
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Basic ${Buffer.from(key + ':').toString('base64')}`,
-      'Stripe-Version': '2024-06-20', // pin: the account default may be a broken preview
-    },
+    headers: { Authorization: `Basic ${Buffer.from(key + ':').toString('base64')}`, 'Stripe-Version': '2024-06-20' },
   });
   if (!res.ok) throw new Error(`Stripe ${pathname} -> ${res.status}: ${await res.text()}`);
   return res.json();
@@ -95,10 +85,8 @@ async function inviteCollaborator(repo, username, token) {
   // 201 = invitation created, 204 = already a collaborator (or invite updated)
   if (res.status === 201 || res.status === 204) return res.status;
   const hint = res.status === 404 ? ' (no such GitHub user, check for a typo in the checkout field)' : '';
-  throw Object.assign(
-    new Error(`GitHub invite ${repo} <- ${username} -> ${res.status}${hint}: ${await res.text()}`),
-    { status: res.status }
-  );
+  const msg = `GitHub invite ${repo} <- ${username} -> ${res.status}${hint}: ${await res.text()}`;
+  throw Object.assign(new Error(msg), { status: res.status });
 }
 
 async function main() {
