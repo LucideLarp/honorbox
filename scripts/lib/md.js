@@ -32,8 +32,9 @@ function renderMarkdown(src) {
 
     if (/^\s*$/.test(line)) { i++; continue; }
 
-    const fence = /^```(\w*)\s*$/.exec(line);
-    if (fence) {
+    // Any line starting ``` opens a fence; the info string ("js",
+    // "objective-c", "c++") is free-form and unused here.
+    if (/^```/.test(line)) {
       const buf = [];
       i++;
       while (i < lines.length && !/^```\s*$/.test(lines[i])) buf.push(lines[i++]);

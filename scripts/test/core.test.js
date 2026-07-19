@@ -390,6 +390,16 @@ test('markdown: wrapped list items keep their continuation lines in the <li>', (
   assert.ok(!html.includes('<p>'), 'continuation must not escape into a paragraph');
 });
 
+test('markdown: fence info strings with non-word chars still open a fence', () => {
+  // "objective-c", "c++", "shell-session": real language tags that fail a \w*
+  // info-string match. The un-fenced opener then renders the code as a
+  // paragraph, and the CLOSING fence swallows the rest of the page into <pre>.
+  const html = renderMarkdown('Intro.\n\n```objective-c\ncode <tag>\n```\n\nAfter paragraph.');
+  assert.ok(html.includes('<pre><code>code &lt;tag&gt;</code></pre>'), html);
+  assert.ok(html.includes('<p>After paragraph.</p>'), html);
+  assert.ok(!html.includes('```'), 'no literal fence markers should survive');
+});
+
 test('markdown: wrapped ordered-list items join like unordered ones', () => {
   const html = renderMarkdown('1. step one\n   continued\n2. step two');
   assert.ok(html.includes('<li>step one continued</li>'), html);
