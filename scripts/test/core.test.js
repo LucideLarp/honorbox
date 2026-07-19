@@ -266,6 +266,92 @@ test('markdown: standalone images render, group into gallery', () => {
   assert.ok(gal.includes('class="gallery"') && gal.includes('x.png') && gal.includes('y.png'));
 });
 
+test('markdown: a code span is inert, not a second pass of markdown', () => {
+  // This shipped. The username regex on the live guide page rendered as
+  // `^<a href="#">a-zA-Z0-9</a>{0,38}$`, its middle eaten, because code spans
+  // were substituted first and the link and emphasis rules then ran straight
+  // through the result.
+  const real = renderMarkdown('validate (`^[a-zA-Z0-9](?:-?[a-zA-Z0-9]){0,38}$`, no doubled hyphens)');
+  assert.ok(real.includes('<code>^[a-zA-Z0-9](?:-?[a-zA-Z0-9]){0,38}$</code>'), real);
+  assert.ok(!real.includes('<a href'), 'no link may be manufactured inside a code span');
+
+  const out = renderMarkdown('Use `**not bold**` and `[t](http://x)` and `*x*` here.');
+  assert.ok(out.includes('<code>**not bold**</code>'), out);
+  assert.ok(out.includes('<code>[t](http://x)</code>'), out);
+  assert.ok(out.includes('<code>*x*</code>'), out);
+  assert.ok(!/<strong>|<em>|<a /.test(out), out);
+
+  // html inside a code span stays escaped
+  assert.ok(renderMarkdown('Set `<div class="x">`').includes('<code>&lt;div class=&quot;x&quot;&gt;</code>'));
+  // a run of backticks delimits, so a literal backtick can be shown
+  assert.ok(renderMarkdown('Use ``a ` b`` here').includes('<code>a ` b</code>'));
+});
+
+test('markdown: an inline image is an image, not a link with a stray bang', () => {
+  const out = renderMarkdown('Logo ![alt](./a.png) inline.');
+  assert.ok(out.includes('<img src="./a.png" alt="alt" loading="lazy">'), out);
+  assert.ok(!out.includes('!<a'), out);
+  // a title is carried through instead of defeating the match entirely
+  assert.ok(renderMarkdown('![alt](./a.png "My title")').includes('title="My title"'));
+  assert.ok(renderMarkdown('[text](./a.png "T")').includes('<a href="./a.png" title="T">text</a>'));
+  // the scheme gate still holds, and degrades to the alt text
+  const bad = renderMarkdown('Logo ![x](javascript:alert) here');
+  assert.ok(!bad.includes('<img'), bad);
+  assert.ok(!bad.includes('javascript:'), bad);
+  assert.ok(bad.includes('x'), bad);
+});
+
+test('markdown: a url may contain parens, and an entity stays an entity', () => {
+  // cut at the first ")" this link pointed at a 404 and left a bare paren
+  const out = renderMarkdown('See [wiki](https://en.wikipedia.org/wiki/Foo_(bar)) now.');
+  assert.ok(out.includes('href="https://en.wikipedia.org/wiki/Foo_(bar)"'), out);
+  assert.ok(!out.includes('</a>)'), out);
+  // &amp; in source means the character, not the five letters
+  const ent = renderMarkdown('Tom &amp; Jerry, 5 &lt; 6, &#8212; dash.');
+  assert.ok(ent.includes('Tom &amp; Jerry'), ent);
+  assert.ok(ent.includes('5 &lt; 6'), ent);
+  assert.ok(ent.includes('&#8212;'), ent);
+  assert.ok(!ent.includes('&amp;amp;'), ent);
+  // a bare ampersand is still escaped
+  assert.ok(renderMarkdown('Tom & Jerry').includes('Tom &amp; Jerry'));
+  // and a link with no text is left alone rather than made nameless
+  assert.ok(!renderMarkdown('[](http://x.com)').includes('<a '), 'no anchor without an accessible name');
+});
+
+test('excerpt and social card share the renderer\'s link shape', () => {
+  // These carried their own copies of the link pattern, so a url with parens
+  // or a titled image rendered fine in the body while leaving raw markdown
+  // and stray punctuation in the meta description.
+  assert.equal(excerpt('See [wiki](https://en.wikipedia.org/wiki/Foo_(bar)) now.'), 'See wiki now.');
+  assert.equal(excerpt('Text with ![alt](./a.png "T") inline.'), 'Text with alt inline.');
+  assert.equal(excerpt('Use ``a ` b`` here.'), 'Use a ` b here.');
+
+  // a titled hero image is still social-card material
+  assert.equal(firstRasterImage('![a](./hero.png "T")'), './hero.png');
+  assert.equal(firstRasterImage('![a](./hero.png)'), './hero.png');
+  // a link is not an image, and the scheme gate still applies
+  assert.equal(firstRasterImage('[a](./notimg.png)'), null);
+  assert.equal(firstRasterImage('![a](javascript:x.png)'), null);
+});
+
+test('markdown: a nested list nests instead of flattening into one item', () => {
+  // the indented marker used to be folded into the item above, markers and
+  // all: "- a" over "  - b" rendered as <li>a - b</li>
+  assert.equal(
+    renderMarkdown('- a\n  - b\n  - c\n- d'),
+    '<ul><li>a<ul><li>b</li><li>c</li></ul></li><li>d</li></ul>'
+  );
+  assert.equal(
+    renderMarkdown('1. one\n   1. inner\n2. two'),
+    '<ol><li>one<ol><li>inner</li></ol></li><li>two</li></ol>'
+  );
+  // three levels, and a different marker kind starts its own list
+  assert.ok(renderMarkdown('- a\n  - b\n    - deep').includes('<li>b<ul><li>deep</li></ul></li>'));
+  assert.equal(renderMarkdown('1. x\n- y'), '<ol><li>x</li></ol>\n<ul><li>y</li></ul>');
+  // wrapped prose still continues the item above, unchanged
+  assert.equal(renderMarkdown('- a\n  wrapped text\n- b'), '<ul><li>a wrapped text</li><li>b</li></ul>');
+});
+
 test('markdown images: unsafe scheme actually hits the filter and emits no img', () => {
   // paren-free payload so it MATCHES the image-line regex (a parenthesized one
   // never reaches the new code path — that was a decoration test)

@@ -28,16 +28,65 @@ function safeUrl(url, { anchor = false } = {}) {
   return (anchor ? URL_GATE_ANCHOR : URL_GATE).test(u) ? u : null;
 }
 
+// Links and images share one shape: an optional `!`, the text, the target, and
+// an optional "title". The target allows one level of nested parens, so a
+// wikipedia-style url survives instead of being cut at its first `)`.
+const LINKISH = /(!?)\[([^\]]*)\]\(\s*([^\s()]*(?:\([^()]*\)[^\s()]*)*)(?:\s+"([^"]*)")?\s*\)/g;
+
+// Placeholders for constructs lifted out of the stream. Control characters, so
+// they cannot appear in page text; incoming text is stripped of them anyway.
+const CODE = '\u0000';
+const OPEN = '\u0001';
+const CLOSE = '\u0002';
+const MARKERS = /[\u0000-\u0002]/g;
+
+// Inline rendering lifts each construct out of the stream before the next rule
+// runs, instead of stacking regexes over one string. The old order replaced
+// code spans first and then ran bold, emphasis and links straight through the
+// result, so markdown characters inside a code span were treated as markup:
+// `^[a-zA-Z0-9](?:-?[a-zA-Z0-9]){0,38}$` published on the live store as
+// `^<a href="#">a-zA-Z0-9</a>{0,38}$`, with the middle of the regex eaten.
 function inline(s) {
-  let out = escapeHtml(s);
-  out = out.replace(/`([^`]+)`/g, (_, c) => `<code>${c}</code>`);
+  const spans = [];
+  const links = [];
+  let out = String(s == null ? '' : s).replace(MARKERS, '');
+
+  // 1. code spans come out first: nothing may look inside them. A run of
+  //    backticks of any length delimits, so ``a ` b`` holds a literal tick.
+  out = out.replace(/(`+)([\s\S]+?)\1(?!`)/g, (_, ticks, code) =>
+    `${CODE}${spans.push(code.replace(/^ ([\s\S]*) $/, '$1')) - 1}${CODE}`
+  );
+
+  // 2. links and images. The text stays in the stream between markers so it
+  //    still picks up emphasis; only the attributes are lifted out.
+  out = out.replace(LINKISH, (m, bang, text, href, title) => {
+    if (bang) {
+      // A rejected scheme degrades to the alt text: still visible, but the
+      // scheme itself never reaches the page, not even as inert prose.
+      if (!safeUrl(href)) return text;
+      return `${OPEN}${links.push({ img: true, href, title, alt: text }) - 1}${OPEN}`;
+    }
+    if (!text) return m; // [](url): a link with no accessible name is not a link
+    const i = links.push({ href: safeUrl(href, { anchor: true }) || '#', title }) - 1;
+    return `${OPEN}${i}${OPEN}${text}${CLOSE}${i}${CLOSE}`;
+  });
+
+  out = escapeHtml(out);
+  // 3. an author who writes &amp; or &mdash; means the entity, not the letters
+  out = out.replace(/&amp;(#\d+;|#x[0-9a-fA-F]+;|[a-zA-Z][a-zA-Z0-9]{1,31};)/g, '&$1');
   out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, text, href) => {
-    const safe = safeUrl(href, { anchor: true }) || '#';
-    return `<a href="${safe}">${text}</a>`;
+
+  // 4. put the lifted constructs back, escaped and inert
+  const attr = (l) => (l.title ? ` title="${escapeHtml(l.title)}"` : '');
+  out = out.replace(new RegExp(OPEN + '(\\d+)' + OPEN, 'g'), (_, n) => {
+    const l = links[n];
+    return l.img
+      ? `<img src="${escapeHtml(l.href)}" alt="${escapeHtml(l.alt)}" loading="lazy"${attr(l)}>`
+      : `<a href="${escapeHtml(l.href)}"${attr(l)}>`;
   });
-  return out;
+  out = out.replace(new RegExp(CLOSE + '\\d+' + CLOSE, 'g'), '</a>');
+  return out.replace(new RegExp(CODE + '(\\d+)' + CODE, 'g'), (_, n) => `<code>${escapeHtml(spans[n])}</code>`);
 }
 
 // Lines that are markdown structure, not paragraph prose. One definition
@@ -45,6 +94,52 @@ function inline(s) {
 // can never drift apart again (an image line after a paragraph used to be
 // swallowed because a hand-copied variant here lacked `!\[`).
 const STRUCTURAL = /^(#{1,4}\s|```|[-*]\s|\d+\.\s|>|!\[|(-{3,}|\*{3,})\s*$)/;
+
+// Lists nest by indentation. The previous rule folded ANY indented line into
+// the item above, so a nested list came out as one run-on item with its
+// markers still in the text: "- a" over "  - b" rendered <li>a - b</li>.
+// A deeper marker now opens a sublist inside the item it belongs to, while a
+// plain indented line still continues wrapped prose as before.
+const BULLET = /^(\s*)[-*]\s+(.*)$/;
+const NUMBER = /^(\s*)\d+\.\s+(.*)$/;
+
+function listAt(lines, start, base) {
+  const ordered = !BULLET.test(lines[start]);
+  const items = [];
+  let i = start;
+  while (i < lines.length) {
+    const m = BULLET.exec(lines[i]) || NUMBER.exec(lines[i]);
+    if (m) {
+      const indent = m[1].length;
+      if (indent < base) break;
+      if (indent > base) {
+        if (!items.length) break;
+        const sub = listAt(lines, i, indent);
+        items[items.length - 1].sub += sub.html;
+        i = sub.next;
+        continue;
+      }
+      // a different marker kind at the same depth starts a different list
+      if (!BULLET.test(lines[i]) !== ordered) break;
+      items.push({ text: m[2], sub: '' });
+      i++;
+      continue;
+    }
+    // wrapped source: an indented plain line continues the item above, but
+    // only while that item has not already opened a sublist
+    const last = items[items.length - 1];
+    if (last && !last.sub && /^\s+\S/.test(lines[i])) {
+      last.text += ' ' + lines[i++].trim();
+      continue;
+    }
+    break;
+  }
+  const tag = ordered ? 'ol' : 'ul';
+  return {
+    html: `<${tag}>${items.map((it) => `<li>${inline(it.text)}${it.sub}</li>`).join('')}</${tag}>`,
+    next: i,
+  };
+}
 
 function renderMarkdown(src) {
   const lines = src.split(/\r?\n/);
@@ -103,24 +198,10 @@ function renderMarkdown(src) {
       continue;
     }
 
-    if (/^[-*]\s+/.test(line)) {
-      const buf = [];
-      // an indented non-empty line continues the item above (wrapped source)
-      while (i < lines.length && (/^[-*]\s+/.test(lines[i]) || (buf.length && /^\s+\S/.test(lines[i])))) {
-        if (/^[-*]\s+/.test(lines[i])) buf.push(lines[i++].replace(/^[-*]\s+/, ''));
-        else buf[buf.length - 1] += ' ' + lines[i++].trim();
-      }
-      out.push(`<ul>${buf.map((li) => `<li>${inline(li)}</li>`).join('')}</ul>`);
-      continue;
-    }
-
-    if (/^\d+\.\s+/.test(line)) {
-      const buf = [];
-      while (i < lines.length && (/^\d+\.\s+/.test(lines[i]) || (buf.length && /^\s+\S/.test(lines[i])))) {
-        if (/^\d+\.\s+/.test(lines[i])) buf.push(lines[i++].replace(/^\d+\.\s+/, ''));
-        else buf[buf.length - 1] += ' ' + lines[i++].trim();
-      }
-      out.push(`<ol>${buf.map((li) => `<li>${inline(li)}</li>`).join('')}</ol>`);
+    if (/^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
+      const list = listAt(lines, i, 0);
+      out.push(list.html);
+      i = list.next;
       continue;
     }
 
@@ -156,9 +237,10 @@ function excerpt(src, max = 160) {
   const buf = [];
   while (i < lines.length && !/^\s*$/.test(lines[i]) && !STRUCTURAL.test(lines[i].trim())) buf.push(lines[i++]);
   const text = buf.join(' ')
-    .replace(/!\[([^\]]*)\]\([^)\s]+\)/g, '$1') // images before links: same prefix
-    .replace(/\[([^\]]+)\]\([^)\s]+\)/g, '$1')
-    .replace(/`([^`]+)`/g, '$1')
+    // same shape the renderer uses, so a url with parens or a titled image
+    // cannot leave residue in a meta description that the body renders fine
+    .replace(LINKISH, (_m, _bang, label) => label)
+    .replace(/(`+)([\s\S]+?)\1(?!`)/g, '$2')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')
     .replace(/\s+/g, ' ')
@@ -173,10 +255,12 @@ function excerpt(src, max = 160) {
 // SVG is skipped (link-preview scrapers don't render it); same scheme gate
 // as the renderer.
 function firstRasterImage(src) {
-  const re = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+  // own instance: LINKISH is module-level and exec() would share its lastIndex
+  const re = new RegExp(LINKISH.source, 'g');
   let m;
   while ((m = re.exec(String(src == null ? '' : src)))) {
-    if (safeUrl(m[1]) && /\.(png|jpe?g|webp|gif)$/i.test(m[1])) return m[1];
+    const [, bang, , href] = m;
+    if (bang && safeUrl(href) && /\.(png|jpe?g|webp|gif)$/i.test(href)) return href;
   }
   return null;
 }
