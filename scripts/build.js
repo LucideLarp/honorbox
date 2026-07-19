@@ -71,7 +71,7 @@ function buyButton(p, big = false) {
   if (!p.payment_link || typeof p.payment_link !== 'string') {
     return `<span class="btn btn-disabled" title="Checkout not configured yet">Checkout coming soon</span>`;
   }
-  return `<a class="btn btn-buy${big ? ' btn-big' : ''}" href="${p.payment_link}">Buy ${escapeHtml(p.name)} — ${escapeHtml(p.price)}</a>`;
+  return `<a class="btn btn-buy${big ? ' btn-big' : ''}" href="${escapeHtml(p.payment_link)}">Buy ${escapeHtml(p.name)} — ${escapeHtml(p.price)}</a>`;
 }
 
 function productCard(p) {
