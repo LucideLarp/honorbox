@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://honorboxx.github.io/honorbox/sitemap.xml
