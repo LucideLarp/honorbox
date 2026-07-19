@@ -44,7 +44,7 @@
       "rows": [
         [
           "Platform fee",
-          "10% + 30¢",
+          "10% + 50¢",
           "5% + 50¢",
           "0%"
         ],
@@ -56,7 +56,7 @@
         ],
         [
           "Payment processing",
-          "included above",
+          "2.9% + 30¢ on top",
           "included above",
           "Stripe's standard rate only"
         ],
@@ -122,6 +122,11 @@
           "title": "Gumroad alternatives (2026)",
           "text": "Gumroad, Lemon Squeezy, Payhip, Paddle, plain Stripe, DIY — the real fees, the honest math, and when each one wins.",
           "href": "./gumroad-alternatives.html"
+        },
+        {
+          "title": "Lemon Squeezy vs Gumroad vs DIY (2026)",
+          "text": "The two big platforms against your own Stripe account — fees verified on their live pricing pages, per-sale math shown, and a fair list of when not to DIY.",
+          "href": "./lemon-squeezy-vs-gumroad-vs-diy.html"
         },
         {
           "title": "Sell digital products with Stripe Payment Links",
