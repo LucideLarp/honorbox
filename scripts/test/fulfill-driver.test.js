@@ -115,3 +115,18 @@ test('happy path end to end: session fulfilled, ledger row, state advanced', asy
   assert.deepEqual(readState('new-sales.json'), ['octocat']);
   assert.ok(fs.existsSync(path.join(dir, 'state', 'HAD_ACTIVITY')), 'activity flag set on a run with sales');
 });
+
+test('HAD_ACTIVITY is cleared again on a quiet run', async () => {
+  // The workflows commit state/ wholesale and gate the ledger-publish step
+  // on this file. If a run with no new sales leaves last run's flag on
+  // disk, the gate is permanently open after the first sale ever.
+  const dir = tmp();
+  const s = paidSession('cs_flag_1', 1_700_000_000);
+  const stripe = (sessions) => ({ match: 'api.stripe.com', res: () => jsonRes({ data: sessions, has_more: false }) });
+  const github = { match: 'api.github.com', res: () => jsonRes({}, 201) };
+  await runMain(dir, [stripe([s]), github]);
+  assert.ok(fs.existsSync(path.join(dir, 'state', 'HAD_ACTIVITY')), 'flag set by the active run');
+  // second run: same session comes back inside the overlap window, already processed
+  await runMain(dir, [stripe([s]), github]);
+  assert.ok(!fs.existsSync(path.join(dir, 'state', 'HAD_ACTIVITY')), 'quiet run must clear the flag');
+});

@@ -158,8 +158,12 @@ async function main() {
   writeJson(ledgerPath, ledger);
   writeJson(path.join(path.dirname(statePath), 'new-sales.json'), newSales);
   console.log(`done. ledger_rows=${ledger.rows.length} failures_total=${state.failures.length}`);
-  // Signal "attention needed" to the workflow without failing the run.
-  if (fresh.length > 0) fs.writeFileSync(path.join(path.dirname(statePath), 'HAD_ACTIVITY'), '1');
+  // Signal "attention needed" to the workflow without failing the run. The
+  // flag reflects THIS run only: state/ gets committed, so a stale flag from
+  // the last sale would hold the publish gate open forever.
+  const flagPath = path.join(path.dirname(statePath), 'HAD_ACTIVITY');
+  if (fresh.length > 0) fs.writeFileSync(flagPath, '1');
+  else fs.rmSync(flagPath, { force: true });
 }
 
 module.exports = { readJson, stripeGet, listSessionsSince, inviteCollaborator, main };
