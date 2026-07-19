@@ -11,13 +11,30 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+// Which URLs may reach an href/src attribute: explicit http(s), or a reference
+// that stays on this origin. A leading "//" or "/\" is an *authority*, not a
+// path — the WHATWG url parser treats a backslash as a slash for special
+// schemes — so "//evil.example/x" reads like a local path but resolves to
+// somebody else's origin under our scheme. Root-relative "/path" still works.
+// One definition, shared with build.js's safeHref, so the gates guarding
+// links, images, and the checkout button cannot drift apart (that drift is how
+// the buy button ended up with no scheme gate at all).
+// anchor: links may target "#section"; an image src has no use for one.
+const URL_GATE = /^(?:https?:\/\/|\/(?![/\\])|\.)/;
+const URL_GATE_ANCHOR = /^(?:https?:\/\/|\/(?![/\\])|#|\.)/;
+
+function safeUrl(url, { anchor = false } = {}) {
+  const u = String(url == null ? '' : url);
+  return (anchor ? URL_GATE_ANCHOR : URL_GATE).test(u) ? u : null;
+}
+
 function inline(s) {
   let out = escapeHtml(s);
   out = out.replace(/`([^`]+)`/g, (_, c) => `<code>${c}</code>`);
   out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, text, href) => {
-    const safe = /^(https?:\/\/|\/|#|\.)/.test(href) ? href : '#';
+    const safe = safeUrl(href, { anchor: true }) || '#';
     return `<a href="${safe}">${text}</a>`;
   });
   return out;
@@ -55,7 +72,7 @@ function renderMarkdown(src) {
       const rejected = [];
       while (i < lines.length && /^!\[[^\]]*\]\([^)\s]+\)\s*$/.test(lines[i])) {
         const m = /^!\[([^\]]*)\]\(([^)\s]+)\)\s*$/.exec(lines[i++]);
-        if (/^(https?:\/\/|\/|\.)/.test(m[2])) {
+        if (safeUrl(m[2])) {
           // escape the URL for the attribute — same discipline as link hrefs
           imgs.push(`<img src="${escapeHtml(m[2])}" alt="${escapeHtml(m[1])}" loading="lazy">`);
         } else {
@@ -159,9 +176,9 @@ function firstRasterImage(src) {
   const re = /!\[[^\]]*\]\(([^)\s]+)\)/g;
   let m;
   while ((m = re.exec(String(src == null ? '' : src)))) {
-    if (/^(https?:\/\/|\/|\.)/.test(m[1]) && /\.(png|jpe?g|webp|gif)$/i.test(m[1])) return m[1];
+    if (safeUrl(m[1]) && /\.(png|jpe?g|webp|gif)$/i.test(m[1])) return m[1];
   }
   return null;
 }
 
-module.exports = { renderMarkdown, escapeHtml, inline, excerpt, firstRasterImage };
+module.exports = { renderMarkdown, escapeHtml, inline, excerpt, firstRasterImage, safeUrl };

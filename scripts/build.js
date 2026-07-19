@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseFrontmatter } = require('./lib/fm.js');
-const { renderMarkdown, escapeHtml, excerpt, firstRasterImage } = require('./lib/md.js');
+const { renderMarkdown, escapeHtml, excerpt, firstRasterImage, safeUrl } = require('./lib/md.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -18,12 +18,14 @@ function listMd(dir) {
   return fs.readdirSync(dir).filter((f) => f.endsWith('.md')).sort();
 }
 
-// Href for an HTML attribute from a config-authored URL: neutralize any scheme
-// that isn't http(s)/relative/anchor (blocks javascript:), then attribute-escape.
-// Same discipline the markdown renderer applies to link/image URLs.
+// Href for an HTML attribute from a config- or frontmatter-authored URL:
+// neutralize anything that isn't http(s)/relative/anchor (blocks javascript:
+// and protocol-relative "//host"), then attribute-escape. The gate itself is
+// md.js's, so the renderer and the builder cannot disagree about what a safe
+// URL is. EVERY url we put in an href/src goes through here — escaping alone
+// is not enough, it happily preserves a javascript: value.
 function safeHref(url) {
-  const u = String(url == null ? '' : url);
-  return escapeHtml(/^(https?:\/\/|\/|#|\.)/.test(u) ? u : '#');
+  return escapeHtml(safeUrl(url, { anchor: true }) || '#');
 }
 
 // ---------- SEO / social plumbing (pure helpers, covered by core.test.js) ----------
@@ -42,8 +44,21 @@ function absUrl(site, ref) {
   return /^https?:\/\//.test(u) ? u : `${site}/${u.replace(/^\.?\//, '')}`;
 }
 
+// The replacement is a FUNCTION, not a string: in a string replacement "$&"
+// and "$'" are substitution patterns, and escapeHtml does not touch "$" — so a
+// config value could otherwise paste matched or trailing document text
+// (quotes included) into the tag it is being written into.
 function injectHead(html, block) {
-  return html.includes('</head>') ? html.replace('</head>', `${block}\n</head>`) : html;
+  return html.includes('</head>') ? html.replace('</head>', () => `${block}\n</head>`) : html;
+}
+
+// Fill {{placeholders}} in a theme layout, in a SINGLE pass. Sequential
+// per-key replaces let one value's text contain another key's placeholder and
+// get expanded on that key's turn — which let an escaped config string smuggle
+// the raw, unescaped page HTML into <title> or a meta attribute. Own keys
+// only, so inherited names like "constructor" are not placeholders.
+function tpl(layout, vars) {
+  return layout.replace(/\{\{([a-z_]+)\}\}/g, (m, k) => (Object.hasOwn(vars, k) ? String(vars[k]) : m));
 }
 
 // Set a <meta ... content="..."> value: replace in place when the theme layout
@@ -52,7 +67,7 @@ function injectHead(html, block) {
 function setMeta(html, attr, name, content) {
   const esc = escapeHtml(String(content));
   const re = new RegExp(`(<meta\\s+${attr}="${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"\\s+content=")[^"]*(")`);
-  if (re.test(html)) return html.replace(re, `$1${esc}$2`);
+  if (re.test(html)) return html.replace(re, (m, open, close) => `${open}${esc}${close}`);
   return injectHead(html, `<meta ${attr}="${name}" content="${esc}">`);
 }
 
@@ -260,7 +275,7 @@ function buyButton(p, big = false) {
   if (!p.payment_link || typeof p.payment_link !== 'string') {
     return `<span class="btn btn-disabled" title="Checkout not configured yet">Checkout coming soon</span>`;
   }
-  return `<a class="btn btn-buy${big ? ' btn-big' : ''}" href="${escapeHtml(p.payment_link)}">Buy ${escapeHtml(p.name)} · ${escapeHtml(p.price)}</a>`;
+  return `<a class="btn btn-buy${big ? ' btn-big' : ''}" href="${safeHref(p.payment_link)}">Buy ${escapeHtml(p.name)} · ${escapeHtml(p.price)}</a>`;
 }
 
 // variant: '' (default) | 'flagship' | 'companion'. Additive modifier classes
@@ -388,11 +403,7 @@ function main() {
         : null;
   const guides = guideSlugs(config.sections);
 
-  function tpl(vars) {
-    let out = layout;
-    for (const [k, v] of Object.entries(vars)) out = out.split(`{{${k}}}`).join(v);
-    return out;
-  }
+  const fill = (vars) => tpl(layout, vars);
 
   const ledgerFile = path.join(ROOT, 'ledger', 'ledger.json');
   const hasLedger = fs.existsSync(ledgerFile);
@@ -408,7 +419,7 @@ function main() {
       .join(' · ');
     const canonical = `${site}/${slug === 'index' ? '' : slug + '.html'}`;
     const desc = description || config.meta_description || config.tagline || '';
-    let out = tpl({
+    let out = fill({
       lang: 'en',
       title: escapeHtml(title),
       description: escapeHtml(desc),
@@ -578,7 +589,7 @@ ${ledgerRows || '<tr><td colspan="5" class="muted">No sales yet. The box is open
 
 module.exports = {
   escapeHtml, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems, section,
-  usdPrice, absUrl, injectHead, setMeta, jsonLdScript, guideSlugs,
+  usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 };
 

@@ -13,7 +13,7 @@ const { parseFrontmatter } = require('../lib/fm.js');
 const { renderMarkdown, excerpt, firstRasterImage } = require('../lib/md.js');
 const {
   section, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems,
-  usdPrice, absUrl, setMeta, jsonLdScript, guideSlugs,
+  usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 } = require('../build.js');
 
@@ -336,6 +336,48 @@ test('build: showcase section escapes img src, alt, caption, href', () => {
   assert.ok(html.includes('loading="lazy"'), html);
 });
 
+test('build: hrefs cannot leave the origin via a protocol-relative url', () => {
+  // "//host/x" and "/\host/x" both parse as an *authority*, not a path — the
+  // WHATWG url parser treats a backslash as a slash for special schemes — so a
+  // gate that only checks for a leading "/" lets a value that reads like a
+  // local path resolve to somebody else's origin under our scheme.
+  for (const bad of ['//evil.example/x', '/\\evil.example/x']) {
+    const steps = section({
+      type: 'steps', title: 'G',
+      items: [{ title: 'g', text: 't', href: bad }],
+    });
+    assert.ok(steps.includes('href="#"'), `steps ${JSON.stringify(bad)}: ${steps}`);
+    assert.ok(!steps.includes('evil.example'), `steps ${JSON.stringify(bad)}: ${steps}`);
+    const show = section({
+      type: 'showcase', title: 'S',
+      items: [{ img: bad, alt: 'a', href: bad }],
+    });
+    assert.ok(!show.includes('evil.example'), `showcase ${JSON.stringify(bad)}: ${show}`);
+  }
+  // legitimate root-relative and dot-relative links must survive untouched
+  const ok = section({
+    type: 'steps', title: 'G',
+    items: [{ title: 'g', text: 't', href: '/guides/a.html' }],
+  });
+  assert.ok(ok.includes('href="/guides/a.html"'), ok);
+});
+
+test('markdown: protocol-relative link and image urls stay on our origin', () => {
+  for (const bad of ['//evil.example/x', '/\\evil.example/x']) {
+    const link = renderMarkdown(`[x](${bad})`);
+    assert.ok(!link.includes('evil.example'), `link ${JSON.stringify(bad)}: ${link}`);
+    const img = renderMarkdown(`![x](${bad}.png)`);
+    assert.ok(!img.includes('<img'), `img ${JSON.stringify(bad)}: ${img}`);
+    assert.ok(!img.includes('evil.example'), `img ${JSON.stringify(bad)}: ${img}`);
+    assert.equal(firstRasterImage(`![x](${bad}.png)`), null, JSON.stringify(bad));
+  }
+  // root-relative assets and links keep working — this must not become a
+  // same-directory-only renderer
+  assert.ok(renderMarkdown('![a](/assets/a.png)').includes('src="/assets/a.png"'));
+  assert.ok(renderMarkdown('[a](/terms.html)').includes('href="/terms.html"'));
+  assert.equal(firstRasterImage('![a](/assets/a.png)'), '/assets/a.png');
+});
+
 test('build: showcase drops non-numeric dimensions, keeps rendering', () => {
   const html = section({
     type: 'showcase',
@@ -374,6 +416,19 @@ test('build: buy button escapes payment_link and name (regression guard)', () =>
   const html = buyButton({ payment_link: 'https://buy.stripe.com/x"><script>', name: 'P', price: '$1' });
   assert.ok(!html.includes('"><script>'), html);
   assert.ok(html.includes('&quot;&gt;&lt;script&gt;'), html);
+});
+
+test('build: buy button neutralizes dangerous payment_link schemes', () => {
+  // payment_link is product frontmatter, and HonorBox ships as a template a
+  // forker fills in — so the checkout href gets the same scheme gate as every
+  // other url we emit, not attribute escaping alone. Escaping leaves a
+  // javascript: value intact inside the attribute; only the gate removes it.
+  const html = buyButton({ payment_link: 'javascript:alert(1)', name: 'P', price: '$1' });
+  assert.ok(!html.includes('javascript:'), html);
+  assert.ok(html.includes('href="#"'), html);
+  // a real Stripe link still passes through untouched
+  const ok = buyButton({ payment_link: 'https://buy.stripe.com/x', name: 'P', price: '$1' });
+  assert.ok(ok.includes('href="https://buy.stripe.com/x"'), ok);
 });
 
 test('excerpt: first real paragraph, markdown stripped, structure skipped', () => {
@@ -432,6 +487,42 @@ test('setMeta: replaces the layout-hardcoded og:type in place, else appends', ()
   // attribute breakout via content is escaped
   const esc = setMeta(html, 'property', 'og:type', '"><script>');
   assert.ok(!esc.includes('"><script>'), esc);
+});
+
+test('setMeta/injectHead: $-patterns in a value cannot splice the document', () => {
+  // Both feed escaped text to String.replace as the REPLACEMENT string, where
+  // "$&" and "$'" are substitution patterns. escapeHtml leaves "$" alone, so a
+  // config-authored meta value could paste the matched tag (quotes and all)
+  // back into its own content attribute and break out of it.
+  const page = '<head><meta property="og:title" content="old"></head><body>tail</body>';
+  const out = setMeta(page, 'property', 'og:title', '$& http-equiv=refresh');
+  assert.equal((out.match(/<meta property="og:title"/g) || []).length, 1, out);
+  assert.ok(out.includes('content="$&amp; http-equiv=refresh"'), out);
+  // "$'" must not paste the trailing document into the injected tag
+  const inj = injectHead('<head>X</head>TAIL', `<meta content="${"$'"}">`);
+  assert.ok(!inj.includes('content="TAIL"'), inj);
+  assert.ok(inj.includes(`content="${"$'"}"`), inj);
+});
+
+test('build: a config value cannot smuggle a {{placeholder}} into the layout', () => {
+  // Placeholders fill in ONE pass. With sequential replaces an escaped — so
+  // "safe" — config string of "{{content}}" expanded on a later key's turn,
+  // pulling the raw, unescaped page HTML into <title> and into a meta
+  // attribute (verified against the real builder before this was fixed).
+  const layout = '<title>{{title}}</title><meta content="{{description}}"><body>{{content}}</body>';
+  const out = tpl(layout, {
+    title: '{{content}}',
+    description: '{{footer}}',
+    content: '<img src=x onerror=alert(1)>',
+    footer: '<a href="./x">f</a>',
+  });
+  assert.ok(out.includes('<title>{{content}}</title>'), out);
+  assert.ok(out.includes('content="{{footer}}"'), out);
+  assert.equal((out.match(/<img src=x/g) || []).length, 1, out);
+  // known keys still fill; unknown ones are left alone rather than blanked
+  assert.equal(tpl('{{a}}|{{zz}}', { a: '1' }), '1|{{zz}}');
+  // inherited object properties are not placeholders
+  assert.equal(tpl('{{constructor}}', {}), '{{constructor}}');
 });
 
 test('jsonLdScript: </script> in data cannot close the tag', () => {
