@@ -174,8 +174,11 @@ function buyButton(p, big = false) {
   return `<a class="btn btn-buy${big ? ' btn-big' : ''}" href="${escapeHtml(p.payment_link)}">Buy ${escapeHtml(p.name)} — ${escapeHtml(p.price)}</a>`;
 }
 
-function productCard(p) {
-  return `<article class="product-card">
+// variant: '' (default) | 'flagship' | 'companion'. Additive modifier classes
+// only — every theme keeps styling .product-card; a theme that knows the
+// variants steps the companion down visually.
+function productCard(p, variant = '') {
+  return `<article class="product-card${variant ? ` ${variant}` : ''}">
   <div class="pc-head">
     ${p.badge ? `<span class="badge">${escapeHtml(p.badge)}</span>` : ''}
     <h3><a href="./${escapeHtml(p.id)}.html">${escapeHtml(p.name)}</a></h3>
@@ -214,6 +217,23 @@ function section(s) {
   }
   if (s.type === 'note') {
     return `<section class="note"><p>${escapeHtml(s.text)}</p></section>`;
+  }
+  if (s.type === 'showcase') {
+    // Visual proof band: real storefront screenshots. Same escaping discipline
+    // as every other sink (safeHref on urls, escapeHtml on text); width/height
+    // are numeric attributes so layout is reserved before the lazy image loads.
+    const figs = (s.items || [])
+      .map((it) => {
+        const dims =
+          Number.isFinite(Number(it.width)) && Number.isFinite(Number(it.height)) && Number(it.width) > 0 && Number(it.height) > 0
+            ? ` width="${Number(it.width)}" height="${Number(it.height)}"`
+            : '';
+        const img = `<img src="${safeHref(it.img)}" alt="${escapeHtml(it.alt || '')}" loading="lazy" decoding="async"${dims}>`;
+        const fig = `<figure>${img}${it.caption ? `<figcaption>${escapeHtml(it.caption)}</figcaption>` : ''}</figure>`;
+        return it.href ? `<a class="showcase-link" href="${safeHref(it.href)}">${fig}</a>` : fig;
+      })
+      .join('');
+    return `<section class="showcase"><h2>${escapeHtml(s.title)}</h2>${s.note ? `<p class="muted">${escapeHtml(s.note)}</p>` : ''}<div class="showcase-grid">${figs}</div></section>`;
   }
   return '';
 }
@@ -328,7 +348,7 @@ function main() {
 
   const home =
     hero +
-    `<section class="products">${products.map(productCard).join('')}</section>` +
+    `<section class="products">${products.map((p, i) => productCard(p, i === 0 ? 'flagship' : 'companion')).join('')}</section>` +
     (config.sections || []).map(section).join('\n');
 
   write(path.join(DIST, 'index.html'), page({

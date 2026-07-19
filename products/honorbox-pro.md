@@ -5,7 +5,6 @@ name: HonorBox Pro
 tagline: An offline license-key module, four premium themes, ops bots, tracker-free sales stats, and multi-product patterns for your HonorBox store.
 price: $29
 price_note: one-time · lifetime access & updates
-badge: Launch price
 payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
 features:
   - License-key module: ed25519 keys signed in CI, verified offline in your app (JS + Python)
