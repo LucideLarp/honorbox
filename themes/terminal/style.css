@@ -129,3 +129,29 @@ tr.attn td { color: #ffb86b; }
 .prose figure { margin: 1.4rem 0; }
 .prose img, .gallery img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; display: block; }
 .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.8rem; margin: 1.4rem 0; }
+
+/* product variants: the first product carries the weight; companions print small */
+.product-card.companion { padding: 0.9rem 1.2rem 1rem; }
+.product-card.companion::before { content: "┌─ also "; }
+.product-card.companion .badge,
+.product-card.companion .pc-features,
+.product-card.companion .price small { display: none; }
+.product-card.companion h3 { font-size: 1.05rem; }
+.product-card.companion .pc-tagline { font-size: 0.85rem; }
+.product-card.companion .pc-buy { border-top: none; padding-top: 0.7rem; }
+.product-card.companion .price { font-size: 1.1rem; }
+
+/* showcase — proof band of real storefront screenshots */
+.showcase { margin-top: 2.4rem; }
+.showcase .muted { font-size: 0.9rem; }
+.showcase-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1.1rem; margin-top: 1.2rem;
+}
+.showcase figure { margin: 0; }
+.showcase img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; }
+.showcase figcaption { font-size: 0.78rem; color: var(--ink-soft); margin-top: 0.4rem; }
+.showcase figcaption::before { content: "» "; color: var(--accent); }
+.showcase-link { text-decoration: none; }
+.showcase-link:hover img { border-color: var(--accent); }
+.showcase-link:hover figcaption { color: var(--accent); }

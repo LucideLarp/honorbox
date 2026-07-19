@@ -10,6 +10,45 @@
   "repo": "Honorboxx/honorbox",
   "sections": [
     {
+      "type": "showcase",
+      "title": "Four premium themes, one config line",
+      "note": "Real screenshots of this same storefront rebuilt with each HonorBox Pro theme.",
+      "items": [
+        {
+          "img": "./assets/previews/terminal.png",
+          "alt": "The same storefront in the terminal theme — phosphor green type on black",
+          "caption": "terminal — phosphor-on-black, for CLI tools",
+          "href": "./honorbox-pro.html",
+          "width": 1360,
+          "height": 900
+        },
+        {
+          "img": "./assets/previews/editorial.png",
+          "alt": "The same storefront in the editorial theme — serif type, magazine rules",
+          "caption": "editorial — serif, magazine-calm",
+          "href": "./honorbox-pro.html",
+          "width": 1360,
+          "height": 900
+        },
+        {
+          "img": "./assets/previews/brutalist.png",
+          "alt": "The same storefront in the brutalist theme — loud type, hard shadows",
+          "caption": "brutalist — loud, typographic",
+          "href": "./honorbox-pro.html",
+          "width": 1360,
+          "height": 900
+        },
+        {
+          "img": "./assets/previews/midnight.png",
+          "alt": "The same storefront in the midnight theme — deep blue, product-launch look",
+          "caption": "midnight — deep-blue product-launch",
+          "href": "./honorbox-pro.html",
+          "width": 1360,
+          "height": 900
+        }
+      ]
+    },
+    {
       "type": "steps",
       "title": "How the honor box works",
       "items": [

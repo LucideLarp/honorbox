@@ -12,7 +12,7 @@ const {
 const { parseFrontmatter } = require('../lib/fm.js');
 const { renderMarkdown, excerpt, firstRasterImage } = require('../lib/md.js');
 const {
-  section, buyButton,
+  section, buyButton, productCard,
   usdPrice, absUrl, setMeta, jsonLdScript, guideSlugs,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 } = require('../build.js');
@@ -192,6 +192,48 @@ test('build: steps-section item href neutralizes dangerous schemes', () => {
     items: [{ title: 'g', text: 't', href: './guide.html' }],
   });
   assert.ok(ok.includes('href="./guide.html"'), ok);
+});
+
+test('build: showcase section escapes img src, alt, caption, href', () => {
+  // same sinks as steps hrefs / markdown img src — the showcase emitter must
+  // hold the same line: scheme-gate urls, attribute-escape everything.
+  const html = section({
+    type: 'showcase',
+    title: 'T<script>',
+    note: 'n & m',
+    items: [{
+      img: './shot.png"onerror="alert(1)',
+      alt: 'a"b',
+      caption: 'c<em>',
+      href: 'javascript:alert(1)',
+      width: 1360,
+      height: 900,
+    }],
+  });
+  assert.ok(!html.includes('"onerror="'), html);
+  assert.ok(!html.includes('javascript:'), html);
+  assert.ok(!html.includes('<script>'), html);
+  assert.ok(!html.includes('c<em>'), html);
+  assert.ok(html.includes('width="1360" height="900"'), html);
+  assert.ok(html.includes('loading="lazy"'), html);
+});
+
+test('build: showcase drops non-numeric dimensions, keeps rendering', () => {
+  const html = section({
+    type: 'showcase',
+    title: 'T',
+    items: [{ img: './a.png', alt: 'a', width: '12" onmouseover="x', height: 900 }],
+  });
+  assert.ok(!html.includes('onmouseover'), html);
+  assert.ok(!html.includes('width='), html);
+  assert.ok(html.includes('src="./a.png"'), html);
+});
+
+test('build: product card variant is an additive class', () => {
+  const p = { id: 'x', name: 'X', price: '$1', features: [], payment_link: 'https://buy.stripe.com/x' };
+  assert.ok(productCard(p).includes('class="product-card"'));
+  assert.ok(productCard(p, 'flagship').includes('class="product-card flagship"'));
+  assert.ok(productCard(p, 'companion').includes('class="product-card companion"'));
 });
 
 test('build: buy button escapes payment_link and name (regression guard)', () => {

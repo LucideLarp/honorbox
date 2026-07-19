@@ -5,7 +5,6 @@ name: HonorBox Pro
 tagline: Four premium themes, an offline license-key module, ops bots, tracker-free sales stats, and multi-product patterns for your HonorBox store.
 price: $29
 price_note: one-time · lifetime access & updates
-badge: Launch price
 payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
 features:
   - 4 premium storefront themes; the terminal theme is published in the free repo as a full code sample
