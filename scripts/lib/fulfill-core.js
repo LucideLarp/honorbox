@@ -113,6 +113,32 @@ function nextCursor(sessions, prevCursor) {
   return Math.max(prevCursor || 0, newest);
 }
 
+// A grant matches a session by payment link ID (plink_...) or price ID
+// (price_...), never by the buyer-facing checkout URL. Pasting the URL is an
+// easy mistake and the worst kind: the grant simply never matches, so every
+// paid order is skipped with a green run and exit 0. Surface it on every poll
+// instead of losing sales quietly. Warnings, not a hard exit: one bad grant
+// must not stop a working product from delivering.
+function grantProblems(grants) {
+  const out = [];
+  (Array.isArray(grants) ? grants : []).forEach((g, i) => {
+    const where = `fulfillment[${i}]${g && g.product ? ` ("${g.product}")` : ''}`;
+    if (!g || typeof g !== 'object') { out.push(`${where} is not an object`); return; }
+    const link = typeof g.payment_link === 'string' ? g.payment_link : '';
+    const price = typeof g.price === 'string' ? g.price : '';
+    if (/^https?:\/\//i.test(link)) {
+      out.push(`${where} payment_link is a checkout URL, which never matches a session; use the link's id (plink_...) from the Stripe dashboard`);
+    } else if (link && !link.startsWith('plink_')) {
+      out.push(`${where} payment_link "${link}" is not a plink_ id`);
+    }
+    if (price && !price.startsWith('price_')) out.push(`${where} price "${price}" is not a price_ id`);
+    const matchable = link.startsWith('plink_') || price.startsWith('price_');
+    if (!matchable) out.push(`${where} can never match a sale: set payment_link (plink_...) or price (price_...)`);
+    if (!g.repo) out.push(`${where} has no "repo": a matched sale would have nowhere to invite the buyer`);
+  });
+  return out;
+}
+
 // A buyer who owns the target repo already has access (sellers test-buying
 // their own product) — treat as fulfilled without an invite.
 function isRepoOwner(repo, username) {
@@ -127,6 +153,7 @@ module.exports = {
   shouldRetryInvite,
   inviteAttempts,
   isRepoOwner,
+  grantProblems,
   validUsername,
   extractGithubUsername,
   isPaidComplete,

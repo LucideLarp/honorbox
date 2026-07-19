@@ -12,7 +12,7 @@ const {
 const { parseFrontmatter } = require('../lib/fm.js');
 const { renderMarkdown, excerpt, firstRasterImage } = require('../lib/md.js');
 const {
-  section, buyButton, productCard, productProblems,
+  section, buyButton, productCard, productProblems, configProblems, slugProblems,
   usdPrice, absUrl, setMeta, jsonLdScript, guideSlugs,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 } = require('../build.js');
@@ -203,6 +203,38 @@ test('frontmatter: scalars, lists, quoted strings', () => {
   assert.equal(data.price, '$29');
   assert.deepEqual(data.features, ['one', 'two']);
   assert.equal(body.trim(), 'Body here.');
+});
+
+test('frontmatter: a flush-left block sequence is still a list', () => {
+  // YAML allows a sequence at the parent's indentation. It used to match
+  // nothing and fall through, leaving features: [], so the product card
+  // shipped with no selling points at all, and the build stayed green.
+  const { data } = parseFrontmatter(
+    '---\nname: Flush\nfeatures:\n- Lifetime updates\n- Private repo access\n---\nBody.'
+  );
+  assert.deepEqual(data.features, ['Lifetime updates', 'Private repo access']);
+  // indented forms still work, and a list is only consumed while one is open
+  assert.deepEqual(
+    parseFrontmatter('---\nfeatures:\n  - a\n\t- b\n---\n').data.features,
+    ['a', 'b']
+  );
+});
+
+test('frontmatter: an unclosed block is reported, not published as body text', () => {
+  // Without a closing ---, every key rendered as a visible paragraph (leaking
+  // internal notes) and the page title fell back to the filename.
+  const bad = parseFrontmatter('---\ntitle: Refunds\ninternal_note: DRAFT\n\nRefunds within 30 days.\n');
+  assert.ok(bad.error, 'unclosed frontmatter reports an error');
+  assert.match(bad.error, /never closed/);
+  // a plain markdown file with no frontmatter at all is NOT an error
+  const plain = parseFrontmatter('# Just a heading\n\ntext\n');
+  assert.equal(plain.error, undefined);
+  assert.deepEqual(plain.data, {});
+  // a BOM must not defeat the anchor and silently publish the block
+  const bom = parseFrontmatter('﻿---\ntitle: T\n---\nBody.');
+  assert.equal(bom.error, undefined);
+  assert.equal(bom.data.title, 'T');
+  assert.equal(bom.body.trim(), 'Body.');
 });
 
 test('markdown: structure and escaping', () => {
@@ -471,6 +503,110 @@ test('decoratePage: additive a11y only — classes and DOM structure survive', (
   // a theme without a bare <main> gets no dangling skip link
   const noMain = decoratePage('<head></head><body><main class="x"></main></body>');
   assert.ok(!noMain.includes('skip-link'), noMain);
+});
+
+test('grantProblems: a grant holding the checkout URL is called out, not silently dead', () => {
+  const { grantProblems } = require('../lib/fulfill-core.js');
+  // The real shipping shape must stay silent.
+  assert.deepEqual(
+    grantProblems([{ payment_link: 'plink_1', product: 'Crew', repo: 'o/r', price: 'price_1' }]),
+    []
+  );
+  // Sessions carry the plink_ id, never the buyer-facing URL: this grant can
+  // never match, so every paid order is skipped with a green run and exit 0.
+  const url = grantProblems([
+    { payment_link: 'https://buy.stripe.com/8x29AT8J9d7xdqc', product: 'Crew', repo: 'o/r' },
+  ]);
+  assert.equal(url.length, 2, JSON.stringify(url));
+  assert.ok(url[0].includes('checkout URL'), url[0]);
+  assert.ok(url[0].includes('plink_'), 'says what to use instead');
+  assert.ok(url[0].includes('Crew'), 'names the product');
+  assert.ok(url[1].includes('never match'), url[1]);
+
+  // price-only grants are valid (server-created sessions have no payment_link)
+  assert.deepEqual(grantProblems([{ price: 'price_1', product: 'P', repo: 'o/r' }]), []);
+  // a grant with nothing to match on, and one with nowhere to invite
+  assert.ok(grantProblems([{ product: 'P', repo: 'o/r' }])[0].includes('never match'));
+  assert.ok(grantProblems([{ price: 'price_1', product: 'P' }])[0].includes('repo'));
+  assert.deepEqual(grantProblems(undefined), []);
+});
+
+test('theme contract: every shipped theme has print styles', () => {
+  // The terminal theme's fixed-position scanline overlay covered the sheet in
+  // the browser's default print path: terms/refunds/license saved as a BLANK
+  // PDF. Those are the pages a buyer files and a processor asks for, so a
+  // theme without an @media print block is a shipping defect, not a nicety.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const themes = path.join(__dirname, '..', '..', 'themes');
+  const names = fs.readdirSync(themes).filter((d) => fs.statSync(path.join(themes, d)).isDirectory());
+  assert.ok(names.length >= 2, `expected the shipped themes, got ${names}`);
+  for (const name of names) {
+    const css = fs.readFileSync(path.join(themes, name, 'style.css'), 'utf8');
+    assert.match(css, /@media\s+print/, `theme "${name}" ships no print styles`);
+  }
+});
+
+test('configProblems: missing store keys are named, not a TypeError deep in a template', () => {
+  const ok = { name: 'S', tagline: 'T', url: 'https://s.io' };
+  assert.deepEqual(configProblems(ok), []);
+  // each of these used to die as "Cannot read properties of undefined"
+  for (const key of ['name', 'tagline', 'url']) {
+    const bad = { ...ok };
+    delete bad[key];
+    const out = configProblems(bad);
+    assert.equal(out.length, 1, `${key}: ${JSON.stringify(out)}`);
+    assert.ok(out[0].includes(`"${key}"`), out[0]);
+  }
+  assert.ok(configProblems({ ...ok, name: '   ' })[0].includes('"name"'), 'blank is missing');
+});
+
+test('configProblems: a typo in a section type is an error, not a silently deleted band', () => {
+  const base = { name: 'S', tagline: 'T', url: 'https://s.io' };
+  // "stpes" used to fall through section() to '', so the seller's whole
+  // how-it-works band vanished from the storefront with a green build.
+  const typo = configProblems({ ...base, sections: [{ type: 'stpes', title: 'X' }] });
+  assert.equal(typo.length, 1, JSON.stringify(typo));
+  assert.ok(typo[0].includes('unknown type "stpes"'), typo[0]);
+  assert.ok(typo[0].includes('steps'), 'lists the valid types');
+  for (const t of ['steps', 'compare', 'faq', 'note', 'showcase']) {
+    assert.deepEqual(configProblems({ ...base, sections: [{ type: t }] }), [], t);
+  }
+  assert.equal(configProblems({ ...base, sections: ['oops'] }).length, 1, 'non-object entry');
+  assert.equal(configProblems({ ...base, sections: 'nope' }).length, 1, 'sections not a list');
+  // sections is genuinely optional
+  assert.deepEqual(configProblems(base), []);
+});
+
+test('slugProblems: a page may not overwrite a product page', () => {
+  // products are written first, pages second, into one namespace: a
+  // pages/honorbox-pro.md replaced the product page and its Buy button.
+  const out = slugProblems(['honorbox-pro', 'crew'], ['terms', 'honorbox-pro']);
+  assert.equal(out.length, 1, JSON.stringify(out));
+  assert.ok(out[0].includes('honorbox-pro'), out[0]);
+  assert.ok(/checkout/i.test(out[0]), 'says what is lost');
+  assert.deepEqual(slugProblems(['crew'], ['terms', 'privacy']), []);
+});
+
+test('decoratePage: a theme that ships its own skip link does not get a second one', () => {
+  // The stand theme (the shipping default) already has a skip link AND
+  // <main id="main">, so the injection guard passed and every page went out
+  // with the link duplicated. Keyboard users tabbed twice through the same
+  // control, and the injected <style> came after the theme stylesheet, so it
+  // also overrode the theme's designed focus state.
+  const themeOwned =
+    '<head><link rel="stylesheet" href="./style.css"></head>\n<body>\n' +
+    '<a class="skip-link" href="#main">Skip to content</a>\n' +
+    '<header class="site-head"></header>\n<main id="main">\n<p>x</p>\n</main>\n</body>';
+  const out = decoratePage(themeOwned);
+  assert.equal(out.match(/class="skip-link"/g).length, 1, 'exactly one skip link');
+  // the theme styles its own link; injecting ours would win on source order
+  assert.ok(!out.includes('<style>.skip-link'), 'no competing injected style');
+
+  // a theme WITHOUT one still gets both the link and the style it needs
+  const bare = decoratePage('<head></head>\n<body>\n<main>\n<p>x</p>\n</main>\n</body>');
+  assert.equal(bare.match(/class="skip-link"/g).length, 1, 'bare theme gets a link');
+  assert.ok(bare.includes('<style>.skip-link'), 'bare theme gets the style');
 });
 
 test('ledger dedup: a session already in the ledger is not re-appended', () => {

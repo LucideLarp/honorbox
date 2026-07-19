@@ -26,6 +26,7 @@ const {
   ledgerRow,
   nextCursor,
   isRepoOwner,
+  grantProblems,
 } = require('./lib/fulfill-core.js');
 
 function arg(name, fallback) {
@@ -105,6 +106,9 @@ async function main() {
     console.error(`No fulfillment grants configured in ${configPath}`);
     process.exit(2);
   }
+
+  // A grant that can never match loses every sale of that product silently.
+  for (const problem of grantProblems(config.fulfillment)) console.error(`CONFIG ${problem}`);
 
   const state = readJson(statePath, { cursor: 0, processed: [], failures: [] });
   const ledger = readJson(ledgerPath, { rows: [] });

@@ -461,3 +461,17 @@ tr.attn td { font-weight: 700; background: var(--wash); }
   .pc-buy.standalone { align-items: flex-start; flex-direction: column; }
   .pc-buy.standalone:not(:has(.price)) { align-items: center; }
 }
+
+/* Print: prefers-color-scheme still reports dark under print media, so a
+   dark-mode reader's saved PDF rendered near-white ink on unprinted white
+   (~2.6:1). Pin the light palette for paper regardless of screen scheme. */
+@media print {
+  :root {
+    --paper: #ffffff; --wash: #f4f4f6; --line: #e0e0e4; --line-strong: #0d0d0f;
+    --ink: #0d0d0f; --ink-soft: #5d5d66;
+    --plate: #0d0d0f; --plate-ink: #f2f2f4; --plate-soft: #c9c9cf;
+    --accent: #0d0d0f; --coin: #a8862c;
+  }
+  body { background: #fff; color: var(--ink); }
+  .site-nav, .skip-link { display: none; }
+}

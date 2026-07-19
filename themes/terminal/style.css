@@ -155,3 +155,16 @@ tr.attn td { color: #ffb86b; }
 .showcase-link { text-decoration: none; }
 .showcase-link:hover img { border-color: var(--accent); }
 .showcase-link:hover figcaption { color: var(--accent); }
+
+/* Print: the phosphor look does not survive paper. The scanline overlay is
+   position:fixed, so in the browser's default print path (backgrounds off)
+   it covers every sheet and the page comes out blank. Terms, refunds and
+   license are exactly the pages a buyer saves as PDF, so pin readable ink
+   on white and drop the furniture. */
+@media print {
+  body::after { display: none; }
+  body { background: #fff; color: #111; }
+  h1, h2, h3 { color: #111; text-shadow: none; }
+  a { color: #111; }
+  .site-nav, .skip-link { display: none; }
+}
