@@ -2,18 +2,20 @@
   <style>
     .ink { stroke: #23201b; }
     .fill-ink { fill: #23201b; }
+    .coin { fill: #b5482a; }
     @media (prefers-color-scheme: dark) {
       .ink { stroke: #ece5d8; }
       .fill-ink { fill: #ece5d8; }
+      .coin { fill: #d9603c; }
     }
   </style>
-  <!-- mark: a coin half-sunk into the honor box slot (insert-coin gesture) -->
+  <!-- mark: the insert-coin gesture — a tilted coin dropping toward the slot on the honor box -->
   <g transform="translate(8,8)">
-    <rect x="9" y="30" width="54" height="36" rx="8" fill="none" class="ink" stroke-width="5"/>
-    <rect x="22" y="26.4" width="28" height="6.6" rx="3.3" fill="#b5482a"/>
-    <rect x="-3.4" y="-8.2" width="6.8" height="16.4" rx="3.4" fill="#b5482a" transform="translate(38 12.5) rotate(-22)"/>
+    <rect x="9" y="31" width="54" height="33" rx="8" fill="none" class="ink" stroke-width="5"/>
+    <rect x="22" y="27" width="28" height="7" rx="3.5" class="coin"/>
+    <rect x="-3.5" y="-8" width="7" height="16" rx="3.5" class="coin" transform="translate(36 12) rotate(-22)"/>
   </g>
   <!-- wordmark -->
-  <text x="94" y="64" font-family="Iowan Old Style, Palatino Nova, Palatino, Georgia, serif"
+  <text x="94" y="64" font-family="Iowan Old Style, Palatino Nova, Palatino, Charter, Georgia, serif"
         font-size="42" font-weight="700" letter-spacing="-0.6" class="fill-ink">HonorBox</text>
 </svg>
