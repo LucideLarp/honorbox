@@ -1,23 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 344 88" role="img" aria-label="HonorBox">
   <style>
-    .ink { stroke: #1a2620; }
-    .fill-ink { fill: #1a2620; }
-    .slot { fill: #be3a28; }
-    .coin { fill: #b08c31; }
+    .ink { stroke: #0d0d0f; }
+    .fill-ink { fill: #0d0d0f; }
     @media (prefers-color-scheme: dark) {
-      .ink { stroke: #e9ecdf; }
-      .fill-ink { fill: #e9ecdf; }
-      .slot { fill: #e15b41; }
-      .coin { fill: #c9a03b; }
+      .ink { stroke: #f2f2f4; }
+      .fill-ink { fill: #f2f2f4; }
     }
   </style>
-  <!-- mark: the insert-coin gesture — a tilted brass coin dropping toward the red slot on the honor box -->
+  <!-- mark: the insert-coin gesture. The coin, the slot, and the box all print in the same ink. -->
   <g transform="translate(8,8)">
     <rect x="9" y="31" width="54" height="33" rx="8" fill="none" class="ink" stroke-width="5"/>
-    <rect x="22" y="27" width="28" height="7" rx="3.5" class="slot"/>
-    <rect x="-3.5" y="-8" width="7" height="16" rx="3.5" class="coin" transform="translate(36 12) rotate(-22)"/>
+    <rect x="22" y="27" width="28" height="7" rx="3.5" class="fill-ink"/>
+    <rect x="-3.5" y="-8" width="7" height="16" rx="3.5" class="fill-ink" transform="translate(36 12) rotate(-22)"/>
   </g>
   <!-- wordmark -->
-  <text x="94" y="64" font-family="Besley, Rockwell, Clarendon, Georgia, serif"
-        font-size="42" font-weight="700" letter-spacing="0" class="fill-ink">HonorBox</text>
+  <text x="94" y="64" font-family="'Schibsted Grotesk', 'Avenir Next', 'Segoe UI', system-ui, sans-serif"
+        font-size="42" font-weight="800" letter-spacing="-0.8" class="fill-ink">HonorBox</text>
 </svg>

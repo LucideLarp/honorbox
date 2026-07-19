@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Sell digital products with Stripe Payment Links: the complete guide · HonorBox</title>
+<meta name="description" content="How to sell digital products with Stripe Payment Links: checkout in minutes, then the delivery Stripe leaves to you. Four delivery options, refunds, and tax.">
+<link rel="canonical" href="https://honorboxx.github.io/honorbox/sell-with-stripe-payment-links.html">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="stylesheet" href="./style.css">
+<meta property="og:title" content="Sell digital products with Stripe Payment Links: the complete guide">
+<meta property="og:description" content="How to sell digital products with Stripe Payment Links: checkout in minutes, then the delivery Stripe leaves to you. Four delivery options, refunds, and tax.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#1d4a37" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1410" media="(prefers-color-scheme: dark)">
+<meta property="og:url" content="https://honorboxx.github.io/honorbox/sell-with-stripe-payment-links.html">
+<meta property="og:site_name" content="HonorBox">
+<meta property="og:image" content="https://honorboxx.github.io/honorbox/assets/previews/stand.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sell digital products with Stripe Payment Links: the complete guide">
+<meta name="twitter:description" content="How to sell digital products with Stripe Payment Links: checkout in minutes, then the delivery Stripe leaves to you. Four delivery options, refunds, and tax.">
+<meta name="twitter:image" content="https://honorboxx.github.io/honorbox/assets/previews/stand.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Sell digital products with Stripe Payment Links: the complete guide","description":"How to sell digital products with Stripe Payment Links: checkout in minutes, then the delivery Stripe leaves to you. Four delivery options, refunds, and tax.","url":"https://honorboxx.github.io/honorbox/sell-with-stripe-payment-links.html","mainEntityOfPage":"https://honorboxx.github.io/honorbox/sell-with-stripe-payment-links.html","author":{"@type":"Organization","name":"HonorBox","url":"https://honorboxx.github.io/honorbox/"},"publisher":{"@type":"Organization","name":"HonorBox","url":"https://honorboxx.github.io/honorbox/"},"image":"https://honorboxx.github.io/honorbox/assets/previews/stand.png","dateModified":"2026-07-19"}</script>
+<style>.skip-link{position:absolute;left:-999rem}.skip-link:focus{left:.5rem;top:.5rem;z-index:99;background:var(--paper,#fff);color:var(--ink,#000);outline:2px solid var(--accent,currentColor);padding:.4rem .8rem}</style>
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-head">
+  <a class="brand" href="./"><svg class="brand-mark" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="10.2" width="17.6" height="11.2" rx="2.7" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="7.4" y="9.1" width="9.2" height="2.2" rx="1.1" fill="var(--accent)" stroke="none"/><rect x="-1.15" y="-2.8" width="2.3" height="5.6" rx="1.15" fill="var(--accent)" stroke="none" transform="translate(12.7 4.6) rotate(-22)"/></svg>HonorBox</a>
+  <nav class="site-nav" aria-label="Primary"><a href="./">Store</a><a href="https://github.com/Honorboxx/honorbox">GitHub</a></nav>
+</header>
+<main id="main">
+<article class="prose"><h1>Sell digital products with Stripe Payment Links: the complete guide</h1><p>Stripe Payment Links are the fastest way to charge money on the internet: no code, no server, a URL you can put anywhere. This guide covers actually <em>selling digital products</em> with them, including the part Stripe doesn't do for you: delivery. Useful whether or not you use our tool; we mark the one section where we're selling you something.</p>
+<h2>1. Create the product and price (2 minutes)</h2>
+<p>Dashboard → Products → Add product. One-time price, your currency. For digital goods sold internationally, most indie sellers price in USD. Buyers everywhere are used to it and Stripe converts.</p>
+<h2>2. Create the Payment Link</h2>
+<p>Create a Payment Link from that price. Three settings that matter for digital goods:</p>
+<ul><li><strong>Collect a delivery handle.</strong> Add a custom field: for products delivered through GitHub, the buyer's GitHub username; for other goods, whatever identifies where the product goes. Without this you'll fulfill by replying to receipt emails forever.</li><li><strong>Confirmation message.</strong> After payment, the buyer sees a hosted message. Say exactly what happens next and how long it takes (&quot;your repo invite usually arrives within minutes, always within a few hours&quot;), and how to reach you if it doesn't. Vague messages create support tickets and disputes.</li><li><strong>Promotion codes toggle</strong> if you ever want launch coupons.</li></ul>
+<h2>3. Deliver the digital product (the hard part)</h2>
+<p>A completed Payment Link checkout gives you money and a <code>checkout.session</code> object. It does not give the buyer anything. Your options, in increasing order of infrastructure:</p>
+<ol><li><strong>Manual.</strong> Stripe emails you per sale; you email the goods. Fine for the first sales, doesn't survive a launch spike or a weekend away.</li><li><strong>Secret download URL in the confirmation message.</strong> Instant and zero infra, but one buyer can share the link and there's no per-buyer control.</li><li><strong>Webhook + server + mailer.</strong> The classic: <code>checkout.session.completed</code> fires, your endpoint generates a license or link and emails it. Fully flexible; you now operate TLS, retries, a mail sender, and an inbox for bounce handling.</li><li><strong>Polling from CI</strong> <em>(the part where we sell you something: this is what our free, MIT-licensed <a href="https://github.com/Honorboxx/honorbox">HonorBox</a> does)</em>. A scheduled GitHub Action lists recent checkout sessions, reads the buyer's GitHub username from the custom field, and invites them to a private repo with the goods. Access-controlled per buyer, revocable on refund, no server, no webhook endpoint, no mailer. The cost: delivery takes a few minutes, and buyers need GitHub accounts. <a href="./index.html">See it running on this store</a>; our own checkout is this exact pipeline.</li></ol>
+<p>Option 4 in depth: <a href="./deliver-digital-products-github.html">Deliver digital products through GitHub</a>.</p>
+<h2>4. Receipts, refunds, disputes</h2>
+<ul><li>Turn on receipt emails (Settings → Emails → successful payments).</li><li>Decide your refund policy before launch and write it down where buyers can find it. For $10–50 digital goods, &quot;30 days, no questions&quot; costs you almost nothing and prevents disputes. A single chargeback typically costs a $15 fee plus the payment, more than several refunds put together.</li><li>Refund fast. A refund request answered in an hour rarely becomes a dispute.</li></ul>
+<h2>5. Tax on digital products, in one paragraph</h2>
+<p>With Payment Links you are the merchant of record: VAT/sales tax on digital goods is your responsibility, unlike on Gumroad or Lemon Squeezy where the platform is the seller. Practically: most small sellers start below registration thresholds; enable Stripe Tax's free threshold monitoring on day one, and read the rules for your own country once. Our <a href="https://github.com/Honorboxx/honorbox/blob/main/docs/tax.md">plain-language tax explainer</a> goes one level deeper without the hand-waving. Not tax advice.</p>
+<h2>6. The launch checklist</h2>
+<ul><li>Product + one-time price created</li><li>Payment Link with a delivery-handle custom field</li><li>Confirmation message states delivery method and latency</li><li>Delivery automated (any of options 2–4)</li><li>Receipt emails on, refund policy written</li><li>Stripe Tax threshold monitoring on</li></ul>
+<h2>Related</h2>
+<ul><li><a href="./gumroad-alternatives.html">Gumroad alternatives for developers (2026): fees and trade-offs</a></li><li><a href="./lemon-squeezy-vs-gumroad-vs-diy.html">Lemon Squeezy vs Gumroad vs DIY (2026): fees compared</a></li><li><a href="./sell-code-without-a-marketplace.html">Sell code without a marketplace: the direct Stripe + GitHub route</a></li><li><a href="./deliver-digital-products-github.html">Deliver digital products through GitHub: the practical guide</a></li></ul></article>
+</main>
+<footer class="site-foot">
+  <p class="foot-links"><a href="./deliver-digital-products-github.html">Deliver digital products through GitHub: the practical guide</a> · <a href="./gumroad-alternatives.html">Gumroad alternatives for developers (2026): fees and trade-offs</a> · <a href="./lemon-squeezy-vs-gumroad-vs-diy.html">Lemon Squeezy vs Gumroad vs DIY (2026): fees compared</a> · <a href="./privacy.html">Privacy</a> · <a href="./refunds.html">Refunds</a> · <a href="./sell-code-without-a-marketplace.html">Sell code without a marketplace: the direct Stripe + GitHub route</a> · <a href="./sell-with-stripe-payment-links.html">Sell digital products with Stripe Payment Links: the complete guide</a> · <a href="./terms.html">Terms</a></p>
+  <p class="foot-legal">© 2026 · HonorBox · honorbox@proton.me · Payments by Stripe · Runs on <a href="https://github.com/Honorboxx/honorbox">HonorBox</a></p>
+</footer>
+</body>
+</html>
