@@ -12,7 +12,7 @@ const {
 const { parseFrontmatter } = require('../lib/fm.js');
 const { renderMarkdown, excerpt, firstRasterImage } = require('../lib/md.js');
 const {
-  section, buyButton, productCard, productProblems, configProblems, slugProblems,
+  section, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems,
   usdPrice, absUrl, setMeta, jsonLdScript, guideSlugs,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 } = require('../build.js');
@@ -576,6 +576,47 @@ test('configProblems: a typo in a section type is an error, not a silently delet
   assert.equal(configProblems({ ...base, sections: 'nope' }).length, 1, 'sections not a list');
   // sections is genuinely optional
   assert.deepEqual(configProblems(base), []);
+});
+
+test('templateProblems: a fork cannot silently sell HonorBox products', () => {
+  // This repo is both the live store and the template. A seller who re-homes
+  // the storefront but keeps the shipped links gets Buy buttons that take
+  // their buyers' money into HonorBox's Stripe balance and deliver nothing.
+  const ours = { repo: 'Honorboxx/honorbox' };
+  const products = [
+    { id: 'crew', payment_link: 'https://buy.stripe.com/8x29AT8J9d7xdqc8hma7C03' },
+    { id: 'honorbox-pro', payment_link: 'https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00' },
+  ];
+  // HonorBox's own build, and any contributor building locally, sees nothing.
+  assert.deepEqual(templateProblems(ours, products), []);
+  assert.deepEqual(templateProblems({}, products), [], 'no repo set yet is not a fork');
+
+  const fork = { repo: 'janedev/tools' };
+  const out = templateProblems(fork, products);
+  assert.equal(out.length, 2, JSON.stringify(out));
+  for (const o of out) assert.match(o, /HonorBox's Stripe account/);
+  assert.ok(out.some((o) => o.includes('products/crew.md')), 'names the file to edit');
+
+  // the same poisoning through the fulfillment grants
+  const grants = templateProblems(
+    { repo: 'janedev/tools', fulfillment: [
+      { payment_link: 'plink_1TupsnE9zX2nUu1OV1JOs3x3', price: 'price_1TupsmE9zX2nUu1O0MI3E8oR', repo: 'Honorboxx/crew-full' },
+    ] },
+    []
+  );
+  assert.equal(grants.length, 3, JSON.stringify(grants));
+  assert.ok(grants.some((g) => g.includes('fulfillment[0].payment_link')), 'flags the plink');
+  assert.ok(grants.some((g) => g.includes('fulfillment[0].price')), 'flags the price');
+  assert.ok(grants.some((g) => g.includes('cannot invite buyers into')), 'flags the repo');
+
+  // a seller who did the work is left alone
+  assert.deepEqual(
+    templateProblems(
+      { repo: 'janedev/tools', fulfillment: [{ payment_link: 'plink_JANE', price: 'price_JANE', repo: 'janedev/tools-access' }] },
+      [{ id: 'thing', payment_link: 'https://buy.stripe.com/janes_own_link' }]
+    ),
+    []
+  );
 });
 
 test('slugProblems: a page may not overwrite a product page', () => {

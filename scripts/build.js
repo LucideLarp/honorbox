@@ -206,6 +206,46 @@ function configProblems(c) {
   return out;
 }
 
+// This repo is two things at once: HonorBox's live store, and the template
+// sellers fork. Everything in products/ is real and wired to HonorBox's Stripe
+// account, so a fork that re-homes the storefront but keeps these links ships
+// Buy buttons that take its buyers' money into HonorBox's balance and deliver
+// nothing. The build refuses once the store identity is no longer HonorBox's.
+// Adding a product to this repo means adding its checkout identifiers here.
+const UPSTREAM_REPO = 'Honorboxx/honorbox';
+const UPSTREAM_CHECKOUT = new Set([
+  'https://buy.stripe.com/8x29AT8J9d7xdqc8hma7C03', // Crew, payment link URL
+  'https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00', // HonorBox Pro, payment link URL
+  'plink_1TupsnE9zX2nUu1OV1JOs3x3', // Crew
+  'plink_1Tudl9E9zX2nUu1OZywmp76G', // HonorBox Pro
+  'price_1TupsmE9zX2nUu1O0MI3E8oR', // Crew
+  'price_1TudkyE9zX2nUu1OTQhtZq8Q', // HonorBox Pro
+]);
+
+// Nothing fires while `repo` is still HonorBox's, so this repo's own build and
+// a contributor's local build are untouched. A seller must set `repo` to their
+// own to deploy, which is exactly when the leftover links become dangerous.
+function templateProblems(config, products) {
+  if (!config.repo || config.repo === UPSTREAM_REPO) return [];
+  const out = [];
+  const owned = (v) => typeof v === 'string' && UPSTREAM_CHECKOUT.has(v.trim());
+  for (const p of products) {
+    if (owned(p.payment_link)) {
+      out.push(`products/${p.id}.md: payment_link is HonorBox's own checkout, so this store would sell HonorBox's product and the money would land in HonorBox's Stripe account. Replace it with your own payment link.`);
+    }
+  }
+  (Array.isArray(config.fulfillment) ? config.fulfillment : []).forEach((g, i) => {
+    if (!g || typeof g !== 'object') return;
+    for (const key of ['payment_link', 'price']) {
+      if (owned(g[key])) out.push(`store.config.json: fulfillment[${i}].${key} is HonorBox's own ${key}, replace it with yours`);
+    }
+    if (typeof g.repo === 'string' && g.repo.startsWith(`${UPSTREAM_REPO.split('/')[0]}/`)) {
+      out.push(`store.config.json: fulfillment[${i}].repo is "${g.repo}", a HonorBox repo you cannot invite buyers into; point it at your own product repo`);
+    }
+  });
+  return out;
+}
+
 // Products and pages share one output namespace and pages are written second,
 // so a colliding slug silently replaces a product page (and its Buy button)
 // with prose. Pure so the collision rule is testable without a real tree.
@@ -323,6 +363,7 @@ function main() {
   });
 
   problems.push(...slugProblems(ids, pages.map((p) => p.slug)));
+  problems.push(...templateProblems(config, products));
   if (problems.length) {
     console.error(`build: fix your store config and frontmatter first:\n  ${problems.join('\n  ')}`);
     process.exit(2);
@@ -536,7 +577,7 @@ ${ledgerRows || '<tr><td colspan="5" class="muted">No sales yet. The box is open
 }
 
 module.exports = {
-  escapeHtml, buyButton, productCard, productProblems, configProblems, slugProblems, section,
+  escapeHtml, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems, section,
   usdPrice, absUrl, injectHead, setMeta, jsonLdScript, guideSlugs,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 };
