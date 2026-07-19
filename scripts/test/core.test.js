@@ -334,6 +334,24 @@ test('excerpt and social card share the renderer\'s link shape', () => {
   assert.equal(firstRasterImage('![a](javascript:x.png)'), null);
 });
 
+test('markdown: a nested list nests instead of flattening into one item', () => {
+  // the indented marker used to be folded into the item above, markers and
+  // all: "- a" over "  - b" rendered as <li>a - b</li>
+  assert.equal(
+    renderMarkdown('- a\n  - b\n  - c\n- d'),
+    '<ul><li>a<ul><li>b</li><li>c</li></ul></li><li>d</li></ul>'
+  );
+  assert.equal(
+    renderMarkdown('1. one\n   1. inner\n2. two'),
+    '<ol><li>one<ol><li>inner</li></ol></li><li>two</li></ol>'
+  );
+  // three levels, and a different marker kind starts its own list
+  assert.ok(renderMarkdown('- a\n  - b\n    - deep').includes('<li>b<ul><li>deep</li></ul></li>'));
+  assert.equal(renderMarkdown('1. x\n- y'), '<ol><li>x</li></ol>\n<ul><li>y</li></ul>');
+  // wrapped prose still continues the item above, unchanged
+  assert.equal(renderMarkdown('- a\n  wrapped text\n- b'), '<ul><li>a wrapped text</li><li>b</li></ul>');
+});
+
 test('markdown images: unsafe scheme actually hits the filter and emits no img', () => {
   // paren-free payload so it MATCHES the image-line regex (a parenthesized one
   // never reaches the new code path — that was a decoration test)

@@ -95,6 +95,52 @@ function inline(s) {
 // swallowed because a hand-copied variant here lacked `!\[`).
 const STRUCTURAL = /^(#{1,4}\s|```|[-*]\s|\d+\.\s|>|!\[|(-{3,}|\*{3,})\s*$)/;
 
+// Lists nest by indentation. The previous rule folded ANY indented line into
+// the item above, so a nested list came out as one run-on item with its
+// markers still in the text: "- a" over "  - b" rendered <li>a - b</li>.
+// A deeper marker now opens a sublist inside the item it belongs to, while a
+// plain indented line still continues wrapped prose as before.
+const BULLET = /^(\s*)[-*]\s+(.*)$/;
+const NUMBER = /^(\s*)\d+\.\s+(.*)$/;
+
+function listAt(lines, start, base) {
+  const ordered = !BULLET.test(lines[start]);
+  const items = [];
+  let i = start;
+  while (i < lines.length) {
+    const m = BULLET.exec(lines[i]) || NUMBER.exec(lines[i]);
+    if (m) {
+      const indent = m[1].length;
+      if (indent < base) break;
+      if (indent > base) {
+        if (!items.length) break;
+        const sub = listAt(lines, i, indent);
+        items[items.length - 1].sub += sub.html;
+        i = sub.next;
+        continue;
+      }
+      // a different marker kind at the same depth starts a different list
+      if (!BULLET.test(lines[i]) !== ordered) break;
+      items.push({ text: m[2], sub: '' });
+      i++;
+      continue;
+    }
+    // wrapped source: an indented plain line continues the item above, but
+    // only while that item has not already opened a sublist
+    const last = items[items.length - 1];
+    if (last && !last.sub && /^\s+\S/.test(lines[i])) {
+      last.text += ' ' + lines[i++].trim();
+      continue;
+    }
+    break;
+  }
+  const tag = ordered ? 'ol' : 'ul';
+  return {
+    html: `<${tag}>${items.map((it) => `<li>${inline(it.text)}${it.sub}</li>`).join('')}</${tag}>`,
+    next: i,
+  };
+}
+
 function renderMarkdown(src) {
   const lines = src.split(/\r?\n/);
   const out = [];
@@ -152,27 +198,12 @@ function renderMarkdown(src) {
       continue;
     }
 
-    if (/^[-*]\s+/.test(line)) {
-      const buf = [];
-      // an indented non-empty line continues the item above (wrapped source)
-      while (i < lines.length && (/^[-*]\s+/.test(lines[i]) || (buf.length && /^\s+\S/.test(lines[i])))) {
-        if (/^[-*]\s+/.test(lines[i])) buf.push(lines[i++].replace(/^[-*]\s+/, ''));
-        else buf[buf.length - 1] += ' ' + lines[i++].trim();
-      }
-      out.push(`<ul>${buf.map((li) => `<li>${inline(li)}</li>`).join('')}</ul>`);
+    if (/^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
+      const list = listAt(lines, i, 0);
+      out.push(list.html);
+      i = list.next;
       continue;
     }
-
-    if (/^\d+\.\s+/.test(line)) {
-      const buf = [];
-      while (i < lines.length && (/^\d+\.\s+/.test(lines[i]) || (buf.length && /^\s+\S/.test(lines[i])))) {
-        if (/^\d+\.\s+/.test(lines[i])) buf.push(lines[i++].replace(/^\d+\.\s+/, ''));
-        else buf[buf.length - 1] += ' ' + lines[i++].trim();
-      }
-      out.push(`<ol>${buf.map((li) => `<li>${inline(li)}</li>`).join('')}</ol>`);
-      continue;
-    }
-
 
     // paragraph: consume consecutive non-empty, non-structural lines
     const buf = [line];
