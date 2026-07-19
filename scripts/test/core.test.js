@@ -13,7 +13,7 @@ const { parseFrontmatter } = require('../lib/fm.js');
 const { renderMarkdown, excerpt, firstRasterImage } = require('../lib/md.js');
 const {
   section, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems,
-  usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs,
+  usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs, trustArticle,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 } = require('../build.js');
 
@@ -418,17 +418,58 @@ test('build: buy button escapes payment_link and name (regression guard)', () =>
   assert.ok(html.includes('&quot;&gt;&lt;script&gt;'), html);
 });
 
-test('build: buy button neutralizes dangerous payment_link schemes', () => {
+test('build: a payment_link the url gate rejects falls back to the disabled state', () => {
   // payment_link is product frontmatter, and HonorBox ships as a template a
   // forker fills in — so the checkout href gets the same scheme gate as every
-  // other url we emit, not attribute escaping alone. Escaping leaves a
-  // javascript: value intact inside the attribute; only the gate removes it.
-  const html = buyButton({ payment_link: 'javascript:alert(1)', name: 'P', price: '$1' });
-  assert.ok(!html.includes('javascript:'), html);
-  assert.ok(html.includes('href="#"'), html);
-  // a real Stripe link still passes through untouched
+  // other url we emit, not attribute escaping alone.
+  // Gating it to "#" would leave a Buy button that looks alive and goes
+  // nowhere. The module already has an honest state for "no usable checkout
+  // link", and a rejected link is the same problem from the buyer's side, so
+  // it reuses that rather than inventing a third state — which is also the
+  // clearer signal for a forker who typo'd their URL.
+  for (const bad of ['javascript:alert(1)', '//evil.example/x', '/\\evil.example/x']) {
+    const html = buyButton({ payment_link: bad, name: 'P', price: '$1' });
+    assert.ok(html.includes('btn-disabled'), `${bad}: ${html}`);
+    assert.ok(html.includes('Checkout coming soon'), `${bad}: ${html}`);
+    assert.ok(!html.includes('<a '), `${bad}: ${html}`);
+    assert.ok(!html.includes('href='), `${bad}: ${html}`);
+    assert.ok(!html.includes('evil.example') && !html.includes('javascript:'), `${bad}: ${html}`);
+  }
+  // a real Stripe link still passes through untouched, big variant included
   const ok = buyButton({ payment_link: 'https://buy.stripe.com/x', name: 'P', price: '$1' });
   assert.ok(ok.includes('href="https://buy.stripe.com/x"'), ok);
+  assert.ok(buyButton({ payment_link: 'https://buy.stripe.com/x', name: 'P', price: '$1' }, true).includes('btn-big'));
+});
+
+test('build: the ledger total is escaped like every other cell on that page', () => {
+  // Bot-written from Stripe integers today, so this is defense-in-depth rather
+  // than a live exploit — but the trust page is the one surface a seller
+  // publishes to strangers, and "the number is bot-written" is exactly the
+  // assumption that rots.
+  const html = trustArticle({
+    total_sales: '<img src=x onerror=alert(1)>',
+    updated: '2026-07-19T21:00:00Z',
+    rows: [],
+  });
+  assert.ok(!html.includes('<img src=x'), html);
+  assert.ok(html.includes('&lt;img src=x'), html);
+  // a normal total still renders as a plain number, and the empty state holds
+  const ok = trustArticle({ total_sales: 42, updated: '2026-07-19T21:00:00Z', rows: [] });
+  assert.ok(ok.includes('<strong>42</strong>'), ok);
+  assert.ok(ok.includes('No sales yet'), ok);
+  // a missing total is 0, not "undefined"
+  assert.ok(trustArticle({ rows: [] }).includes('<strong>0</strong>'));
+  // rows stay escaped and newest-first
+  const rows = trustArticle({
+    total_sales: 2,
+    rows: [
+      { ts: '2026-07-01T00:00:00Z', product: 'A', amount: 1, currency: 'usd', country: 'NO', ref: 'r1' },
+      { ts: '2026-07-02T00:00:00Z', product: '<b>B</b>', amount: 2.5, currency: 'usd', country: 'SE', ref: 'r2' },
+    ],
+  });
+  assert.ok(!rows.includes('<b>B</b>'), rows);
+  assert.ok(rows.indexOf('r2') < rows.indexOf('r1'), 'newest first');
+  assert.ok(rows.includes('2.50 usd'), rows);
 });
 
 test('excerpt: first real paragraph, markdown stripped, structure skipped', () => {

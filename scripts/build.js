@@ -261,6 +261,33 @@ function templateProblems(config, products) {
   return out;
 }
 
+// Body of the public ledger page. Pure so the escaping is testable without a
+// real ledger file. Everything the fulfillment bot writes is escaped, the
+// total included: it is a Stripe integer today, but this is the one page a
+// seller publishes to strangers and "the number is bot-written" is exactly the
+// assumption that rots.
+function trustArticle(ledger) {
+  const ledgerRows = (ledger.rows || [])
+    .slice()
+    .reverse()
+    .map(
+      (r) =>
+        `<tr${r.needs_attention ? ' class="attn"' : ''}><td>${escapeHtml(r.ts.slice(0, 10))}</td><td>${escapeHtml(r.product)}</td><td class="num">${r.amount.toFixed(2)} ${escapeHtml(r.currency)}</td><td>${escapeHtml(r.country || 'n/a')}</td><td class="num">${escapeHtml(r.ref)}</td></tr>`
+    )
+    .join('');
+  return `<article class="prose trust">
+<h1>Public ledger</h1>
+<p>Every sale this store makes is committed here by the fulfillment bot: date, product, amount,
+buyer country, and an anonymous reference. No names, no emails.</p>
+<p class="ledger-total"><strong>${escapeHtml(String(ledger.total_sales || 0))}</strong> sales recorded · last updated ${escapeHtml((ledger.updated || 'never').slice(0, 16).replace('T', ' '))} UTC</p>
+<div class="table-scroll"><table class="ledger">
+<tr><th scope="col">Date</th><th scope="col">Product</th><th scope="col">Amount</th><th scope="col">Country</th><th scope="col">Ref</th></tr>
+${ledgerRows || '<tr><td colspan="5" class="muted">No sales yet. The box is open.</td></tr>'}
+</table></div>
+<p class="muted">Raw data: <a href="./ledger/ledger.json">ledger.json</a> · Updated on every fulfillment run.</p>
+</article>`;
+}
+
 // Products and pages share one output namespace and pages are written second,
 // so a colliding slug silently replaces a product page (and its Buy button)
 // with prose. Pure so the collision rule is testable without a real tree.
@@ -272,7 +299,12 @@ function slugProblems(productIds, pageSlugs) {
 }
 
 function buyButton(p, big = false) {
-  if (!p.payment_link || typeof p.payment_link !== 'string') {
+  // No usable checkout link — missing, or a URL the gate rejects. Gating a bad
+  // link down to "#" would ship a Buy button that looks alive and goes
+  // nowhere; from the buyer's side that is the same problem as no link at all,
+  // so it gets the state this module already has. For a forker who typo'd
+  // their payment_link, "Checkout coming soon" is also the readable signal.
+  if (!p.payment_link || typeof p.payment_link !== 'string' || !safeUrl(p.payment_link, { anchor: true })) {
     return `<span class="btn btn-disabled" title="Checkout not configured yet">Checkout coming soon</span>`;
   }
   return `<a class="btn btn-buy${big ? ' btn-big' : ''}" href="${safeHref(p.payment_link)}">Buy ${escapeHtml(p.name)} · ${escapeHtml(p.price)}</a>`;
@@ -532,25 +564,7 @@ function main() {
   // ---------- trust / ledger page (opt-in: only if ledger/ledger.json exists) ----------
   if (hasLedger) {
     const ledger = JSON.parse(read(ledgerFile));
-    const ledgerRows = (ledger.rows || [])
-      .slice()
-      .reverse()
-      .map(
-        (r) =>
-          `<tr${r.needs_attention ? ' class="attn"' : ''}><td>${escapeHtml(r.ts.slice(0, 10))}</td><td>${escapeHtml(r.product)}</td><td class="num">${r.amount.toFixed(2)} ${escapeHtml(r.currency)}</td><td>${escapeHtml(r.country || 'n/a')}</td><td class="num">${escapeHtml(r.ref)}</td></tr>`
-      )
-      .join('');
-    const trust = `<article class="prose trust">
-<h1>Public ledger</h1>
-<p>Every sale this store makes is committed here by the fulfillment bot: date, product, amount,
-buyer country, and an anonymous reference. No names, no emails.</p>
-<p class="ledger-total"><strong>${ledger.total_sales || 0}</strong> sales recorded · last updated ${escapeHtml((ledger.updated || 'never').slice(0, 16).replace('T', ' '))} UTC</p>
-<div class="table-scroll"><table class="ledger">
-<tr><th scope="col">Date</th><th scope="col">Product</th><th scope="col">Amount</th><th scope="col">Country</th><th scope="col">Ref</th></tr>
-${ledgerRows || '<tr><td colspan="5" class="muted">No sales yet. The box is open.</td></tr>'}
-</table></div>
-<p class="muted">Raw data: <a href="./ledger/ledger.json">ledger.json</a> · Updated on every fulfillment run.</p>
-</article>`;
+    const trust = trustArticle(ledger);
     write(path.join(DIST, 'trust.html'), page({
       title: `Public ledger · ${config.name}`,
       ogTitle: 'Public ledger',
@@ -589,7 +603,7 @@ ${ledgerRows || '<tr><td colspan="5" class="muted">No sales yet. The box is open
 
 module.exports = {
   escapeHtml, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems, section,
-  usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs,
+  usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs, trustArticle,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 };
 
