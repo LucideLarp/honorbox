@@ -79,8 +79,10 @@ and the builder adds a public `/trust` page for it. Off by default.
 
 ## The themes
 
-The free core ships `stand` (warm paper). Pro adds four more — every one a
-complete, hand-tuned design, switchable with one config line:
+The free core ships `stand` (warm paper) **and `terminal`** (phosphor CRT) —
+the latter is a full Pro theme published here as an auditable sample of the
+paid pack's code quality. Pro adds three more, each a complete hand-tuned
+design, switchable with one config line:
 
 | | |
 |---|---|
@@ -93,6 +95,13 @@ The free core is a **complete store** — one theme, checkout, fulfillment,
 docs. [HonorBox Pro ($29, one-time)](https://honorboxx.github.io/honorbox/honorbox-pro.html)
 adds four premium themes, multi-product catalog patterns, an offline ed25519
 license-key module, and a commerce playbook — and buying it funds the free core.
+
+## Stability promise
+
+`store.config.json`, the product frontmatter, and the fulfillment grant format
+are **stable**: breaking changes only in a major version, always with an
+UPGRADING note and a migration path. Fast iteration happens behind the config,
+not through it.
 
 ## Development
 
