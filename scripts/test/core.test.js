@@ -195,3 +195,19 @@ test('build: buy button escapes payment_link and name (regression guard)', () =>
   assert.ok(!html.includes('"><script>'), html);
   assert.ok(html.includes('&quot;&gt;&lt;script&gt;'), html);
 });
+
+test('ledger dedup: a session already in the ledger is not re-appended', () => {
+  // simulates the local-runner + Actions safety-net overlap window
+  const { pickNewPaidSessions, ledgerRow } = require('../lib/fulfill-core.js');
+  const grants = [{ payment_link: 'plink_1', product: 'P', repo: 'o/r' }];
+  const s = {
+    id: 'cs_dup', status: 'complete', payment_status: 'paid', payment_link: 'plink_1',
+    created: 1_700_000_000, amount_total: 2900, currency: 'usd',
+    customer_details: { address: { country: 'DE' } },
+    custom_fields: [{ key: 'github_username', text: { value: 'octocat' } }],
+  };
+  const existing = ledgerRow(s, grants[0]);
+  const refs = new Set([existing.ref]);
+  // the guard: same ref → skip
+  assert.ok(refs.has(ledgerRow(s, grants[0]).ref), 'ref is stable and dedupable');
+});

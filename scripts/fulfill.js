@@ -112,10 +112,17 @@ async function main() {
   const fresh = pickNewPaidSessions(sessions, state.processed, config.fulfillment);
   console.log(`sessions scanned=${sessions.length} new_paid=${fresh.length}`);
 
+  // Ledger dedup key: two runners (local 2-min + Actions safety net) can overlap;
+  // the processed-set stops sequential re-processing, but a same-window collision
+  // could append a row twice. Guard by the ledger's own ref so a row is unique.
+  const ledgerRefs = new Set(ledger.rows.map((r) => r.ref));
+
   for (const s of fresh) {
     const grant = matchGrant(s, config.fulfillment);
     const username = extractGithubUsername(s);
     const entry = { session: s.id, ts: new Date().toISOString() };
+    const row = ledgerRow(s, grant);
+    if (ledgerRefs.has(row.ref)) { state.processed.push(s.id); continue; }
     try {
       if (!validUsername(username)) {
         throw new Error(`invalid github username: ${JSON.stringify(username)}`);
@@ -126,12 +133,14 @@ async function main() {
         const code = await inviteCollaborator(grant.repo, username, ghToken);
         console.log(`fulfilled ${s.id}: invited ${username} -> ${grant.repo} (HTTP ${code})`);
       }
-      ledger.rows.push(ledgerRow(s, grant));
+      ledger.rows.push(row);
+      ledgerRefs.add(row.ref);
       newSales.push(username);
     } catch (err) {
       console.error(`FAILED ${s.id}: ${err.message}`);
       state.failures.push({ ...entry, error: String(err.message) });
-      ledger.rows.push({ ...ledgerRow(s, grant), needs_attention: true });
+      ledger.rows.push({ ...row, needs_attention: true });
+      ledgerRefs.add(row.ref);
     }
     state.processed.push(s.id);
   }
