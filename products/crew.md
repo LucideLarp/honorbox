@@ -1,5 +1,6 @@
 ---
 id: crew
+order: 2
 name: Crew
 tagline: 10 specialist agents and 14 discipline skills for Claude Code — designed as one system, installed in one command.
 price: $19

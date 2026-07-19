@@ -228,7 +228,7 @@ function main() {
   const products = listMd(path.join(ROOT, 'products')).map((f) => {
     const { data, body } = parseFrontmatter(read(path.join(ROOT, 'products', f)));
     return { ...data, features: data.features || [], body, html: renderMarkdown(body) };
-  });
+  }).sort((a, b) => (Number(a.order || 999) - Number(b.order || 999)) || String(a.name).localeCompare(b.name));
 
   const pages = listMd(path.join(ROOT, 'pages')).map((f) => {
     const { data, body } = parseFrontmatter(read(path.join(ROOT, 'pages', f)));

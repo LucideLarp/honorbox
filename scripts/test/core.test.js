@@ -334,3 +334,9 @@ test('ledger dedup: a session already in the ledger is not re-appended', () => {
   // the guard: same ref → skip
   assert.ok(refs.has(ledgerRow(s, grants[0]).ref), 'ref is stable and dedupable');
 });
+
+test('markdown: bold spanning two source lines renders (not literal **)', () => {
+  const html = renderMarkdown('start of para\n**bold across\nthe line break** and more text');
+  assert.ok(html.includes('<strong>bold across the line break</strong>'), html);
+  assert.ok(!html.includes('**'), 'no literal asterisks should survive');
+});

@@ -103,7 +103,7 @@ function renderMarkdown(src) {
     ) {
       buf.push(lines[i++]);
     }
-    out.push(`<p>${buf.map(inline).join(' ')}</p>`);
+    out.push(`<p>${inline(buf.join(' '))}</p>`);
   }
   return out.join('\n');
 }
