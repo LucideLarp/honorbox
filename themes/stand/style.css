@@ -1,16 +1,41 @@
-/* HonorBox theme: "stand", the honesty box set as a technical document.
-   The page is a well-set spec sheet, not a launch page: left-set, one column
-   of authority, hierarchy carried by size and colour rather than by weight.
-   Space separates sections; hairlines only where a divider earns its keep.
-   Palette: warm near-black ink on white paper, three neutral grays, and one
-   colour. The accent red is the coin: #b5482a on paper, #d9603c on ink, and
-   it is allowed in five places only (the coin in the mark, the buy button,
-   the price, focus rings, and the note's rule). The box and its slot print
-   in ink, because a red slot under a red coin merges into one shape at
-   favicon sizes. Everything else, headings included, prints in ink too.
-   Display face: Schibsted Grotesk (OFL,
-   self-hosted in assets/fonts/). Both schemes are first class; the theme
-   mirrors rather than dims. */
+/* HonorBox theme: "stand".
+
+   An honour box is a plain stand with a single dark slot cut into it. So this
+   page is plain paper carrying exactly one reversed plate, and that plate is
+   the thing you pay into.
+
+   The rules that follow from it:
+
+   - One reversed surface on the whole site: the flagship product's plate. It
+     is the only inverted ground, the only rounded slab, and it holds the only
+     saturated button. Everything else is set on bare paper. Boldness is spent
+     once, here, because the buy action has to be the most findable object on
+     the page and it should not need to shout to manage it.
+   - No borders on cards or bands. Separation is ground and space. A 1px line
+     survives only inside a table and between list rows, where a rule actually
+     encodes structure rather than drawing a box for its own sake.
+   - Quiet surfaces sit LIGHTER than the ground, never darker, so an object
+     reads as something resting on the paper rather than a hole in it.
+   - Section headings are announcements, not labels: roughly 2.5x the body,
+     where they used to be 1.55x. That ratio is what gives the page a shape
+     below the hero.
+   - The accent has exactly two jobs, the coin in the mark and the buy button.
+     It used to have five, which is how an accent stops meaning anything.
+   - The buy button is the one element that does not answer to the colour
+     scheme. It is the slot: identical on paper and at night.
+
+   Palette. Light: ground #faf8f5, raised #ffffff, ink #17130f, ink-soft
+   #5c5449, accent #b5482a, accent-deep #8f3820. Dark mirrors it, and the
+   plate becomes bone #ebe5db rather than white so it lights the page instead
+   of glaring on it. Measured contrast (WCAG 2.1): ink on ground 17.43,
+   ink-soft on ground 7.03, paper on plate 17.43, soft on plate 7.16, button
+   label 5.35, button against either plate 3.45 and 4.27 (both clear the 3:1
+   a control needs). Dark: ink 16.53, ink-soft 6.68, plate ink 14.75, plate
+   soft 5.95.
+
+   Display face: Schibsted Grotesk (OFL, self-hosted in assets/fonts/). Mono is
+   reserved for machine-readable things: figures, labels, kickers. Both colour
+   schemes are first class; the theme mirrors rather than dims. */
 
 @font-face {
   font-family: "Schibsted Grotesk";
@@ -29,41 +54,57 @@
 
 :root {
   color-scheme: light dark;
-  --paper: #ffffff;
-  --wash: #f7f5f2;
-  --line: #e5e1da;
-  --ink: #14120f;
-  --ink-soft: #5f594f;
-  --accent: #b5482a;      /* the coin, and the one colour on the page */
-  --accent-deep: #8f3820; /* the accent as small text, where 5.35:1 is not enough headroom */
+  --ground: #faf8f5;      /* warm paper: the 60 */
+  --raised: #ffffff;      /* a surface resting on it, always lighter */
+  --line: #e6e1d9;
+  --edge: #ddd7cc;   /* the edge of a picture, which must survive a dark screenshot */
+  --ink: #17130f;
+  --ink-soft: #5c5449;
+  --accent: #b5482a;      /* the coin, and the only saturated thing here */
+  --accent-deep: #8f3820; /* the accent where it has to read as small text */
   --on-accent: #ffffff;
   --coin: #b5482a;
+
+  /* The plate: the slot cut into the stand. Inverted in light, bone in dark. */
+  --plate: #17130f;
+  --on-plate: #faf8f5;
+  --on-plate-mid: #ded7cc;   /* the claim */
+  --on-plate-soft: #a8a096;  /* the evidence */
+  --plate-line: #332c25;
 
   --display: "Schibsted Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Vertical rhythm. One scale, used everywhere, so the page has a beat
-     instead of a set of local decisions. */
-  --gap-section: clamp(3.25rem, 7vw, 5.5rem);
+  /* One vertical scale, used everywhere, so the page keeps a beat. */
+  --gap-section: clamp(4rem, 9vw, 7.5rem);
   --gap-block: clamp(1.5rem, 3vw, 2.25rem);
   --pad-page: clamp(1.15rem, 4vw, 2.25rem);
   --measure: 62ch;
+  --shell: 66rem;
 
-  --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%2314120f%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%2314120f%22%2F%3E%3C%2Fsvg%3E');
+  --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%2317130f%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%2317130f%22%2F%3E%3C%2Fsvg%3E');
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #100f0d;
-    --wash: #1a1815;
-    --line: #2e2a25;
-    --ink: #f0ece5;
-    --ink-soft: #9d958a;
+    --ground: #100e0c;
+    --raised: #191613;
+    --line: #2b2620;
+    --edge: #39322a;
+    --ink: #f2ede5;
+    --ink-soft: #a09789;
     --accent: #d9603c;
     --accent-deep: #e8785a;
-    --on-accent: #100f0d;
+    --on-accent: #ffffff;
     --coin: #d9603c;
-    --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%23f0ece5%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%23f0ece5%22%2F%3E%3C%2Fsvg%3E');
+
+    --plate: #ebe5db;      /* bone, not white: it lights the page, never glares */
+    --on-plate: #17130f;
+    --on-plate-mid: #3a3428;
+    --on-plate-soft: #57503f;
+    --plate-line: #d3ccbf;
+
+    --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%23f2ede5%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%23f2ede5%22%2F%3E%3C%2Fsvg%3E');
   }
 }
 
@@ -71,7 +112,7 @@
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--ground);
   color: var(--ink);
   font-family: var(--sans);
   font-size: clamp(1rem, 0.97rem + 0.16vw, 1.05rem);
@@ -79,16 +120,21 @@ body {
   font-synthesis-weight: none;
 }
 
-main { max-width: 66rem; margin: 0 auto; padding: 0 var(--pad-page) var(--gap-section); }
+main { max-width: var(--shell); margin: 0 auto; padding: 0 var(--pad-page) var(--gap-section); }
 
-/* Type scale. The h1-to-body ratio is deliberately about 3x, not the 4x it
-   was: a headline that stops shouting reads as a tool rather than a pitch. */
+/* Type scale. The h1-to-body ratio is about 4x and h2-to-body about 2.5x,
+   where h2 used to be 1.55x. A section heading that is merely a label leaves
+   nine bands reading as one undifferentiated list; at this size each band
+   announces itself and the page has a shape below the hero. */
 h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.12; letter-spacing: -0.02em; }
 h1 {
-  font-size: clamp(2.05rem, 1.5rem + 2.4vw, 3.15rem);
-  line-height: 1.05; margin: 0 0 0.45em; text-wrap: balance; letter-spacing: -0.028em;
+  font-size: clamp(2.6rem, 1.6rem + 4.4vw, 4.25rem);
+  line-height: 1.02; margin: 0 0 0.4em; text-wrap: balance; letter-spacing: -0.035em;
 }
-h2 { font-size: clamp(1.3rem, 1.15rem + 0.75vw, 1.65rem); margin: 0 0 0.7em; text-wrap: balance; }
+h2 {
+  font-size: clamp(1.75rem, 1.3rem + 2.1vw, 2.6rem);
+  margin: 0 0 0.6em; text-wrap: balance; letter-spacing: -0.03em;
+}
 h3 { font-size: clamp(1.05rem, 1rem + 0.28vw, 1.18rem); margin: 0 0 0.35em; }
 
 a { color: var(--ink); text-underline-offset: 3px; text-decoration-thickness: 1px; }
@@ -101,20 +147,21 @@ a:focus-visible, summary:focus-visible {
 
 .skip-link {
   position: absolute; left: 1rem; top: -3.5rem; z-index: 20;
-  background: var(--paper); color: var(--ink); font-weight: 600; font-size: 0.9rem;
+  background: var(--raised); color: var(--ink); font-weight: 600; font-size: 0.9rem;
   border: 1.5px solid var(--ink);
   padding: 0.55rem 1rem; border-radius: 5px; text-decoration: none;
   transition: top 0.15s ease;
 }
 .skip-link:focus { top: 1rem; }
 
-/* header: a hairline, not a rule. The chrome should not out-weigh the page. */
+/* header: no rule under it. The chrome is the quietest thing on the page and a
+   hairline across the full width only re-states an edge the layout already
+   makes obvious. */
 .site-head {
   display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem;
   flex-wrap: wrap;
-  max-width: 66rem; margin: 0 auto;
-  padding: 1.35rem var(--pad-page);
-  border-bottom: 1px solid var(--line);
+  max-width: var(--shell); margin: 0 auto;
+  padding: 1.6rem var(--pad-page) 0.75rem;
 }
 .brand {
   display: inline-flex; align-items: center; gap: 0.55rem;
@@ -130,13 +177,11 @@ a:focus-visible, summary:focus-visible {
 }
 .site-nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
 
-/* footer: an index, not a paragraph. The middots stay (they are text nodes in
-   one <p>), but the links stop being underlined and get room to breathe, so
-   the block reads as a list of places rather than a wall of rules. */
+/* footer: an index, not a paragraph */
 .site-foot {
   border-top: 1px solid var(--line);
   color: var(--ink-soft); font-size: 0.875rem;
-  max-width: 66rem; margin: 0 auto;
+  max-width: var(--shell); margin: 0 auto;
   padding: 2.25rem var(--pad-page) 3.5rem;
 }
 .foot-links { max-width: 52rem; line-height: 2.4; margin: 0 0 1.1rem; color: var(--line); }
@@ -145,11 +190,12 @@ a:focus-visible, summary:focus-visible {
 .foot-links a:hover, .foot-legal a:hover { color: var(--accent-deep); text-decoration: underline; }
 .foot-legal { margin: 0; font-size: 0.83rem; }
 
-/* hero: left-set. The mark prints above the headline and the coin is caught
-   mid-drop, part way into the slot, which is the whole idea of the product. */
+/* hero: left-set, and given real room. The mark prints above the headline and
+   the coin is caught mid-drop, part way into the slot, which is the whole idea
+   of the product. */
 .hero {
   position: relative; text-align: left;
-  padding: clamp(2.5rem, 6vw, 4rem) 0 0;
+  padding: clamp(2.75rem, 7vw, 5.5rem) 0 0;
 }
 .hero::before {
   content: ""; display: block;
@@ -162,7 +208,7 @@ a:focus-visible, summary:focus-visible {
    58px, and its lower half seats into that band. */
 .hero::after {
   content: ""; position: absolute;
-  top: calc(clamp(2.5rem, 6vw, 4rem) - 14px); left: 58px;
+  top: calc(clamp(2.75rem, 7vw, 5.5rem) - 14px); left: 58px;
   width: 12px; height: 27px; border-radius: 6px;
   background: var(--coin);
   transform: rotate(-22deg);
@@ -195,49 +241,51 @@ a:focus-visible, summary:focus-visible {
 }
 .kicker {
   font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--ink-soft); margin: 0 0 1.1em;
+  text-transform: uppercase; color: var(--ink-soft); margin: 0 0 1.3em;
 }
-.hero h1 { max-width: 18ch; }
+.hero h1 { max-width: 17ch; }
 .lede {
-  font-size: clamp(1.08rem, 1rem + 0.42vw, 1.24rem); line-height: 1.6;
-  color: var(--ink-soft); max-width: 54ch; margin: 0 0 2rem; text-wrap: pretty;
+  font-size: clamp(1.1rem, 1rem + 0.5vw, 1.32rem); line-height: 1.55;
+  color: var(--ink-soft); max-width: 50ch; margin: 0 0 2.4rem; text-wrap: pretty;
 }
 .hero-ctas { display: flex; gap: 0.75rem; justify-content: flex-start; flex-wrap: wrap; align-items: center; }
 .hero-sub {
   font-family: var(--mono); font-size: 0.78rem; color: var(--ink-soft);
-  margin: 1.6rem 0 0; max-width: 60ch; line-height: 1.7;
+  margin: 1.8rem 0 0; max-width: 60ch; line-height: 1.7;
 }
 
-/* buttons: one filled in the accent, the rest outlined in a hairline. The
-   filled button is the only saturated object on the page, which is what makes
-   it findable without any of the usual shouting. */
+/* buttons. The filled one is the only saturated object on the site, and it is
+   deliberately identical in both colour schemes: it is the slot, and a slot
+   does not change colour at night. */
 .btn {
-  display: inline-block; padding: 0.68rem 1.3rem; border-radius: 5px;
+  display: inline-block; padding: 0.72rem 1.35rem; border-radius: 5px;
   font-weight: 600; text-decoration: none;
-  border: 1.5px solid var(--line); color: var(--ink); background: var(--paper);
+  border: 1.5px solid var(--line); color: var(--ink); background: transparent;
   font-size: 0.97rem; line-height: 1.35;
   transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease, transform 0.14s ease;
 }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .btn:active { transform: translateY(1px); }
-.btn-buy { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-.btn-buy:hover { background: var(--accent-deep); border-color: var(--accent-deep); transform: translateY(-1px); }
+.btn-buy {
+  background: #b5482a; color: #ffffff; border-color: #b5482a; font-weight: 700;
+}
+.btn-buy:hover { background: #9c3d22; border-color: #9c3d22; transform: translateY(-1px); }
 .btn-ghost:hover { border-color: var(--ink); color: var(--ink); }
-.btn-big { padding: 0.85rem 1.7rem; font-size: 1.03rem; }
+.btn-big { padding: 0.9rem 1.8rem; font-size: 1.03rem; }
 .btn-disabled { opacity: 0.6; border-style: dashed; cursor: not-allowed; }
 
-/* product cards */
+/* ---------- products ---------- */
+
 .products {
-  display: grid; gap: var(--gap-block);
-  grid-template-columns: 1fr; justify-items: center;
+  display: grid; gap: 1rem;
+  grid-template-columns: 1fr;
   margin-top: var(--gap-section);
 }
 .product-card {
-  --card-pad: clamp(1.4rem, 3vw, 2.15rem);
+  --card-pad: clamp(1.5rem, 3.5vw, 2.5rem);
   display: flex; flex-direction: column;
-  border: 1px solid var(--line); border-radius: 8px;
-  background: var(--paper);
   padding: var(--card-pad);
+  border-radius: 12px;
 }
 .pc-head { margin-bottom: 0.2rem; }
 .badge {
@@ -247,83 +295,118 @@ a:focus-visible, summary:focus-visible {
   border-radius: 3px; padding: 0.2rem 0.55rem; margin-bottom: 0.9rem;
 }
 .product-card h3 { margin: 0; font-size: clamp(1.3rem, 1.15rem + 0.6vw, 1.55rem); }
-.product-card h3 a { color: var(--ink); text-decoration: none; }
+.product-card h3 a { color: inherit; text-decoration: none; }
 .product-card h3 a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
-.pc-tagline { color: var(--ink-soft); margin: 0.5rem 0 0; text-wrap: pretty; }
-/* Feature lines, not bullets. Ten markered items in two columns read as a
-   pitch deck; the same ten set as plain lines with room between them read as
-   a specification, which is what they are. */
-.pc-features { list-style: none; padding: 0; margin: 1.4rem 0 1.6rem; }
+.pc-tagline { color: var(--ink-soft); margin: 0.55rem 0 0; text-wrap: pretty; }
+/* Feature lines, not bullets, and no markers at all. Eight markered items read
+   as a pitch deck; the same eight set as plain lines with room between them
+   read as a specification, which is what a person who will open the source
+   before buying is actually here for. */
+.pc-features { list-style: none; padding: 0; margin: 1.5rem 0 1.75rem; }
 .pc-features li {
-  margin: 0; padding: 0.5rem 0 0.5rem 1.05rem; position: relative;
+  margin: 0; padding: 0.55rem 0;
   font-size: 0.94rem; line-height: 1.55; color: var(--ink-soft);
-}
-.pc-features li::before {
-  content: ""; position: absolute; left: 0; top: 1.05em;
-  width: 5px; height: 1px; background: var(--ink-soft);
 }
 .pc-buy {
   display: flex; align-items: center; justify-content: space-between;
   gap: 0.9rem 1.25rem; flex-wrap: wrap;
-  margin-top: auto; padding-top: 1.3rem;
-  border-top: 1px solid var(--line);
-}
-.pc-buy.standalone {
-  margin: 1.9rem 0 2.5rem; padding: 1.15rem 1.35rem;
-  border: 1px solid var(--line); border-radius: 8px;
-  background: var(--wash);
-}
-.pc-buy.standalone:not(:has(.price)) {
-  border: none; background: none;
-  justify-content: flex-start; margin: 2.75rem 0 0.5rem; padding: 0;
+  margin-top: auto; padding-top: 1.4rem;
 }
 .price {
   font-family: var(--display); font-size: 1.55rem; font-weight: 800;
-  line-height: 1.2; letter-spacing: -0.02em; color: var(--accent-deep);
+  line-height: 1.2; letter-spacing: -0.02em; color: var(--ink);
 }
 .price small {
   font-family: var(--sans); font-size: 0.72rem; font-weight: 400; color: var(--ink-soft);
   display: block; margin-top: 0.25rem; letter-spacing: 0.01em;
 }
 
-/* flagship: the one card with any weight to it */
+/* THE PLATE. The one reversed surface on the site, and the only place the
+   accent is allowed to fill anything. Laid out wide and shallow rather than as
+   a tall slab: the identity and the buy action hold a left rail, the
+   specification runs beside it, so the thing a visitor must find sits in the
+   plate's top-left where reading starts. */
 .product-card.flagship {
-  width: min(100%, 48rem);
-  border-color: var(--ink);
+  background: var(--plate);
+  color: var(--on-plate);
+  padding: clamp(1.75rem, 4vw, 3.25rem);
+  border-radius: 14px;
 }
-.product-card.flagship h3 { font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.8rem); }
-.product-card.flagship .pc-tagline { max-width: 62ch; }
-.product-card.flagship .pc-features { columns: 2; column-gap: 2.75rem; }
-.product-card.flagship .pc-features li { break-inside: avoid; }
+.product-card.flagship h3 {
+  font-size: clamp(1.6rem, 1.25rem + 1.5vw, 2.2rem); letter-spacing: -0.03em;
+}
+/* Brighter than the spec lines beside it. One colour for both made the
+   plate's left rail and right column read as a single undifferentiated block
+   of grey; the tagline is the claim, the spec is the evidence. An explicit
+   token rather than color-mix: an engine that does not know the function drops
+   the declaration and inherits --ink-soft, which on this plate is dark grey on
+   near-black. A fallback nobody can read is worse than a flatter plate. */
+.product-card.flagship .pc-tagline { color: var(--on-plate-mid); max-width: 34ch; }
+.product-card.flagship .badge {
+  color: var(--on-plate-soft); border-color: var(--plate-line);
+}
+.product-card.flagship .pc-features li { color: var(--on-plate-soft); }
+/* A hairline between spec lines, in the plate's own line colour. Inside a
+   specification a rule is structure, not decoration: it says these are
+   separate claims. */
+.product-card.flagship .pc-features li + li { border-top: 1px solid var(--plate-line); }
+.product-card.flagship .price { color: var(--on-plate); }
+.product-card.flagship .price small { color: var(--on-plate-soft); }
+.product-card.flagship .pc-buy { padding-top: 1.6rem; }
 
-/* companion: a slim stub */
+@media (min-width: 56rem) {
+  .product-card.flagship {
+    display: grid;
+    grid-template-columns: minmax(0, 21rem) minmax(0, 1fr);
+    /* auto/1fr, not auto/auto. The spec column spans both rows and is always
+       the taller one, and with two auto rows the grid split its surplus
+       between them, opening a hole in the middle of the left rail: between
+       what the product is and what it costs, which is the one place a reader
+       must not be interrupted. Giving row 2 the surplus puts the slack under
+       the button instead, where it reads as air. */
+    grid-template-rows: auto 1fr;
+    column-gap: clamp(2.5rem, 6vw, 5rem);
+    align-items: start;
+  }
+  .product-card.flagship .pc-head { grid-column: 1; grid-row: 1; margin: 0; }
+  .product-card.flagship .pc-buy {
+    grid-column: 1; grid-row: 2; align-self: start;
+    margin-top: 1.75rem; padding-top: 1.6rem;
+    border-top: 1px solid var(--plate-line);
+    justify-content: flex-start; gap: 1.5rem;
+  }
+  .product-card.flagship .pc-features {
+    grid-column: 2; grid-row: 1 / span 2; margin: 0;
+  }
+}
+
+/* companion: a quiet row on bare paper, the opposite of the plate */
 .product-card.companion {
-  width: min(100%, 48rem);
   flex-direction: row; align-items: center; gap: 0.5rem 1.5rem;
-  padding: 1.15rem var(--card-pad);
+  padding: 1.25rem var(--card-pad);
+  background: var(--raised);
 }
 .product-card.companion .badge,
 .product-card.companion .pc-features,
 .product-card.companion .price small { display: none; }
 .product-card.companion .pc-head { flex: 1; min-width: 14rem; margin: 0; }
 .product-card.companion h3 { font-size: 1.12rem; }
-.product-card.companion .pc-tagline { font-size: 0.88rem; margin-top: 0.3rem; max-width: 48ch; }
+.product-card.companion .pc-tagline { font-size: 0.88rem; margin-top: 0.3rem; max-width: 52ch; }
 .product-card.companion .pc-buy {
-  margin: 0; padding: 0 0 0 1.5rem;
-  align-self: stretch; align-items: center; flex-wrap: nowrap; gap: 1.15rem;
-  border-top: none; border-left: 1px solid var(--line);
+  margin: 0; padding: 0;
+  align-self: center; align-items: center; flex-wrap: nowrap; gap: 1.15rem;
 }
 .product-card.companion .price { font-size: 1.12rem; }
 .product-card.companion .btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
 
-/* home sections: space does the separating, a hairline only marks the seam */
+/* ---------- home sections ---------- */
+/* Space separates them. No rule across the top: at this heading size the
+   heading is the divider. */
 .steps, .compare, .faq, .showcase {
-  border-top: 1px solid var(--line);
   margin-top: var(--gap-section);
-  padding-top: clamp(2rem, 4.5vw, 3rem);
 }
 
-/* The two sections that carry a standfirst set it beside the heading rather
+/* Every section that carries a standfirst sets it beside the heading rather
    than beneath it: the heading holds the left column, the note the right, and
    the content spans both. Wide screens get a proper masthead, narrow ones get
    the same two lines stacked. No markup knows about this. */
@@ -342,13 +425,13 @@ a:focus-visible, summary:focus-visible {
 
 /* steps: the numerals set the order, quietly */
 .steps-list {
-  counter-reset: step; list-style: none; padding: 0; margin: 1.75rem 0 0;
-  display: grid; gap: 2rem 2.75rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  counter-reset: step; list-style: none; padding: 0; margin: 2.25rem 0 0;
+  display: grid; gap: 2.25rem 3rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 }
 .steps-list li { counter-increment: step; }
 .steps-list li::before {
   content: counter(step, decimal-leading-zero);
-  display: block; margin-bottom: 0.75rem; padding-bottom: 0.75rem;
+  display: block; margin-bottom: 0.85rem; padding-bottom: 0.85rem;
   border-bottom: 1px solid var(--line);
   font-family: var(--mono); font-weight: 400;
   color: var(--accent-deep); font-size: 0.9rem; letter-spacing: 0.14em; line-height: 1;
@@ -358,11 +441,11 @@ a:focus-visible, summary:focus-visible {
 
 /* guide index rows, and the docs index, share one row treatment */
 .steps-list:has(h3 a), .doc-list {
-  grid-template-columns: 1fr; gap: 0; margin-top: 1.4rem;
+  grid-template-columns: 1fr; gap: 0; margin-top: 1.75rem;
   display: grid; list-style: none; padding: 0; counter-reset: none;
 }
 .steps-list li:has(h3 a), .doc-list li {
-  position: relative; padding: 1.2rem 2.75rem 1.3rem 0;
+  position: relative; padding: 1.3rem 2.75rem 1.4rem 0;
   border-top: 1px solid var(--line);
 }
 .steps-list li:has(h3 a):last-child, .doc-list li:last-child { border-bottom: 1px solid var(--line); }
@@ -381,20 +464,20 @@ a:focus-visible, summary:focus-visible {
 .steps-list li:has(h3 a):hover h3 a, .doc-list li:hover h3 a { color: var(--accent-deep); }
 
 /* compare table: hairlines, and our column marked by ground rather than bold */
-.table-scroll { overflow-x: auto; margin-top: 1.6rem; }
+.table-scroll { overflow-x: auto; margin-top: 2rem; }
 .table-scroll table { min-width: 40rem; }
 table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
 th {
   font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--ink-soft); font-weight: 500;
 }
-th, td { text-align: left; padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th, td { text-align: left; padding: 0.8rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { border-bottom: 1px solid var(--ink); }
 td { color: var(--ink-soft); }
 td.rowhead { font-weight: 600; color: var(--ink); }
 td.num { font-family: var(--mono); }
-tr.attn td { font-weight: 600; background: var(--wash); color: var(--ink); }
-.compare th:last-child, .compare td:last-child { background: var(--wash); }
+tr.attn td { font-weight: 600; background: var(--raised); color: var(--ink); }
+.compare th:last-child, .compare td:last-child { background: var(--raised); }
 .compare th:last-child { color: var(--ink); }
 .compare td:last-child { color: var(--ink); font-weight: 600; }
 
@@ -403,69 +486,74 @@ tr.attn td { font-weight: 600; background: var(--wash); color: var(--ink); }
 .faq details:first-of-type { border-top: 1px solid var(--line); }
 .faq summary {
   display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
-  padding: 1.1rem 0.15rem; font-weight: 600; font-size: 1rem; cursor: pointer;
+  padding: 1.15rem 0.15rem; font-weight: 600; font-size: 1rem; cursor: pointer;
   list-style: none;
 }
 .faq summary::-webkit-details-marker { display: none; }
 .faq summary::after {
   content: "+"; font-family: var(--mono); font-size: 1.1rem; font-weight: 400;
-  color: var(--accent-deep); flex-shrink: 0; line-height: 1;
+  color: var(--ink-soft); flex-shrink: 0; line-height: 1;
   transition: transform 0.2s ease; transform-origin: center;
 }
 .faq summary:hover { color: var(--accent-deep); }
 .faq details[open] summary::after { transform: rotate(45deg); }
-.faq p { color: var(--ink-soft); margin: 0 0 1.3rem; max-width: var(--measure); padding: 0 0.15rem; font-size: 0.96rem; }
+.faq p { color: var(--ink-soft); margin: 0 0 1.4rem; max-width: var(--measure); padding: 0 0.15rem; font-size: 0.96rem; }
 /* Wraps on purpose. A seller writes this label, so it can be any length, and
    nowrap turned a long one into horizontal overflow on a phone. */
 .faq-more { color: var(--accent-deep); }
 
-/* note: a quiet aside marked by the accent, in both schemes. It used to be an
-   inverted plate, which in dark mode became the brightest object on the page. */
+/* note: the page's one piece of plain speech. It used to be 0.94rem grey in a
+   tinted box, which is the typography of fine print, on the paragraph that
+   tells you when NOT to buy this. Set at reading size in full ink it becomes a
+   statement, which is the only thing that paragraph was ever worth. */
 .note { margin: var(--gap-section) 0 0; }
 .note p {
-  margin: 0; font-size: 0.94rem; line-height: 1.7; max-width: 72ch;
-  background: var(--wash); color: var(--ink-soft);
+  margin: 0; font-size: clamp(1.05rem, 0.98rem + 0.35vw, 1.22rem); line-height: 1.6;
+  max-width: 46ch;
+  color: var(--ink);
+  padding: 0 0 0 clamp(1.1rem, 2.5vw, 1.6rem);
   border-left: 2px solid var(--accent);
-  border-radius: 0 6px 6px 0; padding: 1.2rem 1.4rem;
 }
 .note p a { color: var(--ink); }
 
 /* showcase: the theme screenshots are the page's colour, and they are real
-   product, not decoration */
-/* Three across on a wide screen. The band carries five themes, and five in two
-   columns leaves the last one stranded at half width, which reads as a broken
-   grid rather than a remainder. */
+   product rather than decoration */
 .showcase-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: clamp(1.3rem, 3vw, 2rem) clamp(1.1rem, 2.5vw, 1.6rem);
-  margin-top: 1.75rem;
+  margin-top: 2rem;
 }
 .showcase figure { margin: 0; }
 .showcase img {
   display: block; width: 100%; height: auto;
-  border: 1px solid var(--line); border-radius: 6px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  border-radius: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 0 1px var(--edge);
 }
 .showcase figcaption {
   font-family: var(--mono); font-size: 0.71rem; letter-spacing: 0.06em;
-  color: var(--ink-soft); margin-top: 0.65rem;
+  color: var(--ink-soft); margin-top: 0.7rem;
 }
 .showcase-link { text-decoration: none; }
 .showcase-link:hover img, .showcase-link:focus-visible img {
-  border-color: var(--accent); transform: translateY(-2px);
+  box-shadow: 0 0 0 1px var(--accent); transform: translateY(-2px);
 }
 .showcase-link:hover figcaption { color: var(--ink); }
 .showcase-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; display: block; }
 
-/* prose pages */
-.prose { max-width: 44rem; margin: clamp(2rem, 5vw, 3.25rem) auto 0; }
-/* Long-form running text holds a ~62ch measure; media (pre, tables,
-   galleries) may use the full column. */
+/* ---------- prose ---------- */
+/* One left edge for the whole site. A 44rem column centred under a 66rem
+   header gave the site two different left edges and left ~380px of dead
+   margin either side of every doc. On a wide screen the h1 takes a left rail
+   and the body hangs off the header's own edge; below that it is one column.
+   No markup knows about this either. */
+.prose { max-width: var(--shell); margin: clamp(2.5rem, 5vw, 4rem) 0 0; }
+.prose > * { max-width: 44rem; }
 .prose p, .prose ul, .prose ol, .prose blockquote { max-width: var(--measure); }
-.prose h1 { font-size: clamp(1.85rem, 1.35rem + 1.9vw, 2.6rem); }
-.prose h1 + p { font-size: 1.05rem; color: var(--ink-soft); max-width: 56ch; }
+.prose h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); }
+.prose h1 + p { font-size: 1.08rem; color: var(--ink-soft); max-width: 52ch; }
 .prose h2 {
-  font-size: clamp(1.25rem, 1.1rem + 0.65vw, 1.5rem);
+  font-size: clamp(1.3rem, 1.15rem + 0.7vw, 1.65rem);
   margin: 2.75em 0 0.75em; padding-top: 1.4em; border-top: 1px solid var(--line);
 }
 .prose h1 + p + h2, .prose > h2:first-child { border-top: none; padding-top: 0; margin-top: 1.8em; }
@@ -473,17 +561,60 @@ tr.attn td { font-weight: 600; background: var(--wash); color: var(--ink); }
 .prose p { margin: 0 0 1.15em; }
 .prose li { margin: 0.4rem 0; }
 .prose li::marker { color: var(--ink-soft); }
-.product-page { max-width: 44rem; margin: clamp(2rem, 5vw, 3.25rem) auto 0; }
+
+@media (min-width: 64rem) {
+  .prose {
+    display: grid;
+    grid-template-columns: minmax(0, 15rem) minmax(0, 44rem);
+    column-gap: clamp(2rem, 5vw, 3.5rem);
+    align-items: start;
+  }
+  .prose > * { grid-column: 2; }
+  /* Title in the rail, standfirst beside it: the same masthead the compare and
+     showcase bands use, so a doc and the storefront are recognisably one site.
+     Deliberately not sticky. The h1's grid area is row 1 only, so a sticky
+     title would release the moment the first paragraph scrolled past and the
+     declaration would be describing behaviour it cannot produce. Spanning the
+     whole column needs a wrapper element, and the markup is shared across five
+     themes, so the rail stays honest instead. */
+  .prose > h1 {
+    grid-column: 1; grid-row: 1;
+    font-size: clamp(1.9rem, 1.1rem + 1.5vw, 2.35rem);
+    margin: 0; max-width: none; text-wrap: balance;
+  }
+  .prose > :nth-child(2) { grid-row: 1; }
+}
+
+.product-page { max-width: var(--shell); margin: clamp(2rem, 5vw, 3.25rem) 0 0; }
+.product-page > * { max-width: 44rem; }
 .product-page .kicker { margin-bottom: 1em; }
 .product-page .lede { margin-left: 0; margin-right: 0; text-wrap: pretty; }
-.product-page .prose { margin-top: 0; max-width: none; }
+.product-page .prose { margin-top: 0; max-width: 44rem; display: block; }
+.product-page .prose > * { max-width: none; }
+.product-page .prose p, .product-page .prose ul, .product-page .prose ol { max-width: var(--measure); }
+
+/* The standalone buy block on a product page is the plate again, at the size
+   the page can carry. Same object, same meaning, so the site has one way of
+   saying "this is the thing you pay for". */
+.pc-buy.standalone {
+  margin: 2.25rem 0 2.75rem; padding: 1.35rem 1.5rem;
+  border-radius: 12px;
+  background: var(--plate); color: var(--on-plate);
+}
+.pc-buy.standalone .price { color: var(--on-plate); }
+.pc-buy.standalone .price small { color: var(--on-plate-soft); }
+.pc-buy.standalone:not(:has(.price)) {
+  background: none; padding: 0;
+  justify-content: flex-start; margin: 2.75rem 0 0.5rem;
+}
+
 .prose pre {
-  background: var(--wash); border: 1px solid var(--line); border-radius: 6px;
+  background: var(--raised); border: 1px solid var(--line); border-radius: 6px;
   padding: 1rem 1.1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6;
 }
 .prose code { font-family: var(--mono); font-size: 0.9em; }
 .prose p code, .prose li code, .prose td code {
-  background: var(--wash); border: 1px solid var(--line);
+  background: var(--raised); border: 1px solid var(--line);
   border-radius: 3px; padding: 0.08em 0.32em; color: var(--ink);
   /* A long unbroken identifier in inline code has no wrap opportunity and
      widens the whole page on a phone (the docs carry things like
@@ -507,22 +638,30 @@ tr.attn td { font-weight: 600; background: var(--wash); color: var(--ink); }
      width/height attributes so the browser can reserve their box; without
      height:auto the explicit height is honoured literally while max-width
      clamps the width, and a 1200x630 panel renders as a stretched portrait. */
-  max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; display: block;
+  max-width: 100%; height: auto; border-radius: 6px; display: block;
+  box-shadow: 0 0 0 1px var(--edge);
 }
 .gallery {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
   gap: 1rem; margin: 1.75rem 0;
 }
+/* Same seam the showcase band had, and the same rule for it: an odd last tile
+   takes the full row rather than sitting stranded at half width. auto-fit means
+   the column count changes with the container, so this is keyed on the item
+   count alone and holds at every width and every gallery length. */
+.gallery > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+.prose .table-scroll { max-width: none; }
 
-/* small screens */
-/* Three across down to the same width the section masthead splits at, so the
-   band has one wide mode rather than a narrow window where five tiles sit two
-   abreast and strand the fifth. */
+/* ---------- small screens ---------- */
 @media (max-width: 55.99rem) {
   .showcase-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Five tiles in two columns strand the fifth at half width, which reads as a
+     broken grid rather than a remainder. Any odd-numbered last tile takes the
+     full row instead. Keyed on count, not on there being five themes, so a
+     seller who ships four or six never meets the same seam. */
+  .showcase-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (max-width: 44rem) {
-  .product-card.flagship .pc-features { columns: 1; }
   .showcase-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 40rem) {
@@ -532,7 +671,7 @@ tr.attn td { font-weight: 600; background: var(--wash); color: var(--ink); }
   .product-card.companion .pc-buy {
     margin-top: 1rem; padding: 1rem 0 0;
     align-self: auto; flex-wrap: wrap;
-    border-left: none; border-top: 1px solid var(--line);
+    border-top: 1px solid var(--line);
   }
 }
 @media (max-width: 35rem) {
@@ -543,13 +682,17 @@ tr.attn td { font-weight: 600; background: var(--wash); color: var(--ink); }
 
 /* Print: prefers-color-scheme still reports dark under print media, so a
    dark-mode reader's saved PDF rendered near-white ink on unprinted white
-   (~2.6:1). Pin the light palette for paper regardless of screen scheme. */
+   (~2.6:1). Pin the light palette for paper regardless of screen scheme, and
+   flatten the plate, which would otherwise print as a solid black rectangle. */
 @media print {
   :root {
-    --paper: #ffffff; --wash: #f7f5f2; --line: #e5e1da;
-    --ink: #14120f; --ink-soft: #5f594f;
+    --ground: #ffffff; --raised: #ffffff; --line: #d8d2c8; --edge: #b9b2a6;
+    --ink: #17130f; --ink-soft: #5c5449;
     --accent: #b5482a; --accent-deep: #8f3820; --on-accent: #ffffff; --coin: #b5482a;
+    --plate: #ffffff; --on-plate: #17130f; --on-plate-mid: #3a3428;
+    --on-plate-soft: #5c5449; --plate-line: #d8d2c8;
   }
   body { background: #fff; color: var(--ink); }
   .site-nav, .skip-link { display: none; }
+  .product-card.flagship, .pc-buy.standalone { border: 1px solid var(--line); }
 }

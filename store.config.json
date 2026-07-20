@@ -12,53 +12,6 @@
   "repo": "Honorboxx/honorbox",
   "sections": [
     {
-      "type": "showcase",
-      "title": "Five premium themes, one config line",
-      "note": "Real screenshots of this same storefront rebuilt with each HonorBox Pro theme.",
-      "items": [
-        {
-          "img": "./assets/previews/terminal.webp",
-          "alt": "The same storefront in the terminal theme: phosphor green type on black",
-          "caption": "terminal: phosphor-on-black, for CLI tools",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        },
-        {
-          "img": "./assets/previews/atrium.webp",
-          "alt": "The same storefront in the atrium theme: minimal graphite type on a plaster ground",
-          "caption": "atrium: minimal, gallery-quiet",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        },
-        {
-          "img": "./assets/previews/brutalist.webp",
-          "alt": "The same storefront in the brutalist theme: loud type, hard shadows",
-          "caption": "brutalist: loud, typographic",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        },
-        {
-          "img": "./assets/previews/editorial.webp",
-          "alt": "The same storefront in the editorial theme: serif type on book white",
-          "caption": "editorial: serif, book-calm",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        },
-        {
-          "img": "./assets/previews/midnight.webp",
-          "alt": "The same storefront in the midnight theme: deep indigo with a single amber accent",
-          "caption": "midnight: indigo night, one lamp",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        }
-      ]
-    },
-    {
       "type": "steps",
       "title": "How the honor box works",
       "items": [
@@ -75,10 +28,6 @@
           "text": "A scheduled GitHub Action polls Stripe, invites each buyer's GitHub account to your private product repo, and keeps your books. No webhooks, no server, no database."
         }
       ]
-    },
-    {
-      "type": "note",
-      "text": "Who sells this way: indie hackers and SaaS builders, template and boilerplate makers, coding-course creators, CLI and API authors, open-source maintainers funding their work, agencies productizing internal tools, students selling a first project. The one hard requirement: your buyers need GitHub accounts, because delivery is a repo invite. Selling physical goods, ebooks for lay readers, or to a general consumer audience? A merchant-of-record platform will serve you better; the first guide below compares them. Selling a handful of copies a month? Also use one. At that volume the fee saving is a couple of dollars, and a merchant of record will handle your VAT for it, which is the better trade. This earns its keep at volume, or when owning the Stripe account and the customer relationship matters to you for its own sake."
     },
     {
       "type": "compare",
@@ -141,6 +90,57 @@
           "the platform",
           "you; your own Stripe account"
         ]
+      ]
+    },
+    {
+      "type": "note",
+      "text": "Do not buy this if you sell to people without GitHub accounts. Delivery is a repository invite, so that is a hard requirement, not a preference. Do not buy it if you sell a handful of copies a month either: at that volume the fee saving is a couple of dollars, and a merchant of record will handle your VAT for it, which is the better trade. This earns its keep at volume, or when owning the Stripe account and the customer relationship matters to you for its own sake."
+    },
+    {
+      "type": "showcase",
+      "title": "Five premium themes, one config line",
+      "note": "Real screenshots of this same storefront rebuilt with each HonorBox Pro theme.",
+      "items": [
+        {
+          "img": "./assets/previews/terminal.webp",
+          "alt": "The same storefront in the terminal theme: phosphor green type on black",
+          "caption": "terminal: phosphor-on-black, for CLI tools",
+          "href": "./honorbox-pro.html",
+          "width": 960,
+          "height": 504
+        },
+        {
+          "img": "./assets/previews/atrium.webp",
+          "alt": "The same storefront in the atrium theme: minimal graphite type on a plaster ground",
+          "caption": "atrium: minimal, gallery-quiet",
+          "href": "./honorbox-pro.html",
+          "width": 960,
+          "height": 504
+        },
+        {
+          "img": "./assets/previews/brutalist.webp",
+          "alt": "The same storefront in the brutalist theme: loud type, hard shadows",
+          "caption": "brutalist: loud, typographic",
+          "href": "./honorbox-pro.html",
+          "width": 960,
+          "height": 504
+        },
+        {
+          "img": "./assets/previews/editorial.webp",
+          "alt": "The same storefront in the editorial theme: serif type on book white",
+          "caption": "editorial: serif, book-calm",
+          "href": "./honorbox-pro.html",
+          "width": 960,
+          "height": 504
+        },
+        {
+          "img": "./assets/previews/midnight.webp",
+          "alt": "The same storefront in the midnight theme: deep indigo with a single amber accent",
+          "caption": "midnight: indigo night, one lamp",
+          "href": "./honorbox-pro.html",
+          "width": 960,
+          "height": 504
+        }
       ]
     },
     {
@@ -221,10 +221,6 @@
           "href": "./sell-code-without-a-marketplace.html"
         }
       ]
-    },
-    {
-      "type": "note",
-      "text": "This store dogfoods its own engine. The checkout you go through is the same one your buyers would. If something feels off, that's a bug report we want."
     }
   ],
   "fulfillment": [

@@ -14,10 +14,10 @@ payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
 # it makes it a decision rather than a side effect of editing the gallery.
 og_image: ./assets/previews/terminal.png
 features:
+  - Reconcile: cross-checks Stripe against GitHub to prove every paid order actually reached its buyer, and names the ones that didn't
+  - Store doctor: preflight your config, payment links, and fulfillment permissions before launch
   - License-key module: ed25519 keys signed in CI, verified offline in your app (JS + Python)
   - 5 premium storefront themes; the terminal theme is published in the free repo as a full code sample
-  - Store doctor: preflight your config, payment links, and fulfillment permissions before launch
-  - Reconcile: cross-checks Stripe against GitHub to prove every paid order actually reached its buyer, and names the ones that didn't
   - Ops bots: auto-acknowledge new support issues, auto-revoke repo access when Stripe refunds
   - Stats: tracker-free sales analytics rendered from your Stripe data, one command
   - Commerce playbook: pricing, the first ten sales, EU VAT, multi-product catalogs (table of contents is public)
