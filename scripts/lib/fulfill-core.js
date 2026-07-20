@@ -164,6 +164,18 @@ function grantProblems(grants) {
   return out;
 }
 
+// A zero-cost fulfillment is a real invite that moved no money: a 100% coupon,
+// a fully-discounted session, or a mispriced grant. It must never read like a
+// normal sale in the log. The failure this guards against is a discount code
+// working in front of an audience while the run reports it exactly like a paid
+// order — the ledger row says amount 0, but nobody reads the ledger mid-launch.
+function isFreeFulfillment(session) {
+  return (
+    (session.amount_total ?? 0) === 0 ||
+    session.payment_status === 'no_payment_required'
+  );
+}
+
 // A buyer who owns the target repo already has access (sellers test-buying
 // their own product) — treat as fulfilled without an invite.
 function isRepoOwner(repo, username) {
@@ -198,6 +210,7 @@ module.exports = {
   shouldRetryInvite,
   inviteAttempts,
   isRepoOwner,
+  isFreeFulfillment,
   grantProblems,
   validUsername,
   extractGithubUsername,

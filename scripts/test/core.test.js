@@ -8,6 +8,7 @@ const {
   ledgerRow,
   nextCursor,
   matchGrant,
+  isFreeFulfillment,
 } = require('../lib/fulfill-core.js');
 const { parseFrontmatter } = require('../lib/fm.js');
 const { renderMarkdown, excerpt, firstRasterImage } = require('../lib/md.js');
@@ -1185,4 +1186,26 @@ test('markdown: a short row is padded, not shifted into the wrong column', () =>
   const html = renderMarkdown('| A | B | C |\n|---|---|---|\n| 1 |\n');
   const row = /<tr>(?:(?!<tr>).)*<td[^>]*>1<\/td>.*/s.exec(html)[0];
   assert.equal((row.match(/<td/g) || []).length, 3, html);
+});
+
+// A 100%-off order is a real invite that moved no money. On 2026-07-20 the live
+// account carried two active 100%-off promotion codes on both live payment
+// links; the surface is closed now, but the coupon path remains (it is how a
+// free E2E test is run), so the engine must still be able to say so out loud.
+// Note the shape this must catch: the live free session came back
+// payment_status="paid" with amount_total=0, NOT "no_payment_required" — a
+// check written against only the latter would miss the real thing.
+test('a zero-cost fulfillment is distinguishable from a real sale', () => {
+  const free = [
+    { amount_total: 0, payment_status: 'paid' },              // observed live shape
+    { amount_total: 0, payment_status: 'no_payment_required' },
+    { payment_status: 'paid' },                                // amount absent
+  ];
+  for (const s of free) {
+    assert.equal(isFreeFulfillment(s), true, JSON.stringify(s));
+  }
+  for (const s of [{ amount_total: 2900, payment_status: 'paid' },
+                   { amount_total: 1, payment_status: 'paid' }]) {
+    assert.equal(isFreeFulfillment(s), false, JSON.stringify(s));
+  }
 });

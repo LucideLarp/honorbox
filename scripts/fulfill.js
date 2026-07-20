@@ -26,6 +26,7 @@ const {
   ledgerRow,
   nextCursor,
   isRepoOwner,
+  isFreeFulfillment,
   grantProblems,
   unmatchedPaidSessions,
   REQUEST_TIMEOUT_MS,
@@ -175,6 +176,13 @@ async function main() {
         // matters when a buyer says no invite arrived.
         const outcome = code === 201 ? `invited ${username} to` : `${username} already had access to`;
         console.log(`fulfilled ${s.id}: ${outcome} ${grant.repo} (HTTP ${code})`);
+      }
+      if (isFreeFulfillment(s)) {
+        console.error(
+          `WARN: ${s.id} fulfilled at ZERO cost — ${row.product} -> ${username} ` +
+            `(payment_status=${s.payment_status}, amount_total=${s.amount_total ?? 0}). ` +
+            `A coupon or discount covered it in full. Confirm this was intended.`
+        );
       }
       ledger.rows.push(row);
       ledgerRefs.add(row.ref);
