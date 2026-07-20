@@ -37,6 +37,13 @@ correctly-configured Payment Link, and wires `store.config.json` +
 `products/<id>.md` for you. Skip to §3. The manual path:
 
 1. Dashboard → Products → **Add product**: name, price (one-time), currency.
+
+   **Use a one-time price, not a recurring one.** The engine delivers on any
+   completed checkout and does not yet act on a subscription ending. Point a
+   grant at a recurring price today and buyers are invited correctly, but a
+   cancellation does nothing: access stays forever. Enforcing that is being
+   built. Until it ships, a recurring price means you are selling a
+   subscription that never lapses.
 2. Create a **Payment Link** for that price:
    - Add a **custom field**: label "GitHub username (for delivery)",
      key `github_username`, type text, **required**.
