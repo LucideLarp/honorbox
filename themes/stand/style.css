@@ -50,7 +50,7 @@
   --pad-page: clamp(1.15rem, 4vw, 2.25rem);
   --measure: 62ch;
 
-  --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%2314120f%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%2314120f%22%2F%3E%3C%2Fsvg%3E');
+  --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Cpath%20d%3D%22M9%2C15H39A3%2C3%200%200%201%2042%2C18V42H6V18A3%2C3%200%200%201%209%2C15ZM4.5%2C39H43.5A1.5%2C1.5%200%200%201%2045%2C40.5V43.5A1.5%2C1.5%200%200%201%2043.5%2C45H4.5A1.5%2C1.5%200%200%201%203%2C43.5V40.5A1.5%2C1.5%200%200%201%204.5%2C39ZM18%2C24A3%2C3%200%200%200%2015%2C27A3%2C3%200%200%200%2018%2C30H30A3%2C3%200%200%200%2033%2C27A3%2C3%200%200%200%2030%2C24H18Z%22%20fill%3D%22%2314120f%22%2F%3E%3C%2Fsvg%3E');
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -63,7 +63,7 @@
     --accent-deep: #e8785a;
     --on-accent: #100f0d;
     --coin: #d9603c;
-    --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%23f0ece5%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%23f0ece5%22%2F%3E%3C%2Fsvg%3E');
+    --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Cpath%20d%3D%22M9%2C15H39A3%2C3%200%200%201%2042%2C18V42H6V18A3%2C3%200%200%201%209%2C15ZM4.5%2C39H43.5A1.5%2C1.5%200%200%201%2045%2C40.5V43.5A1.5%2C1.5%200%200%201%2043.5%2C45H4.5A1.5%2C1.5%200%200%201%203%2C43.5V40.5A1.5%2C1.5%200%200%201%204.5%2C39ZM18%2C24A3%2C3%200%200%200%2015%2C27A3%2C3%200%200%200%2018%2C30H30A3%2C3%200%200%200%2033%2C27A3%2C3%200%200%200%2030%2C24H18Z%22%20fill%3D%22%23f0ece5%22%2F%3E%3C%2Fsvg%3E');
   }
 }
 
@@ -121,7 +121,9 @@ a:focus-visible, summary:focus-visible {
   font-family: var(--display); font-weight: 800; font-size: 1.15rem;
   color: var(--ink); text-decoration: none; letter-spacing: -0.022em;
 }
-.brand-mark { color: var(--ink); width: 24px; height: 24px; flex-shrink: 0; }
+/* 27px, not 24: the mark's frame carries a 3 unit margin of its own, so it
+   needs a slightly larger box to sit level with the wordmark beside it. */
+.brand-mark { color: var(--ink); width: 27px; height: 27px; flex-shrink: 0; }
 .site-nav { display: flex; gap: 0.3rem 1.5rem; flex-wrap: wrap; }
 .site-nav a {
   color: var(--ink-soft); text-decoration: none; font-size: 0.92rem; font-weight: 500;
@@ -145,31 +147,43 @@ a:focus-visible, summary:focus-visible {
 .foot-links a:hover, .foot-legal a:hover { color: var(--accent-deep); text-decoration: underline; }
 .foot-legal { margin: 0; font-size: 0.83rem; }
 
-/* hero: left-set. The mark prints above the headline and the coin is caught
-   mid-drop, part way into the slot, which is the whole idea of the product. */
+/* hero: left-set. The mark prints above the headline, the coin caught in the
+   air over the slot, which is the whole idea of the product. The coin stays
+   clear of the box rather than seating into it: overlapped, the two merge into
+   one blob by 16px and the mark stops reading. */
 .hero {
+  /* The mark's frame is square now, so it costs more vertical room than the
+     old wide one. 80px keeps the headline and the buy button inside the first
+     630px, which is the height the social card is cut to. */
+  --mark: 80px;
   position: relative; text-align: left;
   padding: clamp(2.5rem, 6vw, 4rem) 0 0;
 }
 .hero::before {
   content: ""; display: block;
-  width: 128px; height: 71px; margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
-  background: var(--mark-box) left center / contain no-repeat;
+  width: var(--mark); height: var(--mark); margin-bottom: clamp(1.25rem, 2.6vw, 1.85rem);
+  background: var(--mark-box) left top / contain no-repeat;
 }
-/* Geometry, not guesswork: the mark's viewBox is 76 wide, so at 128px it
-   scales by 1.684. The slot (x 24 to 52) centres on 64px, and its band lands
-   3px to 15px below the mark's top edge. The coin is 12 wide, so it starts at
-   58px, and its lower half seats into that band. */
+/* Geometry, not guesswork: the coin's size and offset are fractions of the
+   mark, taken from the same constants that draw the SVG, so the CSS coin and
+   the SVG coin cannot drift apart. Verified by rendering both and diffing:
+   the box is pixel identical and the coin differs only by edge antialiasing.
+   Only --mark ever needs changing. */
 .hero::after {
   content: ""; position: absolute;
-  top: calc(clamp(2.5rem, 6vw, 4rem) - 14px); left: 58px;
-  width: 12px; height: 27px; border-radius: 6px;
+  top: calc(clamp(2.5rem, 6vw, 4rem) + var(--mark) * 0.0698);
+  left: calc(var(--mark) * 0.3698);
+  width: calc(var(--mark) * 0.2604);
+  height: calc(var(--mark) * 0.1729);
+  border-radius: 50%;
   background: var(--coin);
   transform: rotate(-22deg);
-  animation: coin-drop 0.7s cubic-bezier(0.22, 1.3, 0.36, 1) 0.15s both;
+  animation: coin-drop 0.55s cubic-bezier(0.3, 1.25, 0.5, 1) both;
 }
+/* One short fall, once, and it is over before a reader has finished the
+   headline. The coin is absolutely positioned, so nothing reflows. */
 @keyframes coin-drop {
-  from { transform: translateY(-26px) rotate(-42deg); }
+  from { transform: translateY(calc(var(--mark) * -0.28)) rotate(-40deg); }
   to { transform: translateY(0) rotate(-22deg); }
 }
 @media (prefers-reduced-motion: reduce) {

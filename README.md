@@ -1,4 +1,9 @@
-<p align="center"><img src="assets/logo.svg" alt="HonorBox" width="340"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+    <img src="assets/logo.svg" alt="HonorBox" width="320">
+  </picture>
+</p>
 
 **Sell digital products with just Stripe + GitHub. No platform, no monthly fee, no server.**
 
