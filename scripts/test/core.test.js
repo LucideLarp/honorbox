@@ -370,11 +370,51 @@ test('frontmatter: an unclosed block is reported, not published as body text', (
 
 test('markdown: structure and escaping', () => {
   const html = renderMarkdown('# T\n\nHello **world** `x<y`\n\n- a\n- b\n\n```\ncode <tag>\n```');
-  assert.ok(html.includes('<h1>T</h1>'));
+  assert.ok(html.includes('<h1 id="t">T</h1>'));
   assert.ok(html.includes('<strong>world</strong>'));
   assert.ok(html.includes('<code>x&lt;y</code>'));
   assert.ok(html.includes('<ul><li>a</li><li>b</li></ul>'));
   assert.ok(html.includes('<pre><code>code &lt;tag&gt;</code></pre>'));
+});
+
+test('markdown: headings carry the anchor the docs already link to', () => {
+  // setup.md has linked to "#6-what-this-costs" since it was written and
+  // nothing emitted an id for it, so the link was dead on the published page.
+  // The slug follows GitHub's rules because that is what an author writing a
+  // fragment link will assume.
+  const html = renderMarkdown('## 6. What this costs\n\n## Delivery model\n\n## The `ref` column');
+  assert.ok(html.includes('<h2 id="6-what-this-costs">'), html);
+  assert.ok(html.includes('<h2 id="delivery-model">'), html);
+  assert.ok(html.includes('<h2 id="the-ref-column">'), 'formatting is stripped before slugging');
+
+  // Duplicate headings must not produce duplicate ids: that is invalid HTML
+  // and makes the anchor ambiguous.
+  const dupes = renderMarkdown('## Notes\n\n## Notes\n\n## Notes');
+  assert.ok(dupes.includes('<h2 id="notes">'), dupes);
+  assert.ok(dupes.includes('<h2 id="notes-1">'), dupes);
+  assert.ok(dupes.includes('<h2 id="notes-2">'), dupes);
+
+  // A heading that slugs to nothing gets no id rather than id="".
+  assert.ok(renderMarkdown('## ...').includes('<h2>'), 'no empty id attribute');
+});
+
+test('every fragment link in the shipped docs lands on a real heading', () => {
+  // The failure this catches is silent: a dead "#section" link looks fine in
+  // the markdown, renders fine, and simply does nothing when clicked.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const docsDir = path.join(__dirname, '..', '..', 'docs');
+  const dead = [];
+  for (const f of fs.readdirSync(docsDir).filter((n) => n.endsWith('.md'))) {
+    const src = fs.readFileSync(path.join(docsDir, f), 'utf8');
+    const ids = new Set(
+      [...renderMarkdown(src).matchAll(/<h[1-4] id="([^"]+)"/g)].map((m) => m[1])
+    );
+    for (const m of src.matchAll(/\]\((#[a-z0-9-]+)\)/g)) {
+      if (!ids.has(m[1].slice(1))) dead.push(`${f} -> ${m[1]}`);
+    }
+  }
+  assert.deepEqual(dead, [], `dead in-page anchors:\n  ${dead.join('\n  ')}`);
 });
 
 test('markdown: unsafe link hrefs are neutralized', () => {

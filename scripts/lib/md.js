@@ -210,7 +210,38 @@ function listAt(lines, start, base) {
 // purpose: markdown rendering stays a pure string->string function with no
 // filesystem in it, so the caller that KNOWS where the images live is the one
 // that measures them. Without it the markup is byte-for-byte what it was.
+// Heading anchors, using GitHub's slug rules, because that is the shape the
+// docs were already written against: setup.md has linked to
+// "#6-what-this-costs" since it was written, and nothing ever emitted an id
+// for it to land on, so the link was dead on the published page. Authors
+// reasonably assume a markdown heading is linkable; making that true here is
+// cheaper than catching every dead fragment by review.
+//
+// Formatting is stripped before slugging so the id follows the words a reader
+// sees, not the markup: "## The `ref` column" anchors as "the-ref-column".
+function headingSlug(text) {
+  return String(text == null ? '' : text)
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9 -]/g, '')
+    .replace(/\s+/g, '-');
+}
+
+// Two headings can legitimately read the same ("## Notes" twice). Duplicate
+// ids are invalid HTML and make the anchor ambiguous, so later collisions get
+// a suffix, matching GitHub again.
+function uniqueSlug(base, seen) {
+  if (!base) return '';
+  const n = seen.get(base) || 0;
+  seen.set(base, n + 1);
+  return n ? `${base}-${n}` : base;
+}
+
 function renderMarkdown(src, opts = {}) {
+  const slugs = new Map();
   const lines = src.split(/\r?\n/);
   const out = [];
   let i = 0;
@@ -259,7 +290,8 @@ function renderMarkdown(src, opts = {}) {
     const heading = /^(#{1,4})\s+(.*)$/.exec(line);
     if (heading) {
       const level = heading[1].length;
-      out.push(`<h${level}>${inline(heading[2])}</h${level}>`);
+      const id = uniqueSlug(headingSlug(heading[2]), slugs);
+      out.push(`<h${level}${id ? ` id="${id}"` : ''}>${inline(heading[2])}</h${level}>`);
       i++;
       continue;
     }

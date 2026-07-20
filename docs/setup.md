@@ -42,7 +42,13 @@ correctly-configured Payment Link, and wires `store.config.json` +
      key `github_username`, type text, **required**.
    - After payment → show a confirmation message like: *"You're in. Your GitHub
      account will be invited to the private repo, usually within minutes and
-     always within a few hours. Trouble? Reply to your receipt."*
+     always within a few hours. Watch for the email from GitHub and accept the
+     invite: it expires after 7 days. Trouble? Reply to your receipt."*
+
+     Say the "accept it" part. Delivery is not finished when the invite is
+     sent, it is finished when the buyer accepts, and a buyer who never
+     realised there was a second step looks identical to a happy one in every
+     record you keep. See [how-it-works.md](how-it-works.md#delivery-model).
    - Leave "allow promotion codes" **off** unless you are actively running a
      coupon. `init.js` generates links with it off on purpose: a link that
      accepts typed codes plus any live 100%-off coupon is a free copy of your

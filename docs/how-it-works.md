@@ -31,6 +31,25 @@ product repo. That's deliberate:
 - It's durable: buyers keep access and get updates via `git pull`.
 - It's auditable: the invite log is the entitlement record.
 
+**Sending the invite is not the same as delivering it.** The buyer has access
+only once they *accept*, and GitHub expires an unaccepted invitation seven days
+after it was created. Until they accept, every system you own reads "delivered":
+Stripe says paid, the ledger has a row, the run is green. If they never open the
+email, that stays true right up to the moment the invitation lapses, and then
+they have nothing permanently, with nothing anywhere saying so.
+
+The engine does not watch for this: `fulfill.js`'s job ends when GitHub accepts
+the invite. Two things make it visible and one makes it go away:
+
+- Put "accept the invite" in your post-payment confirmation and receipt. Most
+  buyers who miss it simply did not realise there was a second step.
+- Watch `GET /repos/{owner}/{repo}/invitations` for anything old. Pro's
+  [ops bots](https://github.com/Honorboxx/honorbox-pro) sweep it for you, and
+  its reconciler pairs it back to the money.
+- Re-issuing an invitation restarts the seven-day clock, so an invitation can be
+  held open indefinitely. Doing it by hand from the repo's Settings page takes
+  ten seconds; the Pro sweep does it automatically before each one expires.
+
 The cost: by default delivery is not instant (the poll runs on a schedule and
 GitHub sometimes delays it). Set that expectation at checkout:
 "usually within minutes, always within a few hours." If you want near-instant
@@ -74,6 +93,7 @@ transparency; keeping it private is the default.
 | Failure | What happens |
 |---|---|
 | Buyer typos username | Order flagged `needs_attention`; fix by hand from Stripe dashboard (buyer email is there); refund if unreachable |
+| Buyer never accepts the invite | Nothing looks wrong anywhere: paid, ledgered, green run. The invitation expires after 7 days and they are left with nothing. Re-invite them (it restarts the clock), and see [Delivery model](#delivery-model) |
 | GitHub cron delayed | Delivery late by minutes to hours; confirmation message sets expectation |
 | Actions outage | Sales queue up; next run drains the backlog (poll + idempotency) |
 | Stripe key leaked | Restricted key limits blast radius to reading checkout sessions; rotate in dashboard |
