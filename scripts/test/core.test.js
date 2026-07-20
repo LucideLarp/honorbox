@@ -974,3 +974,82 @@ test('markdown: wrapped ordered-list items join like unordered ones', () => {
   assert.ok(html.includes('<li>step one continued</li>'), html);
   assert.ok(html.includes('<li>step two</li>'), html);
 });
+
+// ---------- free-tier cost: the "$0/month" claim is a cron budget ----------
+
+// GitHub bills PRIVATE-repo Actions per job, rounded UP to a whole minute,
+// against 2,000 free minutes/month on the Free plan:
+//   "GitHub rounds the minutes and partial minutes each job uses up to the
+//    nearest whole minute" — docs.github.com/en/billing/reference/actions-runner-pricing
+// A fulfillment run is ~15s, so it bills 1 minute whether or not it finds a
+// sale, and the monthly bill is just the run count. Verified against this
+// org's own metered usage: 44 runs of ~10-17s billed exactly 44.00 minutes.
+const FREE_TIER_MINUTES = 2000;
+
+// Runs per hour for a cron minute-field. "*/N" fires at every minute divisible
+// by N (so */25 is :00,:25,:50 = 3, not 2), a list is its length, a literal is 1.
+function runsPerHour(minuteField) {
+  if (minuteField === '*') return 60;
+  const step = /^\*\/(\d+)$/.exec(minuteField);
+  if (step) return Math.ceil(60 / Number(step[1]));
+  return minuteField.split(',').length;
+}
+
+// Worst case: every scheduled run actually fires, in a 31-day month.
+function monthlyBillableMinutes(cron) {
+  return runsPerHour(cron.trim().split(/\s+/)[0]) * 24 * 31;
+}
+
+function cronOf(wfPath) {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '..', '..', wfPath), 'utf8');
+  // the first uncommented `- cron: "..."` line
+  const m = /^\s*-\s*cron:\s*["']([^"']+)["']/m.exec(
+    src.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n')
+  );
+  assert.ok(m, `no active cron found in ${wfPath}`);
+  return m[1];
+}
+
+test('cron budget: the shipped fulfillment poll fits inside the free tier', () => {
+  // This is the whole "$0/month" claim. The template shipped */15 = 2,976
+  // billable minutes against a 2,000 allowance — 976 over, ~$5.86/month — so
+  // the headline was false for the configuration we recommend.
+  const cron = cronOf('setup/workflows/fulfill.yml.example');
+  const minutes = monthlyBillableMinutes(cron);
+  assert.ok(
+    minutes <= FREE_TIER_MINUTES,
+    `poll cron "${cron}" costs ${minutes} billable min/month, over the ${FREE_TIER_MINUTES} free tier`
+  );
+  // Real headroom, not a photo finish: sale-triggered runs cost a minute each
+  // (fulfill-on-sale.yml), and a store with no headroom bills on its 1st sale.
+  assert.ok(
+    FREE_TIER_MINUTES - minutes >= 400,
+    `poll cron "${cron}" leaves only ${FREE_TIER_MINUTES - minutes} min for sale-triggered runs`
+  );
+});
+
+test('cron budget: the heartbeat fits alongside an hourly poll', () => {
+  // heartbeat.yml's cron runs in the seller's PUBLIC repo (free minutes), but
+  // every nudge starts a run in the PRIVATE ops repo, which bills a full
+  // minute even when it finds nothing. The template shipped */5 = 8,928
+  // billable minutes: 4.5x the entire free tier.
+  const minutes = monthlyBillableMinutes(cronOf('setup/workflows/heartbeat.yml'));
+  const hourlyPoll = 24 * 31;
+  assert.ok(
+    minutes + hourlyPoll <= FREE_TIER_MINUTES,
+    `heartbeat (${minutes}) + hourly poll (${hourlyPoll}) exceeds the ${FREE_TIER_MINUTES} free tier`
+  );
+});
+
+test('cron budget: the arithmetic is published where a skeptic will check it', () => {
+  // A cost claim a reader cannot verify is a cost claim we get to be wrong
+  // about quietly. docs/setup.md must carry the actual numbers.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const setup = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'setup.md'), 'utf8');
+  assert.ok(/2,000/.test(setup), 'setup.md must state the free-tier allowance');
+  assert.ok(/1,488/.test(setup), 'setup.md must state the shipped poll cost');
+  assert.ok(/round/i.test(setup), 'setup.md must state the per-job rounding rule');
+});

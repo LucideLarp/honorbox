@@ -16,7 +16,22 @@ name: Fulfill orders
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    # Every 30 minutes. This cadence is chosen by the free tier, not by taste.
+    #
+    # GitHub bills PRIVATE-repo Actions per job, rounded UP to a whole minute,
+    # against 2,000 free minutes/month on the Free plan. This job runs ~15
+    # seconds and is therefore billed as 1 minute, every time it fires. So the
+    # monthly cost of a poll is just its run count:
+    #
+    #   */30 -> 2/h * 24 * 31 = 1,488 min/month   fits (512 min spare)
+    #   */20 -> 3/h * 24 * 31 = 2,232 min/month   OVER by 232
+    #   */15 -> 4/h * 24 * 31 = 2,976 min/month   OVER by 976 (~$5.86/month)
+    #
+    # The spare 512 minutes cover sale-triggered runs (fulfill-on-sale.yml,
+    # 1 minute per sale) and manual dispatches. Tightening this cron is the
+    # one edit here that can put a seller over the free tier — see
+    # docs/setup.md ("What this costs") before you change it.
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 permissions:

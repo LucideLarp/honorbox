@@ -1,8 +1,10 @@
 # Instant delivery (optional)
 
-HonorBox's default fulfillment is a poll: zero infrastructure, zero accounts
-beyond Stripe + GitHub, delivery within minutes, sometimes hours when
-GitHub's cron drifts. The *payment* is always instant; this page is about
+HonorBox's default fulfillment is a poll every 30 minutes: zero
+infrastructure, zero accounts beyond Stripe + GitHub, and an invite a median
+of ~15 minutes after payment — sometimes hours when GitHub's cron drifts. (The
+cadence is set by the free Actions tier, not by taste; the arithmetic is in
+[setup.md](setup.md).) The *payment* is always instant; this page is about
 shrinking the wait for the *invite*.
 
 Both upgrades here are opt-in. The poll stays on either way; it is the
@@ -10,8 +12,8 @@ safety net, and skipping these keeps a perfectly working store.
 
 | Mode | Typical delivery | Worst case | What you add |
 |---|---|---|---|
-| Poll (default) | minutes | hours (cron drift) | nothing |
-| + Heartbeat | ≤ ~10 min | two independent crons must both drift | 1 fine-grained token |
+| Poll (default) | ~15 min median | hours (cron drift) | nothing |
+| + Heartbeat | ~15 min median | two independent crons must both drift | 1 fine-grained token |
 | + Webhook relay | **~15–60 seconds** | falls back to the poll | 1 free serverless endpoint + webhook secret + 1 token |
 
 ## Webhook mode: delivery in seconds
@@ -99,13 +101,20 @@ from Stripe's API. A forged dispatch can at worst trigger an empty run.
 | Relay down / Stripe webhook outage | Delivery degrades to the poll, which is exactly today's behavior. Stripe also retries failed webhook deliveries for days and emails you about a failing endpoint. |
 | Double delivery (webhook + poll race) | The two workflows share a concurrency group so they serialize; the processed-set and ledger-ref guard make the second run a no-op; the GitHub invite call itself is idempotent (204 if already invited). |
 
-## Heartbeat: tighter cadence, no new accounts
+## Heartbeat: a second scheduler, no new accounts
 
 No relay and no webhook, just a second, independent scheduler. A workflow in a
 *different* repo (your public storefront fork is the natural home) fires
-every 5 minutes and `workflow_dispatch`es the ops fulfill workflow. GitHub
-crons drift independently per repo, and a dispatched run starts promptly,
-so two schedulers cut the odds of a long gap without any always-on machine.
+hourly and `workflow_dispatch`es the ops fulfill workflow. GitHub crons drift
+independently per repo, and a dispatched run starts promptly, so two
+schedulers cut the odds of a long gap without any always-on machine.
+
+Heartbeat buys **reliability, not speed**. Pair it with an hourly poll
+(`0 * * * *` in `fulfill.yml`, `30 * * * *` here) and you get the same
+~15-minute median as the shipped `*/30` poll, for the same 1,488 Actions
+minutes a month, but from two schedulers instead of one — so a single
+scheduler drifting no longer means a long silence. It does not beat the
+webhook relay, and it is not free to run tighter: see the cost note below.
 
 Set up: copy `setup/workflows/heartbeat.yml` into the storefront repo's
 `.github/workflows/`, add secret `OPS_DISPATCH_TOKEN` (fine-grained PAT:
@@ -122,7 +131,13 @@ eventually loses its heartbeat (you get an email; any push re-arms).
   fine-grained GitHub token, ~10 minutes. Ongoing: a token rotation once a
   year and one more place where a config can rot.
 - **Heartbeat:** one fine-grained token and a workflow file. Ongoing: the
-  same token rotation, plus Actions minutes for a no-op poll every 5 minutes.
+  same token rotation, plus Actions minutes. The heartbeat's own cron runs in
+  your public repo, where minutes are free, but each nudge starts a run in the
+  **private** ops repo, and private runs bill a whole minute each even when
+  they find nothing. So a nudge costs exactly what a poll costs: 1 minute.
+  Hourly here + hourly in `fulfill.yml` = 1,488 min/month, inside the free
+  2,000. A `*/5` heartbeat would be 8,928 min/month — 4.5x the free tier.
+  The arithmetic is in [setup.md](setup.md).
 - **Staying on the plain poll costs nothing** and remains the default:
   set the buyer's expectation at checkout ("usually within minutes, always
   within a few hours") and beat it.

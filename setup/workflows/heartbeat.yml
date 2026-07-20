@@ -27,20 +27,37 @@
 #   OPS_WORKFLOW = workflow file to nudge (default fulfill.yml)
 #   OPS_BRANCH   = branch that workflow lives on (default main)
 #
+# COST — read this before tightening the cron:
+#   This cron runs in your PUBLIC storefront repo, where Actions minutes are
+#   free. But every nudge starts a run in your PRIVATE ops repo, and private
+#   runs are billed per job, rounded UP to a whole minute, against 2,000 free
+#   minutes/month. A nudge that finds no sales still costs a full minute.
+#   So: 1 nudge = 1 billable minute in the ops repo.
+#
+#   Hourly here + hourly in fulfill.yml (offset, below) = 744 + 744 = 1,488
+#   min/month, the same bill as a lone */30 poll but with two independent
+#   schedulers, so one drifting scheduler no longer means a long gap.
+#
+#   A */5 heartbeat would be 12/h * 24 * 31 = 8,928 billable minutes: 4.5x the
+#   entire free tier, ~$41/month. Do not do this.
+#
 # Limits:
 #   - This cron drifts too; it adds redundancy, not precision.
 #   - On PUBLIC repos GitHub disables schedules after 60 days without repo
 #     activity (you get an email; any push re-arms it).
-#   - Each nudge burns ~½ minute of the ops repo's Actions quota if it runs;
-#     private-repo free tier is 2,000 min/month. */5 nudging an always-run
-#     workflow fits, but don't tighten the cron below 5 minutes (GitHub's
-#     minimum anyway).
+#   - GitHub's minimum schedule interval is 5 minutes; the limit that binds
+#     here is the ops repo's minute budget, not that floor.
+#
+# IF YOU ENABLE THIS, loosen fulfill.yml's cron to hourly ("0 * * * *") so the
+# two together stay inside the free tier. Leaving fulfill.yml at */30 AND
+# running this hourly is 1,488 + 744 = 2,232 min/month, which is over.
 
 name: Fulfillment heartbeat
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # Hourly at :30, offset from the fulfill.yml poll it partners with.
+    - cron: "30 * * * *"
   workflow_dispatch:
 
 permissions: {} # needs nothing from THIS repo, not even the default token

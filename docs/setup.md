@@ -1,7 +1,8 @@
 # Setup: from fork to first sale
 
-Time: ~30 minutes. Cost: $0/month. You need a GitHub account and an activated
-Stripe account (charges enabled).
+Time: ~30 minutes. Cost: $0/month — the arithmetic is in
+[§6](#6-what-this-costs), not asserted. You need a GitHub account and an
+activated Stripe account (charges enabled).
 
 ## 1. Your storefront repo
 
@@ -104,7 +105,58 @@ Keep secrets and state **out of your public repo**:
 5. Run the workflow once manually (Actions → Fulfill orders → Run workflow) and
    check the log.
 
-## 6. Test the whole pipe before launch
+## 6. What this costs
+
+$0/month, and here is the arithmetic rather than the assurance.
+
+**GitHub Pages + the storefront build.** Your storefront repo is public, and
+Actions minutes in public repositories are not billed at all — GitHub's own
+wording is "There are no billable minutes when using GitHub Actions in public
+repositories." So the site build and deploy are free at any frequency.
+
+**The fulfillment poll.** This is the only part with a meter on it. Your ops
+repo is private, and private-repo Actions bill against **2,000 free
+minutes/month** on the GitHub Free plan. Two rules decide the bill:
+
+- Each *job* is rounded **up to a whole minute** — "GitHub rounds the minutes
+  and partial minutes each job uses up to the nearest whole minute."
+- A fulfillment run takes ~15 seconds, so it is billed as **1 minute**,
+  whether it finds a sale or not.
+
+So the monthly cost of polling is simply its run count, and the shipped
+`*/30` cron is sized to fit a 31-day month:
+
+| Poll cron | Runs/month (31d) | Billable minutes | Inside 2,000? |
+|---|---|---|---|
+| **`*/30` (shipped default)** | 1,488 | 1,488 | **yes** — 512 spare |
+| `*/20` | 2,232 | 2,232 | no — 232 over |
+| `*/15` | 2,976 | 2,976 | no — 976 over (~$5.86/mo at $0.006/min) |
+| `*/5` | 8,928 | 8,928 | no — 4.5x the tier |
+
+The 512 spare minutes are real headroom, not rounding: they cover
+sale-triggered runs (`fulfill-on-sale.yml` costs 1 minute per sale, so 512
+sales/month before the free tier binds) and any manual re-runs.
+
+If you turn on the optional heartbeat (§ [instant-delivery.md](instant-delivery.md)),
+loosen this cron to hourly — heartbeat nudges cost an ops-repo minute each, and
+hourly + hourly is the same 1,488 minutes as a lone `*/30`.
+
+**What you actually wait for.** With the `*/30` default and no webhook relay,
+a buyer's invite lands a median of **~15 minutes** after payment (uniform
+arrival inside a 30-minute window) and ~30 minutes worst case *if GitHub runs
+the cron on time*. It often does not: GitHub's scheduler is best-effort and
+drops scheduled runs on quiet repos, so real worst case is a few hours. That
+is why the confirmation message promises "usually within minutes, always
+within a few hours" and why webhook mode (seconds, and free) exists for
+sellers who want the wait gone.
+
+**Stripe** takes its per-transaction percentage and no monthly fee. That is a
+cost per *sale*, not per month, and it is the only money that leaves.
+
+The one edit that can put you over: tightening the poll cron. Everything else
+here scales with sales, not with time.
+
+## 7. Test the whole pipe before launch
 
 1. In Stripe, create a coupon for **100% off** with 1–2 max redemptions and a
    promotion code only you know.
@@ -113,7 +165,7 @@ Keep secrets and state **out of your public repo**:
 3. Run the fulfillment workflow; confirm the invite arrives and the ledger row
    appears. Refund/cleanup isn't needed; the order was $0.
 
-## 7. Going live checklist
+## 8. Going live checklist
 
 - [ ] Payment link opens and shows your product + custom field
 - [ ] `store.config.json` fulfillment uses the `plink_` id, not the URL
