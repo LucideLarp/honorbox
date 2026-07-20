@@ -149,7 +149,7 @@
         },
         {
           "q": "Do I need HonorBox Pro to use the engine?",
-          "a": "No. The free core is a complete store: one theme, checkout, fulfillment, docs. Pro adds the offline license-key module, the premium themes, and multi-product catalog patterns. Buying it funds the free core."
+          "a": "No. The free core is a complete store: two themes, checkout, fulfillment, docs. Pro adds the offline license-key module, the premium themes, and multi-product catalog patterns. Buying it funds the free core."
         },
         {
           "q": "Does the fulfillment bot need my full Stripe secret key?",

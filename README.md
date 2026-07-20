@@ -102,17 +102,18 @@ and the builder adds a public `/trust` page for it. Off by default.
 
 The free core ships `stand` (warm paper) **and `terminal`** (phosphor CRT).
 The latter is a full Pro theme published here as an auditable sample of the
-paid pack's code quality. Pro adds three more, each a complete hand-tuned
+paid pack's code quality. Pro adds four more, each a complete hand-tuned
 design, switchable with one config line:
 
 | | |
 |---|---|
-| ![terminal](assets/previews/terminal.webp) | ![brutalist](assets/previews/brutalist.webp) |
-| ![editorial](assets/previews/editorial.webp) | ![midnight](assets/previews/midnight.webp) |
+| ![terminal](assets/previews/terminal.webp) | ![atrium](assets/previews/atrium.webp) |
+| ![brutalist](assets/previews/brutalist.webp) | ![editorial](assets/previews/editorial.webp) |
+| ![midnight](assets/previews/midnight.webp) | |
 
 ## Free core vs Pro
 
-The free core is a **complete store**: one theme, checkout, fulfillment,
+The free core is a **complete store**: two themes, checkout, fulfillment,
 docs. [HonorBox Pro ($29, one-time)](https://honorboxx.github.io/honorbox/honorbox-pro.html)
 adds an offline ed25519 license-key module, five premium themes, multi-product
 catalog patterns, and a commerce playbook. Buying it funds the free core.
