@@ -13,7 +13,7 @@
   "sections": [
     {
       "type": "showcase",
-      "title": "Four premium themes, one config line",
+      "title": "Five premium themes, one config line",
       "note": "Real screenshots of this same storefront rebuilt with each HonorBox Pro theme.",
       "items": [
         {
@@ -26,8 +26,8 @@
         },
         {
           "img": "./assets/previews/editorial.webp",
-          "alt": "The same storefront in the editorial theme: serif type, magazine rules",
-          "caption": "editorial: serif, magazine-calm",
+          "alt": "The same storefront in the editorial theme: serif type on book white",
+          "caption": "editorial: serif, book-calm",
           "href": "./honorbox-pro.html",
           "width": 1200,
           "height": 630
@@ -42,8 +42,16 @@
         },
         {
           "img": "./assets/previews/midnight.webp",
-          "alt": "The same storefront in the midnight theme: deep blue, product-launch look",
-          "caption": "midnight: deep-blue product-launch",
+          "alt": "The same storefront in the midnight theme: deep indigo with a single amber accent",
+          "caption": "midnight: indigo night, one lamp",
+          "href": "./honorbox-pro.html",
+          "width": 1200,
+          "height": 630
+        },
+        {
+          "img": "./assets/previews/atrium.webp",
+          "alt": "The same storefront in the atrium theme: minimal graphite type on a plaster ground",
+          "caption": "atrium: minimal, gallery-quiet",
           "href": "./honorbox-pro.html",
           "width": 1200,
           "height": 630
