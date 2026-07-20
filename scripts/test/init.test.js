@@ -146,3 +146,33 @@ test('init: --dry-run does not demand a Stripe key it will never use', () => {
   assert.equal(res.status, 0, res.stdout + res.stderr);
   assert.match(res.stdout, /dry run/);
 });
+
+test('init: --dry-run=true is refused, not silently ignored', () => {
+  // has() matched the exact token `--dry-run` while KNOWN_FLAGS blessed
+  // `--dry-run=true` as valid, so the = spelling passed validation, evaluated
+  // FALSE, and reached the live Stripe create path. A command that literally
+  // says dry-run created real Products and Payment Links on the operator's
+  // account; only a fake key stopped the reproduction. Found by crew-reviewer.
+  const dir = tmp();
+  const cfg = path.join(dir, 'store.config.json');
+  fs.writeFileSync(cfg, JSON.stringify({ name: 'S', url: 'https://s.io', fulfillment: [] }, null, 2));
+  for (const spelling of ['--dry-run=true', '--dry-run=false']) {
+    const res = runInit(['--name', 'My Tool', '--price', '2900', '--repo', 'o/r',
+      '--config', cfg, '--products', path.join(dir, 'products'), spelling, '--yes']);
+    assert.equal(res.status, 2, `${spelling} should refuse, got ${res.status}: ${res.stdout}${res.stderr}`);
+    assert.match(res.stderr, /switch and takes no value/, res.stderr);
+    // The point of the test: nothing reached Stripe.
+    assert.doesNotMatch(res.stderr, /v1\/products/, `${spelling} reached the Stripe API: ${res.stderr}`);
+  }
+});
+
+test('init: a value flag may still use = (the switch rule is not a blanket ban)', () => {
+  const dir = tmp();
+  const cfg = path.join(dir, 'store.config.json');
+  fs.writeFileSync(cfg, JSON.stringify({ name: 'S', url: 'https://s.io', fulfillment: [] }, null, 2));
+  const res = runInit(['--name=My Tool', '--price=2900', '--repo=o/r',
+    '--config', cfg, '--products', path.join(dir, 'products'), '--dry-run'],
+    { STRIPE_SECRET_KEY: '' });
+  assert.equal(res.status, 0, res.stdout + res.stderr);
+  assert.match(res.stdout, /dry run/);
+});

@@ -34,6 +34,20 @@ const has = (name) => process.argv.includes(`--${name}`);
 
 const KNOWN_FLAGS = ['name', 'price', 'currency', 'repo', 'id', 'config', 'products', 'dry-run', 'yes', 'help'];
 
+// Switches take no value. `has()` matches the exact token, so `--dry-run=true`
+// evaluated FALSE while passing flag validation: a command that literally says
+// dry-run created live Stripe objects on the operator's account. Refuse the
+// spelling instead of interpreting it — `--dry-run=false` is the same trap
+// pointing the other way, and on a money path an ambiguous switch should stop,
+// not guess.
+const SWITCHES = ['dry-run', 'yes', 'help'];
+function switchesWithValues(argv) {
+  return argv
+    .filter((a) => a.startsWith('--') && a.includes('='))
+    .map((a) => a.slice(2).split('=')[0])
+    .filter((f) => SWITCHES.includes(f));
+}
+
 // A typo'd flag used to be discarded in silence, so `--reppo you/x` died with
 // "--repo is required" — technically true and completely unhelpful. Worse, a
 // typo'd --repo on a real run would have created live Stripe objects pointing
@@ -118,6 +132,10 @@ async function main() {
   const unknown = unknownFlags(process.argv.slice(2));
   if (unknown.length) {
     die(`unknown flag${unknown.length > 1 ? 's' : ''} ${unknown.map((f) => `--${f}`).join(', ')}. Known flags: ${KNOWN_FLAGS.map((f) => `--${f}`).join(' ')}`);
+  }
+  const valued = switchesWithValues(process.argv.slice(2));
+  if (valued.length) {
+    die(`${valued.map((f) => `--${f}`).join(', ')} ${valued.length > 1 ? 'are switches' : 'is a switch'} and take${valued.length > 1 ? '' : 's'} no value. Write --${valued[0]} on its own, or leave it off.`);
   }
   // --dry-run touches nothing, so demanding a key for it turns away the most
   // sensible first move a stranger can make: seeing what this would do before
