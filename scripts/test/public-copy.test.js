@@ -146,20 +146,26 @@ test('the built store carries neither, if it has been built', () => {
   assert.deepEqual(hits, [], `leaked into the built store:\n  ${hits.join('\n  ')}`);
 });
 
-// ---------- House style: no em dashes ----------------------------------------
+// ---------- House style: no long dashes --------------------------------------
 // Heavy em dash use is the most recognisable tell of machine-written prose, so
 // we ship none: not in copy, not in a comment, not in a workflow file. A comma,
 // a colon, a full stop or brackets says the same thing without the tell.
 //
-// Only U+2014 is a defect. U+2013 stays legal because it is the correct
-// character in a numeric range ("6-12 months" is written with one in
-// least-privilege.md), and hyphens and minus signs are a different character
-// again. Matching the one codepoint keeps this from touching any of them.
+// Both long dashes are barred, and the reason they are handled together is that
+// splitting them needs a heuristic. The em dash (U+2014) is never legitimate
+// here. The en dash (U+2013) is only ever barred when it does a comma's job,
+// which no checker can tell from a genuine range, so we sidestep the judgement
+// call: ranges are written with the ordinary hyphen ("6-12 months"), which
+// leaves any en dash in the tree a defect by construction.
 //
-// Built from the codepoint rather than typed, because this file is inside the
+// The plain hyphen is untouched, in compound words, flags, file names, code and
+// URLs, because only these two codepoints are matched. A minus sign is a third
+// character again and is likewise never matched.
+//
+// Built from codepoints rather than typed, because this file sits inside the
 // tree it scans: a literal here is a hit on itself. The first run of this test
 // proved that by failing on its own definition.
-const EM_DASH = String.fromCodePoint(0x2014);
+const LONG_DASHES = [String.fromCodePoint(0x2014), String.fromCodePoint(0x2013)];
 
 // Binary and third-party files. assets/fonts/ holds the upstream OFL licence
 // texts, which we are not free to reword, so a dash arriving there is not our
@@ -174,7 +180,7 @@ const NOT_OUR_PROSE = /\.(png|jpe?g|gif|webp|ico|woff2?|ttf|otf|eot)$|^assets\/f
 // em dash, and every file inside it must still carry one, so cleaning a file
 // fails this test until its entry is deleted. That is what stops a quarantine
 // list quietly turning into the place exceptions go to live forever.
-const EM_DASH_QUARANTINE = {
+const LONG_DASH_QUARANTINE = {
   'scripts/fulfill.js': 'money path; edits route through the engine lane',
   'scripts/lib/fulfill-core.js': 'money path, and its log strings are asserted in fulfill-driver.test.js',
   'scripts/lib/imgsize.js': 'the engine lane owns scripts/lib',
@@ -210,43 +216,45 @@ function shippedSources() {
   return out;
 }
 
-function emDashHits(files) {
+const hasLongDash = (s) => LONG_DASHES.some((d) => s.includes(d));
+
+function longDashHits(files) {
   const hits = [];
   for (const f of files) {
     read(f).split('\n').forEach((line, i) => {
-      if (line.includes(EM_DASH)) hits.push(`${f}:${i + 1}  ${line.trim().slice(0, 90)}`);
+      if (hasLongDash(line)) hits.push(`${f}:${i + 1}  ${line.trim().slice(0, 90)}`);
     });
   }
   return hits;
 }
 
-test('public copy carries no em dashes', () => {
-  const hits = emDashHits(publicSources());
-  assert.deepEqual(hits, [], `em dash on a public surface, use a comma, colon, full stop or brackets:\n  ${hits.join('\n  ')}`);
+test('public copy carries no long dashes', () => {
+  const hits = longDashHits(publicSources());
+  assert.deepEqual(hits, [], `long dash on a public surface, use a comma, colon, full stop or brackets (ranges take a plain hyphen):\n  ${hits.join('\n  ')}`);
 });
 
-test('shipped source carries no em dashes outside the quarantine', () => {
-  const hits = emDashHits(shippedSources().filter((f) => !(f in EM_DASH_QUARANTINE)));
-  assert.deepEqual(hits, [], `em dash in shipped source, use a comma, colon, full stop or brackets:\n  ${hits.join('\n  ')}`);
+test('shipped source carries no long dashes outside the quarantine', () => {
+  const hits = longDashHits(shippedSources().filter((f) => !(f in LONG_DASH_QUARANTINE)));
+  assert.deepEqual(hits, [], `long dash in shipped source, use a comma, colon, full stop or brackets (ranges take a plain hyphen):\n  ${hits.join('\n  ')}`);
 });
 
-test('the em dash quarantine lists only files that still need cleaning', () => {
-  const stale = Object.keys(EM_DASH_QUARANTINE).filter((f) => {
+test('the long dash quarantine lists only files that still need cleaning', () => {
+  const stale = Object.keys(LONG_DASH_QUARANTINE).filter((f) => {
     const abs = path.join(ROOT, f);
-    return !fs.existsSync(abs) || !fs.readFileSync(abs, 'utf8').includes(EM_DASH);
+    return !fs.existsSync(abs) || !hasLongDash(fs.readFileSync(abs, 'utf8'));
   });
-  assert.deepEqual(stale, [], `clean already, so delete these entries from EM_DASH_QUARANTINE:\n  ${stale.join('\n  ')}`);
+  assert.deepEqual(stale, [], `clean already, so delete these entries from LONG_DASH_QUARANTINE:\n  ${stale.join('\n  ')}`);
 });
 
-test('the built store carries no em dashes, if it has been built', () => {
+test('the built store carries no long dashes, if it has been built', () => {
   const dist = path.join(ROOT, 'dist');
   if (!fs.existsSync(dist)) return; // build not run in this environment
   const hits = [];
   for (const f of fs.readdirSync(dist)) {
     if (!f.endsWith('.html')) continue;
     fs.readFileSync(path.join(dist, f), 'utf8').split('\n').forEach((line, i) => {
-      if (line.includes(EM_DASH)) hits.push(`dist/${f}:${i + 1}`);
+      if (hasLongDash(line)) hits.push(`dist/${f}:${i + 1}`);
     });
   }
-  assert.deepEqual(hits, [], `em dash reached the built store:\n  ${hits.join('\n  ')}`);
+  assert.deepEqual(hits, [], `long dash reached the built store:\n  ${hits.join('\n  ')}`);
 });

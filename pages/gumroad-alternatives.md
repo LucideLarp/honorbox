@@ -69,7 +69,7 @@ covers it without hand-waving. The engine is MIT-licensed and
   Lemon Squeezy. The fee is real but so is the service.
 - Selling **software with licenses and real volume** → Lemon Squeezy or Paddle.
 - Selling **code, templates, boilerplates, courses, or tools** to people who
-  have GitHub accounts, and you'd rather keep the 5–15% →
+  have GitHub accounts, and you'd rather keep the 5-15% →
   [Stripe Payment Links](./sell-with-stripe-payment-links.html) + HonorBox.
 - Already have a backend and a mailer → plain Stripe and your own glue; you
   don't need any of us.

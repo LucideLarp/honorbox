@@ -172,7 +172,7 @@ neither needing a card.
 
 **A. Temporarily allow codes on the link** (simplest, all in the Dashboard)
 
-1. In Stripe, create a coupon for **100% off**, `max_redemptions` 1–2, with an
+1. In Stripe, create a coupon for **100% off**, `max_redemptions` 1-2, with an
    expiry. Bound it; an unbounded 100% coupon is the whole risk here.
 2. On the payment link, turn "allow promotion codes" on, and create a promotion
    code only you know. Do not use a guessable name like `FREETEST`.

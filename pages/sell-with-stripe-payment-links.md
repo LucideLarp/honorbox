@@ -60,7 +60,7 @@ Option 4 in depth: [Deliver digital products through GitHub](./deliver-digital-p
 
 - Turn on receipt emails (Settings → Emails → successful payments).
 - Decide your refund policy before launch and write it down where buyers can
-  find it. For $10–50 digital goods, "30 days, no questions" costs you almost
+  find it. For $10-50 digital goods, "30 days, no questions" costs you almost
   nothing and prevents disputes. A single chargeback typically costs a $15
   fee plus the payment, more than several refunds put together.
 - Refund fast. A refund request answered in an hour rarely becomes a dispute.
@@ -80,7 +80,7 @@ goes one level deeper without the hand-waving. Not tax advice.
 - Product + one-time price created
 - Payment Link with a delivery-handle custom field
 - Confirmation message states delivery method and latency
-- Delivery automated (any of options 2–4)
+- Delivery automated (any of options 2-4)
 - Receipt emails on, refund policy written
 - Stripe Tax threshold monitoring on
 

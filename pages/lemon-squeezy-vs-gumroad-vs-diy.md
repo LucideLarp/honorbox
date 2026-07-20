@@ -84,7 +84,7 @@ fee is cheaper than your time.
 ## When DIY wins
 
 You sell code, templates, courses, or tools to people who have GitHub
-accounts, and you'd rather keep the 5–15%. The checkout half takes minutes
+accounts, and you'd rather keep the 5-15%. The checkout half takes minutes
 with [Stripe Payment Links](./sell-with-stripe-payment-links.html); the
 delivery half is the actual gap. [HonorBox](./index.html) fills it without a
 server: a static storefront on GitHub Pages and a scheduled GitHub Action

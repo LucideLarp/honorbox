@@ -73,7 +73,7 @@ Create it: GitHub → **Settings → Developer settings → Fine-grained tokens
 - **Repository permissions**: **Administration → Read and write**. Nothing
   else. (GitHub adds a read-only Metadata entry on its own.)
 - **Expiration**: GitHub's default is 30 days, and non-expiring tokens are
-  allowed. Pick a real date (6–12 months) and calendar the rotation
+  allowed. Pick a real date (6-12 months) and calendar the rotation
   instead of taking either extreme.
 
 That token is Actions secret `GH_FULFILL_TOKEN`.

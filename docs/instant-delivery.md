@@ -14,7 +14,7 @@ safety net, and skipping these keeps a perfectly working store.
 |---|---|---|---|
 | Poll (default) | ~15 min median | hours (cron drift) | nothing |
 | + Heartbeat | ~15 min median | two independent crons must both drift | 1 fine-grained token |
-| + Webhook relay | **~15–60 seconds** | falls back to the poll | 1 free serverless endpoint + webhook secret + 1 token |
+| + Webhook relay | **~15-60 seconds** | falls back to the poll | 1 free serverless endpoint + webhook secret + 1 token |
 
 ## Webhook mode: delivery in seconds
 
