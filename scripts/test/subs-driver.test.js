@@ -207,6 +207,36 @@ test('an armed reconciler within the limit does revoke, loudly', async () => {
   assert.ok(state.grants['acme/widget|u1'], 'and the active customers are untouched');
 });
 
+// --- what a seller sees before arming enforcement ----------------------------
+
+test('customers already in grace are reported every pass, not only on the day they started', async () => {
+  const dir = tmpdir();
+  const daysAgo = (d) => new Date(Date.now() - d * 86_400_000).toISOString();
+  // Three people at different points in a seven day grace, all started on
+  // earlier passes. Before this, a pass printed nothing at all about them: the
+  // start was logged days ago and the removal is days away, so a seller reading
+  // a quiet log would conclude nothing was pending and arm enforcement blind.
+  const grants = {
+    'acme/widget|carol': { sub: 'sub_c', repo: 'acme/widget', user: 'carol', lapsed_since: daysAgo(1) },
+    'acme/widget|alice': { sub: 'sub_a', repo: 'acme/widget', user: 'alice', lapsed_since: daysAgo(5) },
+    'acme/widget|bob': { sub: 'sub_b', repo: 'acme/widget', user: 'bob', lapsed_since: daysAgo(3) },
+  };
+  const subs = ['sub_a', 'sub_b', 'sub_c'].map((id) => subscription(id, 'canceled'));
+  const { logs } = await runMain(
+    dir,
+    [
+      { match: '/v1/subscriptions', res: () => jsonRes({ data: subs, has_more: false }) },
+      { match: '/v1/checkout/sessions', res: () => jsonRes({ data: [], has_more: false }) },
+    ],
+    { fulfillment: FULFILLMENT, subscriptions: { enforce: false, grace_days: 7 } },
+    { version: 1, cursor: 1, users: { sub_a: 'alice', sub_b: 'bob', sub_c: 'carol' }, grants, breaker: {} }
+  );
+  assert.match(logs, /3 customer\(s\) in grace/);
+  assert.match(logs, /would be removed if enforcement were on/);
+  // Soonest first: alice has served five of seven days, carol only one.
+  assert.match(logs, /Soonest: alice@acme\/widget in 2d, bob@acme\/widget in 4d, carol@acme\/widget in 6d/);
+});
+
 // --- the page boundary -------------------------------------------------------
 
 test('an unreadable page of sessions is refused, not read as no new customers', async () => {

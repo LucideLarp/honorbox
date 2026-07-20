@@ -327,8 +327,12 @@ const DEFAULT_REVOKE_LIMIT_PERCENT = 10;
 // human being told about it is the right outcome anyway.
 const DEFAULT_REVOKE_LIMIT_FLOOR = 3;
 
+function distinctUserSet(pairs) {
+  return new Set((pairs || []).map((p) => normalizeUser(p.user)));
+}
+
 function distinctUsers(pairs) {
-  return new Set((pairs || []).map((p) => normalizeUser(p.user))).size;
+  return distinctUserSet(pairs).size;
 }
 
 // Verdict on whether this pass may revoke at all. All or nothing: the breaker
@@ -372,32 +376,44 @@ function breakerVerdict(due, entitledPairs, opts = {}) {
     };
   }
 
-  const entitled = distinctUsers(entitledPairs);
+  const entitledSet = distinctUserSet(entitledPairs);
+  const entitled = entitledSet.size;
   const limit = Math.max(floor, Math.floor((entitled * percent) / 100));
   const sweep = entitled === 0;
+  // The population this pass started from, counted as a union rather than a
+  // sum: somebody entitled on one repo and lapsed on another is one person, and
+  // adding the two counts would report more subscribers than the store has.
+  //
+  // Reported as "N of TOTAL" and never "N of entitled". Once everyone has
+  // lapsed the entitled count is zero, and "would revoke 12 of 0 subscribers"
+  // is a sentence that makes a worried seller trust the tool less, which is the
+  // opposite of what the most important line in this program should do.
+  const total = new Set([...entitledSet, ...distinctUserSet(due)]).size;
   if (people > limit) {
     if (opts.override) {
       return {
         allowed: true,
         people,
         limit,
+        total,
         sweep,
         overridden: true,
-        reason: `${people} of ${entitled + people} subscribers, over the safety limit of ${limit}, allowed for this run only`,
+        reason: `${people} of ${total} subscribers, over the safety limit of ${limit}, allowed for this run only`,
       };
     }
     return {
       allowed: false,
       people,
       limit,
+      total,
       sweep,
       overridable: true,
       reason:
-        `this pass would revoke ${people} of ${entitled} subscribers, over the safety limit of ${limit} ` +
+        `this pass would revoke ${people} of ${total} subscribers, over the safety limit of ${limit} ` +
         `(the larger of ${floor} people or ${percent}% of subscribers)`,
     };
   }
-  return { allowed: true, people, limit, sweep, reason: 'within the safety limit' };
+  return { allowed: true, people, limit, total, sweep, reason: 'within the safety limit' };
 }
 
 // --- logging ----------------------------------------------------------------
@@ -429,8 +445,17 @@ function revokeLine(pair, { dryRun = false, confirmed = true } = {}) {
   );
 }
 
+// Capped, because the whole point of this line is that it gets read. A store
+// that loses two hundred people at once produces two hundred names, and a wall
+// of text is skimmed exactly as fast as no text at all. The state file keeps the
+// full list in `breaker.would_revoke` for anyone who needs every name.
+const HELD_BACK_SHOWN = 10;
+
 function breakerLine(verdict, due) {
-  const who = due.map((p) => `${p.user}@${p.repo}`).join(', ');
+  const names = due.map((p) => `${p.user}@${p.repo}`);
+  const who = names.length > HELD_BACK_SHOWN
+    ? `${names.slice(0, HELD_BACK_SHOWN).join(', ')}, and ${names.length - HELD_BACK_SHOWN} more`
+    : names.join(', ');
   // Only a size refusal can be overridden, so only a size refusal is told about
   // the flag. Naming it on the zero-subscriptions refusal would invite a seller
   // to force their way past the one guard that is never wrong.
@@ -455,6 +480,53 @@ function sweepLine(verdict) {
       ? 'It was allowed because --allow-mass-revocation was passed for this run.'
       : 'It was allowed because the store is small enough to sit under the safety floor.') +
     ' If that is not what you expected, check the Stripe key and the store config now'
+  );
+}
+
+// --- what is about to happen -------------------------------------------------
+// The question a seller actually has before arming enforcement is not "what did
+// this pass do", it is "what is this about to do to my customers". Nothing
+// answered that. A person three days into a seven day grace produces no output
+// at all: their clock started on an earlier pass, the start was logged then, and
+// nothing is printed again until the day they are removed. A seller reading a
+// quiet log would reasonably conclude there was nothing pending, arm
+// enforcement, and be surprised.
+//
+// Sorted soonest first, because the only one that needs a decision today is the
+// one at the top.
+function upcomingRevocations(lapsing, graceDays, now) {
+  return (Array.isArray(lapsing) ? lapsing : [])
+    .map((p) => {
+      const started = Date.parse(p.lapsed_since);
+      const dueAt = Number.isFinite(started) ? started + graceDays * 86_400_000 : null;
+      return {
+        user: p.user,
+        repo: p.repo,
+        sub: p.sub,
+        dueAt,
+        // Rounded up, so "in 1 day" never means "in a few minutes".
+        days: dueAt == null ? null : Math.max(0, Math.ceil((dueAt - now) / 86_400_000)),
+      };
+    })
+    .sort((a, b) => (a.dueAt == null ? Infinity : a.dueAt) - (b.dueAt == null ? Infinity : b.dueAt));
+}
+
+// One line, capped. A store with two hundred people in grace must not print two
+// hundred lines nobody reads; the soonest few and a count carry the same
+// decision.
+const UPCOMING_SHOWN = 5;
+
+function upcomingLine(rows, { enforce = false } = {}) {
+  if (!rows || rows.length === 0) return null;
+  const shown = rows
+    .slice(0, UPCOMING_SHOWN)
+    .map((r) => (r.days == null ? `${r.user}@${r.repo} never (its lapse date is unreadable)` : `${r.user}@${r.repo} in ${r.days}d`))
+    .join(', ');
+  const more = rows.length > UPCOMING_SHOWN ? `, and ${rows.length - UPCOMING_SHOWN} more` : '';
+  return (
+    `subscriptions: ${rows.length} customer(s) in grace, ` +
+    `${enforce ? 'and will be removed when it runs out' : 'and would be removed if enforcement were on'}. ` +
+    `Soonest: ${shown}${more}`
   );
 }
 
@@ -515,5 +587,7 @@ module.exports = {
   revokeLine,
   breakerLine,
   sweepLine,
+  upcomingRevocations,
+  upcomingLine,
   subscriptionConfigProblems,
 };

@@ -28,6 +28,8 @@ const {
   revokeLine,
   breakerLine,
   sweepLine,
+  upcomingRevocations,
+  upcomingLine,
   subscriptionConfigProblems,
   grantKey,
   normalizeUser,
@@ -515,6 +517,13 @@ async function main(sleep = defaultSleep) {
         }
       }
     }
+
+    // Everyone whose clock is running, not only the ones it started this pass.
+    // Printed in both modes: before arming, it is the list a seller is deciding
+    // about; after arming, it is the warning that arrives while there is still
+    // time to do something about it.
+    const upcoming = upcomingLine(upcomingRevocations(diff.lapsing, graceDays, now), { enforce });
+    if (upcoming) console.log(upcoming);
 
     state.last_pass = new Date(now).toISOString();
     writeJson(statePath, state);

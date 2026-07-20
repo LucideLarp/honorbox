@@ -458,6 +458,37 @@ test('an empty Stripe response is refused on its own terms', () => {
   assert.match(v.reason, /wrong API key|wrong account/);
 });
 
+test('the refusal counts against the store, not against who is left', () => {
+  // Once everybody has lapsed the entitled count is zero, and a denominator of
+  // zero produced "would revoke 12 of 0 subscribers". A seller reading that
+  // during an incident trusts the tool less, which is the opposite of what the
+  // most important line in this program is for.
+  const due = Array.from({ length: 12 }, (_, i) => ({ user: `u${i}`, repo: 'a/r' }));
+  const v = breakerVerdict(due, [], { enumeratedSubs: 12 });
+  assert.equal(v.allowed, false);
+  assert.equal(v.total, 12);
+  assert.match(v.reason, /12 of 12 subscribers/);
+  assert.doesNotMatch(v.reason, /of 0 subscribers/);
+});
+
+test('one person entitled here and lapsed there is counted once', () => {
+  // Union, not sum: adding the entitled count to the due count would report a
+  // store as having more subscribers than it has.
+  const v = breakerVerdict(
+    [{ user: 'alice', repo: 'a/two' }],
+    [{ user: 'alice', repo: 'a/one' }],
+    { enumeratedSubs: 1 }
+  );
+  assert.equal(v.total, 1, 'alice is one person, not two');
+});
+
+test('a held-back list stays readable when a whole store trips the breaker', () => {
+  const due = Array.from({ length: 200 }, (_, i) => ({ user: `u${i}`, repo: 'a/r' }));
+  const line = breakerLine(breakerVerdict(due, [], { enumeratedSubs: 200 }), due);
+  assert.match(line, /and 190 more/);
+  assert.ok(line.length < 800, `the line a seller must read is ${line.length} characters`);
+});
+
 test('a pass with nothing to revoke is always allowed', () => {
   assert.equal(breakerVerdict([], [], { enumeratedSubs: 0 }).allowed, true);
 });
