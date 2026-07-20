@@ -70,16 +70,33 @@ const productsDir = arg('products', 'products');
 
 function die(msg) { console.error(`init: ${msg}`); process.exit(2); }
 
+// Node's fetch has no overall timeout, so a connection that opens and then
+// never answers hangs this process forever: no output, no error, nothing to
+// tell the operator whether Stripe is down or their key is wrong. That is a
+// bad failure for the very first command anyone runs against their own
+// account. 20s matches the fulfillment path, which carries the same deadline
+// for the same reason.
+const REQUEST_TIMEOUT_MS = 20_000;
+
 async function stripe(pathname, form) {
-  const res = await fetch(`https://api.stripe.com${pathname}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${Buffer.from(SK + ':').toString('base64')}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Stripe-Version': '2024-06-20',
-    },
-    body: new URLSearchParams(form).toString(),
-  });
+  let res;
+  try {
+    res = await fetch(`https://api.stripe.com${pathname}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(SK + ':').toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Stripe-Version': '2024-06-20',
+      },
+      body: new URLSearchParams(form).toString(),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (err) {
+    // No HTTP verdict at all: DNS, a reset, or our own deadline. Name the
+    // error class, because "TimeoutError" and "ENOTFOUND" send the reader to
+    // different places. Nothing has been created at this point.
+    throw new Error(`${pathname}: no response from Stripe (${err.name}: ${err.message}). Nothing was created.`);
+  }
   const body = await res.json();
   if (!res.ok) throw new Error(`${pathname}: ${body.error ? body.error.message : res.status}`);
   return body;

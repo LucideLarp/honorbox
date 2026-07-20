@@ -176,3 +176,16 @@ test('init: a value flag may still use = (the switch rule is not a blanket ban)'
   assert.equal(res.status, 0, res.stdout + res.stderr);
   assert.match(res.stdout, /dry run/);
 });
+
+test('init: a Stripe call that never answers fails with a named error, not a hang', () => {
+  // Node's fetch has no overall timeout. Before this, a socket that accepted
+  // the connection and then went silent left init hanging forever: no output,
+  // no error, nothing telling the operator whether Stripe was down or their
+  // key was wrong, on the very first command they run against their account.
+  const src = fs.readFileSync(path.join(__dirname, '..', 'init.js'), 'utf8');
+  const call = src.slice(src.indexOf('async function stripe('), src.indexOf('const body = await res.json()'));
+  assert.match(call, /signal:\s*AbortSignal\.timeout\(/, 'the Stripe call must carry a deadline');
+  assert.match(src, /no response from Stripe/, 'an aborted call must say so by name');
+  // and it must not have been "fixed" by swallowing the failure
+  assert.doesNotMatch(call, /catch\s*\([^)]*\)\s*\{\s*\}/, 'the catch must not be empty');
+});
