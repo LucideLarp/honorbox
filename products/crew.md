@@ -6,7 +6,7 @@ meta_title: Crew ($19): 10 agents and 14 discipline skills for Claude Code
 description: 10 specialist agents and 14 discipline skills for Claude Code, designed as one system and installed in one command. Free tier on GitHub; $19 for the full pack.
 tagline: 10 specialist agents and 14 discipline skills for Claude Code, designed as one system and installed in one command.
 price: $19
-price_note: one-time · lifetime access & updates · $19 for the first 25 copies, then $29
+price_note: one-time · lifetime access & updates
 badge: New
 payment_link: https://buy.stripe.com/8x29AT8J9d7xdqc8hma7C03
 features:
@@ -82,8 +82,8 @@ the same repo.
 
 ## Terms
 
-- $19, one-time, for the first 25 copies; $29 after those are sold. No
-  subscription. Buyers at $19 keep every later update at no extra cost.
+- $19, one-time. No subscription. Every later update is included at no extra
+  cost.
 - Licensed per developer; use across all your projects.
 - Don't republish or resell the pack itself.
 - 30-day refunds, no questions asked, via Stripe.

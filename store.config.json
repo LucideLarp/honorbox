@@ -156,10 +156,6 @@
           "href_label": "What a small seller owes"
         },
         {
-          "q": "Why does the price go up after 25 copies?",
-          "a": "Pro is $29 for the first 25 copies, then $39. Crew is $19 for the first 25, then $29. That is a launch price with a real end: it goes up once, and it stays up. Anyone who buys at the launch price keeps every later update at no extra cost, because updates land in the repo they already have access to. There's no countdown and no live counter on the page, because a number nobody can audit isn't worth putting there."
-        },
-        {
           "q": "Refunds?",
           "a": "30 days, no questions asked, refunded through Stripe to your original payment method. Repository access ends when a refund is issued."
         },

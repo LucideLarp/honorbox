@@ -6,7 +6,7 @@ meta_title: HonorBox Pro ($29): never silently lose a sale
 description: Reconcile proves every paid order reached its buyer. Plus license keys, four themes, ops bots, and a store doctor for your Stripe + GitHub store. $29 one-time.
 tagline: Your store calls a sale delivered the moment it sends an invite. Pro is what goes back and checks, plus license keys, four themes, and bots for the unattended hours.
 price: $29
-price_note: one-time · lifetime access & updates · $29 for the first 25 copies, then $39
+price_note: one-time · lifetime access & updates
 payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
 # Social card, named explicitly. The gallery below is WebP for the browser,
 # which link-preview scrapers do not reliably render, so the card keeps a PNG.
@@ -146,9 +146,9 @@ watching the engine you'd be buying.
 
 ## Terms
 
-- $29, one-time, for the first 25 copies; $39 after those are sold. No
-  subscription, no upsell treadmill. Buyers at $29 keep every later update at
-  no extra cost, because updates land in the repo you already have access to.
+- $29, one-time. No subscription, no upsell treadmill. Every later update is
+  included at no extra cost, because updates land in the repo you already have
+  access to.
 - Licensed per developer. Use it in any number of your own stores.
 - Don't republish or resell the Pro content itself.
 - 30-day refunds, no questions asked, via Stripe.
