@@ -519,12 +519,25 @@ function main() {
   const themeDir = path.join(ROOT, 'themes', config.theme || 'stand');
   const layout = read(path.join(themeDir, 'layout.html'));
 
-  const problems = [];
+  const problems = []; // fatal: the build refuses to ship a store this broken
+  const warnings = []; // non-fatal, but printed on EVERY build — never silent
   for (const problem of configProblems(config)) problems.push(`store.config.json: ${problem}`);
   const products = listMd(path.join(ROOT, 'products')).map((f) => {
     const { data, body, error } = parseFrontmatter(read(path.join(ROOT, 'products', f)));
     if (error) problems.push(`products/${f}: ${error}`);
     for (const problem of productProblems(data)) problems.push(`products/${f}: ${problem}`);
+    // The social card, when it is named explicitly, is a deliberate choice —
+    // so a broken one is a build error, not something to paper over. Checked
+    // HERE rather than where the card is emitted, because that happens after
+    // the problem gate has already run.
+    if (data.og_image) {
+      const bare = String(data.og_image).split(/[?#]/)[0];
+      if (!/\.(png|jpe?g|gif)$/i.test(bare)) {
+        problems.push(`products/${f}: og_image must be .png/.jpg/.gif — link-preview scrapers do not reliably render anything else`);
+      } else if (!/^https?:\/\//i.test(bare) && !fs.existsSync(path.join(ROOT, bare.replace(/^\.?\//, '')))) {
+        problems.push(`products/${f}: og_image "${data.og_image}" does not exist`);
+      }
+    }
     return { ...data, features: data.features || [], body, html: renderMarkdown(body, MD_OPTS) };
   }).sort((a, b) => (Number(a.order || 999) - Number(b.order || 999)) || String(a.name).localeCompare(b.name, 'en'));
   const ids = new Set();
@@ -683,11 +696,36 @@ function main() {
   <div class="prose">${p.html}</div>
   <div class="pc-buy standalone">${buyButton(p, true)}</div>
 </article>`;
-    // Scraper-safe formats only: the gallery is served as WebP to browsers,
-    // but a card scraper that cannot decode it shows no preview at all, and a
-    // product link with a blank card is worse than a slightly larger one.
-    const bodyImage = firstRasterImage(p.body, { ext: /\.(png|jpe?g|gif)$/i });
-    const ogImage = bodyImage ? absUrl(site, bodyImage) : defaultOgImage;
+    // The social card, decided in three explicit steps rather than inherited
+    // from whatever image happens to be first in the body.
+    //
+    // The failure this replaces: the gallery moved to WebP, firstRasterImage
+    // found nothing a scraper could decode, and the card SILENTLY fell back to
+    // the theme preview. The page still built green while the product's link
+    // preview quietly changed — the same shape as every bug worth fixing here,
+    // where the system reports success and does something else.
+    //
+    // Scraper-safe formats only: a card scraper that cannot decode WebP shows
+    // no preview at all, and a blank card costs more than the bytes WebP saves.
+    // Those bytes are not on the critical path anyway — a card image is fetched
+    // by scrapers, never by a visitor loading the page.
+    const OG_SAFE = /\.(png|jpe?g|gif)$/i;
+    let ogImage;
+    if (p.og_image) {
+      ogImage = absUrl(site, p.og_image); // validated before the gate, below
+    } else {
+      const bodyImage = firstRasterImage(p.body, { ext: OG_SAFE });
+      ogImage = bodyImage ? absUrl(site, bodyImage) : defaultOgImage;
+      // The page HAS pictures, none of them usable as a card, and nobody chose
+      // one. Say so on every build instead of substituting in silence.
+      if (!bodyImage && firstRasterImage(p.body)) {
+        warnings.push(
+          `products/${p.id}: every image in the body is a format link-preview scrapers ` +
+            `do not reliably render, so the card fell back to ${defaultOgImage}. ` +
+            `Set "og_image:" in the frontmatter to choose one deliberately.`
+        );
+      }
+    }
     write(path.join(DIST, `${p.id}.html`), page({
       title: p.meta_title || `${p.name} · ${config.name}`,
       ogTitle: p.name,
@@ -801,6 +839,10 @@ files that ship in the repo.</p>
   write(path.join(DIST, '404.html'), page({ title: `Not found · ${config.name}`, slug: '404', content: `<article class="prose"><h1>Nothing at this stand</h1><p>That page doesn't exist. <a href="./">Back to the store.</a></p></article>`, noindex: true }));
   write(path.join(DIST, '.nojekyll'), '');
 
+  // Printed at the END, after the pages that generate them have been written.
+  // Not fatal, but a silent fallback is how the product's social card changed
+  // without anyone deciding to change it — a green build still has to say so.
+  for (const w of warnings) console.error(`build: WARN ${w}`);
   console.log(`built dist/: ${products.length} product(s), ${pages.length} page(s), ${docs.length} doc(s), ledger page: ${hasLedger ? 'on' : 'off'}`);
 }
 

@@ -1417,3 +1417,122 @@ test('a zero-cost fulfillment is distinguishable from a real sale', () => {
     assert.equal(isFreeFulfillment(s), false, JSON.stringify(s));
   }
 });
+
+test('every theme lets a sized image keep its aspect ratio', () => {
+  // The defect this pins, found on the live-preview pass before it shipped:
+  // once <img> carries real width/height, a rule of `max-width: 100%` WITHOUT
+  // `height: auto` honours the explicit height literally while clamping the
+  // width. A 1200x630 landscape panel then rendered as a 358x630 portrait —
+  // every gallery image on the product page stretched, desktop and mobile.
+  //
+  // It was latent in all six themes long before the attributes existed, and it
+  // would bite any seller who put a sized image in their own prose. The
+  // .showcase rules already set width/height explicitly and were never
+  // affected, which is exactly why the homepage looked fine and the product
+  // page did not.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const themesDir = path.join(__dirname, '..', '..', 'themes');
+  const themes = fs.readdirSync(themesDir).filter((t) =>
+    fs.existsSync(path.join(themesDir, t, 'style.css'))
+  );
+  assert.ok(themes.length > 0, 'expected at least one theme to check');
+  for (const t of themes) {
+    const css = fs.readFileSync(path.join(themesDir, t, 'style.css'), 'utf8');
+    // Isolate the declaration block that styles prose/gallery images, with
+    // comments stripped FIRST: the fix ships next to a comment explaining it,
+    // and matching that comment is how this assertion quietly passed against
+    // deliberately broken CSS the first time it was written.
+    const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const m = /\.prose img[^{]*\{([^}]*)\}/.exec(bare);
+    assert.ok(m, `${t}: no ".prose img" rule found — did the selector change?`);
+    assert.match(
+      m[1], /height:\s*auto/,
+      `${t}/style.css: ".prose img" sets max-width without "height: auto", so an ` +
+        `image with width/height attributes will render stretched`
+    );
+  }
+});
+
+test('the social card is a decision, and a fallback is never silent', () => {
+  // The failure this closes: moving the gallery to WebP made firstRasterImage
+  // find nothing a scraper could decode, so og:image, twitter:image and the
+  // JSON-LD Product.image ALL silently changed from the terminal screenshot to
+  // the theme preview. The build stayed green while the product's link preview
+  // quietly became a different picture — success reported, something else done.
+  const { firstRasterImage } = require('../lib/md.js');
+  const OG_SAFE = /\.(png|jpe?g|gif)$/i;
+  const body = [
+    '![terminal](./assets/previews/terminal.webp)',
+    '![midnight](./assets/previews/midnight.webp)',
+  ].join('\n');
+
+  // A body of WebP has images, but none a card scraper can be trusted with.
+  assert.equal(firstRasterImage(body), './assets/previews/terminal.webp',
+    'the page itself still has images');
+  assert.equal(firstRasterImage(body, { ext: OG_SAFE }), null,
+    'none of them is usable as a social card');
+  // Those two disagreeing is exactly the condition that must warn rather than
+  // substitute: pictures present, none card-safe, nobody chose one.
+
+  // A PNG in the body is still picked up automatically, so a store that never
+  // adopts WebP keeps working with no frontmatter at all.
+  assert.equal(
+    firstRasterImage('![t](./assets/previews/terminal.png)', { ext: OG_SAFE }),
+    './assets/previews/terminal.png'
+  );
+  // An SVG is not a raster and was never a candidate either way.
+  assert.equal(firstRasterImage('![l](./logo.svg)', { ext: OG_SAFE }), null);
+});
+
+test('a named social card must be real and scraper-safe, or the build stops', () => {
+  // og_image is an explicit choice, so a broken one is an error rather than
+  // something to paper over — the whole point is to stop cards changing by
+  // accident. Driven through the real builder in a child process, because the
+  // check lives in the build's problem gate and exits the process.
+  // spawnSync, not execFileSync: execFileSync only surfaces stderr on the
+  // throw path, so a SUCCESSFUL build's warnings would be invisible — and the
+  // whole point of case (c) is that a green build still speaks up.
+  const { spawnSync } = require('node:child_process');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const ROOT = path.join(__dirname, '..', '..');
+  const src = path.join(ROOT, 'products', 'honorbox-pro.md');
+  const original = fs.readFileSync(src, 'utf8');
+  assert.match(original, /^og_image:/m, 'the Pro product must name its card explicitly');
+
+  const build = () => {
+    const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'build.js')], {
+      cwd: ROOT, encoding: 'utf8',
+    });
+    return { code: r.status, err: String(r.stderr || '') };
+  };
+
+  try {
+    // (a) points at nothing
+    fs.writeFileSync(src, original.replace(/^og_image: .*$/m, 'og_image: ./assets/previews/nope.png'));
+    let r = build();
+    assert.equal(r.code, 2, 'a missing card file must fail the build');
+    assert.match(r.err, /og_image .*does not exist/);
+
+    // (b) a format scrapers do not reliably render
+    fs.writeFileSync(src, original.replace(/^og_image: .*$/m, 'og_image: ./assets/previews/terminal.webp'));
+    r = build();
+    assert.equal(r.code, 2, 'a WebP card must fail the build, not ship a blank preview');
+    assert.match(r.err, /og_image must be \.png/);
+
+    // (c) no card named at all, and a body of WebP: builds, but says so
+    fs.writeFileSync(src, original.replace(/^og_image: .*$/m, ''));
+    r = build();
+    assert.equal(r.code, 0, 'a store with no card named must still build');
+    assert.match(r.err, /WARN .*fell back to/, 'the fallback must be loud, never silent');
+
+    // (d) as shipped
+    fs.writeFileSync(src, original);
+    r = build();
+    assert.equal(r.code, 0, `the real product must build clean:\n${r.err}`);
+    assert.doesNotMatch(r.err, /WARN/, 'the shipped store must not be warning about its own card');
+  } finally {
+    fs.writeFileSync(src, original);
+  }
+});

@@ -438,7 +438,11 @@ tr.attn td { font-weight: 700; background: var(--wash); }
 
 .prose figure { margin: 1.4rem 0; }
 .prose img, .gallery img {
-  max-width: 100%; border: 1.5px solid var(--line); border-radius: 8px; display: block;
+  /* height:auto is load-bearing, not cosmetic. These images now carry real
+     width/height attributes so the browser can reserve their box; without
+     height:auto the explicit height is honoured literally while max-width
+     clamps the width, and a 1200x630 panel renders as a stretched portrait. */
+  max-width: 100%; height: auto; border: 1.5px solid var(--line); border-radius: 8px; display: block;
 }
 .gallery {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
