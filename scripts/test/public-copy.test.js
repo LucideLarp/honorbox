@@ -258,3 +258,28 @@ test('the built store carries no long dashes, if it has been built', () => {
   }
   assert.deepEqual(hits, [], `long dash reached the built store:\n  ${hits.join('\n  ')}`);
 });
+
+// Section numbers move. Inserting one step into setup.md renumbered six
+// references across three files today, two of them in code comments that no
+// test could see. A link to a heading that no longer exists is a dead link on
+// a published page, and we have shipped one before: docs/setup.md pointed at
+// its own cost section for days while the headings emitted no anchors at all.
+test('every doc link points at a heading that exists', () => {
+  const docs = path.join(ROOT, 'docs');
+  if (!fs.existsSync(docs)) return;
+  const slug = (h) => h.toLowerCase().replace(/[^a-z0-9 -]/g, '').trim().replace(/\s+/g, '-');
+  const headings = {};
+  for (const f of fs.readdirSync(docs).filter((f) => f.endsWith('.md'))) {
+    const body = fs.readFileSync(path.join(docs, f), 'utf8');
+    headings[f] = new Set([...body.matchAll(/^#+\s+(.+)$/gm)].map((m) => slug(m[1])));
+  }
+  const dead = [];
+  for (const f of Object.keys(headings)) {
+    const body = fs.readFileSync(path.join(docs, f), 'utf8');
+    for (const m of body.matchAll(/\]\(([a-z0-9.-]*\.md)?#([a-z0-9-]+)\)/g)) {
+      const target = m[1] || f;
+      if (headings[target] && !headings[target].has(m[2])) dead.push(`${f} -> ${target}#${m[2]}`);
+    }
+  }
+  assert.deepEqual(dead, [], `doc links pointing at headings that do not exist:\n  ${dead.join('\n  ')}`);
+});
