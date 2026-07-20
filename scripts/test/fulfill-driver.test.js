@@ -65,8 +65,13 @@ async function runMain(dir, routes) {
   process.env.STRIPE_SECRET_KEY = 'rk_test_stub';
   process.env.GH_FULFILL_TOKEN = 'ghp_test_stub';
   const { calls, restore } = stubFetch(routes);
+  // Retries are real in main() but must not cost real seconds here: record the
+  // waits instead of serving them. `slept` is then assertable — a test can
+  // prove the engine waited the number of seconds GitHub asked for.
+  const slept = [];
+  const fakeSleep = async (ms) => { slept.push(ms); };
   try {
-    await driver.main();
+    await driver.main(fakeSleep);
   } finally {
     restore();
     process.argv = savedArgv;
@@ -75,7 +80,7 @@ async function runMain(dir, routes) {
     if (savedEnv.tok === undefined) delete process.env.GH_FULFILL_TOKEN;
     else process.env.GH_FULFILL_TOKEN = savedEnv.tok;
   }
-  return { calls, readState: (f) => JSON.parse(fs.readFileSync(path.join(dir, 'state', f), 'utf8')) };
+  return { calls, slept, readState: (f) => JSON.parse(fs.readFileSync(path.join(dir, 'state', f), 'utf8')) };
 }
 
 // console.log capture: the fulfillment log IS the operator interface, so
@@ -482,4 +487,114 @@ test('both APIs are called with a deadline attached', async () => {
     assert.ok(call.init.signal, `${host} call has no abort signal — an unanswered socket would stall the cycle`);
     assert.equal(typeof call.init.signal.aborted, 'boolean', `${host} signal is not an AbortSignal`);
   }
+});
+
+// A throttled response whose BODY says nothing useful: only the header marks
+// it as a rate limit. That is deliberate — GitHub's wording is not a contract,
+// and matching on prose was the old, brittle test.
+const throttledRes = (retryAfterSeconds) => ({
+  ok: false,
+  status: 403,
+  headers: new Headers({ 'retry-after': String(retryAfterSeconds) }),
+  json: async () => ({}),
+  text: async () => 'Forbidden',
+});
+
+test('a secondary rate limit is retried inside the run, not left to the next poll', async () => {
+  // The failure this closes: the relay returns 200 to Stripe the moment the
+  // DISPATCH lands, which says nothing about whether the INVITE succeeded, so
+  // Stripe never retries a failed invite. Before this, a burst that tripped
+  // GitHub's secondary limit left the buyer waiting for the hourly
+  // reconciliation poll — up to ~60 minutes for a throttle that clears in
+  // seconds.
+  const dir = tmp();
+  let attempts = 0;
+  const github = {
+    match: 'api.github.com',
+    res: () => (++attempts === 1 ? throttledRes(3) : jsonRes({}, 201)),
+  };
+  const stripe = {
+    match: 'api.stripe.com',
+    res: () => jsonRes({ data: [paidSession('cs_rl_1', 1_700_000_000)], has_more: false }),
+  };
+  const err = captureErr();
+  let out;
+  try { out = await runMain(dir, [stripe, github]); } finally { err.restore(); }
+
+  assert.equal(attempts, 2, 'the invite was retried inside the same run');
+  assert.deepEqual(out.slept, [3000], 'waited exactly the 3s GitHub asked for, no more and no less');
+  const state = out.readState('fulfill-state.json');
+  assert.deepEqual(state.processed, ['cs_rl_1'], 'delivered in this run, not deferred to the poll');
+  assert.equal(state.failures.length, 0, 'a throttle that cleared is not a failure worth keeping');
+  const ledger = JSON.parse(fs.readFileSync(path.join(dir, 'ledger', 'ledger.json'), 'utf8'));
+  assert.equal(ledger.rows.length, 1);
+  assert.ok(!ledger.rows[0].needs_attention);
+  assert.ok(err.lines.some((l) => l.includes('RETRY')), 'the wait is visible in the log the watchdog reads');
+});
+
+test('the in-run retry budget is shared across a burst, so it cannot stretch without bound', async () => {
+  // Ten throttled buyers must not serialize into ten separate waits and hold
+  // the Actions job open. The budget is per-RUN: once spent, the buyers behind
+  // it fall back to exactly the old behaviour — unprocessed, retried by the
+  // next poll — rather than each buying another wait.
+  const dir = tmp();
+  const sessions = Array.from({ length: 10 }, (_, i) =>
+    paidSession(`cs_rl_${i}`, 1_700_000_000 + i, {
+      custom_fields: [{ key: 'github_username', text: { value: `buyer${i}` } }],
+    })
+  );
+  const err = captureErr();
+  let out;
+  try {
+    out = await runMain(dir, [
+      { match: 'api.stripe.com', res: () => jsonRes({ data: sessions, has_more: false }) },
+      { match: 'api.github.com', res: () => throttledRes(25) },
+    ]);
+  } finally { err.restore(); }
+
+  const { IN_RUN_RETRY_BUDGET_MS } = require('../lib/fulfill-core.js');
+  const total = out.slept.reduce((a, b) => a + b, 0);
+  assert.ok(total <= IN_RUN_RETRY_BUDGET_MS, `run-wide wait must stay inside the budget, got ${total}ms`);
+  const state = out.readState('fulfill-state.json');
+  assert.deepEqual(state.processed, [], 'still throttled: all ten stay for the next poll');
+  assert.equal(state.failures.length, 10, 'every buyer recorded one transient failure');
+  assert.ok(state.failures.every((f) => f.transient), 'a throttle is transient, never needs_attention');
+});
+
+test('a transient Stripe error retries instead of killing the whole cycle', async () => {
+  // The session list is the FIRST thing the run does, so before this a single
+  // 500 from Stripe meant nobody was delivered that cycle. That is the widest
+  // blast radius in the engine: one bad minute at Stripe during a launch burst
+  // would have taken out every buyer in it, not one.
+  const dir = tmp();
+  let hits = 0;
+  const stripe = {
+    match: 'api.stripe.com',
+    res: () => (++hits === 1
+      ? { ok: false, status: 500, json: async () => ({}), text: async () => 'server error' }
+      : jsonRes({ data: [paidSession('cs_sr_1', 1_700_000_000)], has_more: false })),
+  };
+  const err = captureErr();
+  let out;
+  try {
+    out = await runMain(dir, [stripe, { match: 'api.github.com', res: () => jsonRes({}, 201) }]);
+  } finally { err.restore(); }
+  assert.equal(hits, 2, 'the failed list call was retried');
+  assert.deepEqual(out.readState('fulfill-state.json').processed, ['cs_sr_1'], 'the sale still got delivered');
+
+  // ...and a permanent verdict is NOT retried: a bad key must fail fast and
+  // loudly, because every extra attempt delays the human who has to fix it.
+  const dir2 = tmp();
+  let authHits = 0;
+  const err2 = captureErr();
+  try {
+    await assert.rejects(
+      () => runMain(dir2, [{
+        match: 'api.stripe.com',
+        res: () => { authHits++; return { ok: false, status: 401, json: async () => ({}), text: async () => 'Invalid API Key' }; },
+      }]),
+      /401/
+    );
+  } finally { err2.restore(); }
+  assert.equal(authHits, 1, 'a bad key fails on the first call, not after retries');
 });

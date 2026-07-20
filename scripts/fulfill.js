@@ -31,7 +31,14 @@ const {
   unmatchedPaidSessions,
   REQUEST_TIMEOUT_MS,
   inviteStatusHint,
+  inRunRetryDelayMs,
+  retryAfterMs,
+  pruneFailures,
+  IN_RUN_MAX_ATTEMPTS,
 } = require('./lib/fulfill-core.js');
+
+// Injectable so tests exercise the real retry paths without real waiting.
+const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -50,25 +57,50 @@ function writeJson(file, obj) {
   fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
 }
 
-async function stripeGet(pathname, params, key) {
+// Stripe is read-only here and every failure is fatal to the WHOLE run: the
+// session list is the first thing main() does, so one 500 or one 429 from
+// Stripe means nobody gets delivered this cycle, not just one buyer. That is
+// the widest blast radius in the engine, so the read gets a short retry.
+// Retries are safe because the call is a GET. Permanent verdicts (401 bad
+// key, 400 bad params) are not retried — they cannot come good, and burning
+// the run's time on them delays the failure a human needs to see.
+const STRIPE_RETRY_DELAYS_MS = [500, 2_000];
+
+async function stripeGet(pathname, params, key, sleep = defaultSleep) {
   const url = new URL(`https://api.stripe.com${pathname}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  // Stripe-Version pinned: the account default may be a broken preview
-  const res = await fetch(url, {
-    headers: { Authorization: `Basic ${Buffer.from(key + ':').toString('base64')}`, 'Stripe-Version': '2024-06-20' },
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`Stripe ${pathname} -> ${res.status}: ${await res.text()}`);
-  return res.json();
+  for (let attempt = 0; ; attempt++) {
+    let res;
+    try {
+      // Stripe-Version pinned: the account default may be a broken preview
+      res = await fetch(url, {
+        headers: { Authorization: `Basic ${Buffer.from(key + ':').toString('base64')}`, 'Stripe-Version': '2024-06-20' },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch (err) {
+      // No verdict at all (DNS, reset, our own deadline) — retryable.
+      if (attempt >= STRIPE_RETRY_DELAYS_MS.length) throw err;
+      console.error(`RETRY Stripe ${pathname} after ${err.name}: ${err.message}`);
+      await sleep(STRIPE_RETRY_DELAYS_MS[attempt]);
+      continue;
+    }
+    if (res.ok) return res.json();
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable || attempt >= STRIPE_RETRY_DELAYS_MS.length) {
+      throw new Error(`Stripe ${pathname} -> ${res.status}: ${await res.text()}`);
+    }
+    console.error(`RETRY Stripe ${pathname} -> ${res.status} (attempt ${attempt + 1})`);
+    await sleep(STRIPE_RETRY_DELAYS_MS[attempt]);
+  }
 }
 
-async function listSessionsSince(createdGt, key) {
+async function listSessionsSince(createdGt, key, sleep = defaultSleep) {
   const sessions = [];
   let startingAfter = null;
   for (;;) {
     const params = { limit: '100', 'created[gt]': String(createdGt), 'expand[]': 'data.line_items' };
     if (startingAfter) params.starting_after = startingAfter;
-    const page = await stripeGet('/v1/checkout/sessions', params, key);
+    const page = await stripeGet('/v1/checkout/sessions', params, key, sleep);
     sessions.push(...page.data);
     if (!page.has_more || page.data.length === 0) break;
     startingAfter = page.data[page.data.length - 1].id;
@@ -104,10 +136,38 @@ async function inviteCollaborator(repo, username, token) {
   // this set is how a delivery failure starts reading like a delivery.
   if (res.status === 201 || res.status === 204) return res.status;
   const msg = `GitHub invite ${repo} <- ${username} -> ${res.status}${inviteStatusHint(res.status)}: ${await res.text()}`;
-  throw Object.assign(new Error(msg), { status: res.status });
+  // Headers ride along on the error: retry-after / x-ratelimit-* are how a
+  // rate limit is told apart from a permissions 403, and how long to wait is
+  // GitHub's call, not ours. Discarding them was why the old code had to guess
+  // from the prose of the message.
+  throw Object.assign(new Error(msg), { status: res.status, headers: res.headers });
 }
 
-async function main() {
+// Retry the invite INSIDE this run while the budget allows, instead of leaving
+// a transient failure to the next poll an hour away. Safe to repeat: the call
+// is a PUT, so a replay either creates the one invitation or reports the
+// collaborator already has access — GitHub does not stack duplicate invites,
+// and nothing is written to the ledger until one of those two verdicts lands.
+async function inviteWithRetry(repo, username, token, budget, sleep) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await inviteCollaborator(repo, username, token);
+    } catch (err) {
+      const delay = inRunRetryDelayMs(err, attempt, budget.spentMs);
+      if (delay === null) throw err; // out of budget/attempts, or not transient
+      const stated = retryAfterMs(err.headers);
+      console.error(
+        `RETRY ${repo} <- ${username} in ${Math.round(delay / 1000)}s ` +
+          `(attempt ${attempt}/${IN_RUN_MAX_ATTEMPTS}, ` +
+          `${stated === null ? 'no retry-after header, backing off' : 'GitHub asked for this delay'}): ${err.message}`
+      );
+      budget.spentMs += delay;
+      await sleep(delay);
+    }
+  }
+}
+
+async function main(sleep = defaultSleep) {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   const ghToken = process.env.GH_FULFILL_TOKEN;
   if (!stripeKey || !ghToken) {
@@ -132,8 +192,13 @@ async function main() {
   const ledger = readJson(ledgerPath, { rows: [] });
   const newSales = []; // usernames fulfilled THIS run (for license issuing etc.)
 
+  // One shared in-run retry budget for the whole cycle. Per-session budgets
+  // would let ten failing buyers serialize into ten separate waits and stretch
+  // the run without bound; this caps the total wait no matter how many fail.
+  const budget = { spentMs: 0 };
+
   const since = Math.max(0, (state.cursor || 0) - OVERLAP_SECONDS);
-  const sessions = await listSessionsSince(since, stripeKey);
+  const sessions = await listSessionsSince(since, stripeKey, sleep);
   const fresh = pickNewPaidSessions(sessions, state.processed, config.fulfillment);
   console.log(`sessions scanned=${sessions.length} new_paid=${fresh.length}`);
 
@@ -169,7 +234,7 @@ async function main() {
       if (isRepoOwner(grant.repo, username)) {
         console.log(`fulfilled ${s.id}: ${username} owns ${grant.repo}, no invite needed`);
       } else {
-        const code = await inviteCollaborator(grant.repo, username, ghToken);
+        const code = await inviteWithRetry(grant.repo, username, ghToken, budget, sleep);
         // 201 created an invitation; 204 means the account was already a
         // collaborator. Reporting both as "invited" made a seller's own
         // test-buy read like a real delivery and hid the difference that
@@ -201,6 +266,10 @@ async function main() {
   }
 
   state.cursor = nextCursor(sessions, state.cursor);
+  // Prune BEFORE trimming processed, so the settled set is at its largest and
+  // the prune is as effective as it can be. Rows for sessions still awaiting a
+  // retry are kept at any size — they date the 6h window.
+  state.failures = pruneFailures(state.failures, state.processed);
   // Bound growth: processed ids older than the overlap window can never recur.
   if (state.processed.length > 5000) state.processed = state.processed.slice(-5000);
 
@@ -219,7 +288,7 @@ async function main() {
   else fs.rmSync(flagPath, { force: true });
 }
 
-module.exports = { readJson, stripeGet, listSessionsSince, inviteCollaborator, main };
+module.exports = { readJson, stripeGet, listSessionsSince, inviteCollaborator, inviteWithRetry, main };
 
 if (require.main === module) {
   main().catch((err) => {

@@ -130,7 +130,7 @@ tr.attn td { color: #ffb86b; }
 
 /* prose images & preview galleries */
 .prose figure { margin: 1.4rem 0; }
-.prose img, .gallery img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; display: block; }
+.prose img, .gallery img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; display: block; }
 .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.8rem; margin: 1.4rem 0; }
 
 /* product variants: the first product carries the weight; companions print small */

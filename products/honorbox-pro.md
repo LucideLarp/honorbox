@@ -8,6 +8,11 @@ tagline: Your store calls a sale delivered the moment it sends an invite. Pro is
 price: $29
 price_note: one-time · lifetime access & updates · $29 for the first 25 copies, then $39
 payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
+# Social card, named explicitly. The gallery below is WebP for the browser,
+# which link-preview scrapers do not reliably render, so the card keeps a PNG.
+# This was previously whatever image happened to be first in the body; naming
+# it makes it a decision rather than a side effect of editing the gallery.
+og_image: ./assets/previews/terminal.png
 features:
   - License-key module: ed25519 keys signed in CI, verified offline in your app (JS + Python)
   - 4 premium storefront themes; the terminal theme is published in the free repo as a full code sample
@@ -50,10 +55,10 @@ type and dark-mode awareness: `terminal` (phosphor-on-black for CLI tools),
 `brutalist` (loud, typographic), `editorial` (serif, magazine-calm), and
 `midnight` (deep-blue product-launch look). Switch with one config line.
 
-![terminal theme, phosphor CRT](./assets/previews/terminal.png)
-![brutalist theme, loud type and hard shadows](./assets/previews/brutalist.png)
-![editorial theme, serif calm](./assets/previews/editorial.png)
-![midnight theme, deep blue](./assets/previews/midnight.png)
+![terminal theme, phosphor CRT](./assets/previews/terminal.webp)
+![brutalist theme, loud type and hard shadows](./assets/previews/brutalist.webp)
+![editorial theme, serif calm](./assets/previews/editorial.webp)
+![midnight theme, deep blue](./assets/previews/midnight.webp)
 
 **The store doctor.** One read-only command that checks your whole pipe:
 config shape, the pasted-URL-instead-of-id mistake, whether your payment links

@@ -94,6 +94,114 @@ test('invite failures classify as transient (retry) or permanent (attention)', (
   assert.equal(inviteAttempts(failures, 'cs_a'), 2);
 });
 
+test('how long to wait comes from GitHub headers, in the documented order', () => {
+  const { retryAfterMs } = require('../lib/fulfill-core.js');
+  const now = 1_700_000_000_000;
+  const nowSec = Math.floor(now / 1000);
+  // 1. retry-after wins — this is what a SECONDARY limit sends, and a burst
+  //    trips secondary limits, not primary ones.
+  assert.equal(retryAfterMs(new Headers({ 'retry-after': '30' }), now), 30_000);
+  // works through Headers (case-insensitive) and through the plain object a
+  // stubbed response carries
+  assert.equal(retryAfterMs({ 'retry-after': '5' }, now), 5_000);
+  // 2. a PRIMARY limit: remaining 0, wait until the window resets
+  assert.equal(
+    retryAfterMs(new Headers({ 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(nowSec + 600) }), now),
+    600_000
+  );
+  // retry-after takes precedence when both are present
+  assert.equal(
+    retryAfterMs(new Headers({ 'retry-after': '7', 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(nowSec + 600) }), now),
+    7_000
+  );
+  // budget left is not a limit
+  assert.equal(retryAfterMs(new Headers({ 'x-ratelimit-remaining': '4999', 'x-ratelimit-reset': String(nowSec + 600) }), now), null);
+  // a reset already past never yields a negative wait
+  assert.equal(retryAfterMs(new Headers({ 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(nowSec - 60) }), now), 0);
+  // nothing to go on
+  assert.equal(retryAfterMs(null, now), null);
+  assert.equal(retryAfterMs(new Headers({}), now), null);
+  assert.equal(retryAfterMs(new Headers({ 'retry-after': 'soon' }), now), null);
+});
+
+test('a 403 carrying a rate-limit header is transient even when the prose says nothing', () => {
+  const { isTransientInviteError } = require('../lib/fulfill-core.js');
+  // The failure this closes: the only rate-limit test used to be a match on
+  // the words of the response body. GitHub's wording is not part of any
+  // contract — reword it and a retryable throttle silently reclassifies as a
+  // permanent permissions error, so the buyer is never retried at all and
+  // lands in needs_attention instead.
+  assert.ok(isTransientInviteError(Object.assign(new Error('403 Forbidden'), {
+    status: 403, headers: new Headers({ 'retry-after': '60' }),
+  })));
+  assert.ok(isTransientInviteError(Object.assign(new Error('403 Forbidden'), {
+    status: 403, headers: new Headers({ 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '9999999999' }),
+  })));
+  // The regression that must NOT ride along: a genuine permissions 403 has no
+  // rate-limit headers and stays permanent, because retrying cannot fix it.
+  assert.ok(!isTransientInviteError(Object.assign(new Error('Resource not accessible by personal access token'), {
+    status: 403, headers: new Headers({ 'x-ratelimit-remaining': '4998' }),
+  })));
+});
+
+test('the in-run retry waits as long as GitHub asked, inside a bounded budget', () => {
+  const {
+    inRunRetryDelayMs, IN_RUN_RETRY_BUDGET_MS, IN_RUN_MAX_WAIT_MS, IN_RUN_MAX_ATTEMPTS,
+  } = require('../lib/fulfill-core.js');
+  const limited = (secs) => Object.assign(new Error('secondary rate limit'), {
+    status: 403, headers: new Headers({ 'retry-after': String(secs) }),
+  });
+  // GitHub's number is honoured verbatim — never shortened, which is how a
+  // secondary limit gets extended instead of cleared.
+  assert.equal(inRunRetryDelayMs(limited(5), 1, 0), 5_000);
+  // A wait longer than the ceiling is DECLINED rather than slept through: that
+  // is a primary limit saying "come back in an hour", and holding an Actions
+  // run open for it burns billed minutes and delivers nothing. The poll has it.
+  assert.ok(IN_RUN_MAX_WAIT_MS < 3_600_000);
+  assert.equal(inRunRetryDelayMs(limited(3600), 1, 0), null);
+  // budget spent by earlier buyers in this same run -> decline
+  assert.equal(inRunRetryDelayMs(limited(5), 1, IN_RUN_RETRY_BUDGET_MS), null);
+  // a wait that would overrun the remaining budget is declined whole, not
+  // truncated to a shorter one that GitHub did not agree to
+  assert.equal(inRunRetryDelayMs(limited(20), 1, IN_RUN_RETRY_BUDGET_MS - 5_000), null);
+  // attempts are capped even when every failure is instant and costs no budget
+  assert.equal(inRunRetryDelayMs(limited(1), IN_RUN_MAX_ATTEMPTS, 0), null);
+  // a header-less transient (timeout, 5xx) still backs off rather than hammering
+  assert.ok(inRunRetryDelayMs(Object.assign(new Error('502'), { status: 502 }), 1, 0) > 0);
+  // a permanent failure is never retried in-run
+  assert.equal(inRunRetryDelayMs(Object.assign(new Error('404'), { status: 404 }), 1, 0), null);
+});
+
+test('failure rows are pruned by settlement, never dropping a live retry window', () => {
+  const { pruneFailures, shouldRetryInvite } = require('../lib/fulfill-core.js');
+  const now = Date.parse('2026-07-20T12:00:00Z');
+  const old = new Date(now - 7 * 3600 * 1000).toISOString(); // older than the 6h window
+  const live = { session: 'cs_live', transient: true, ts: old };
+  const settled = Array.from({ length: 3000 }, (_, i) => ({ session: `cs_done_${i}`, transient: true, ts: old }));
+  const processed = settled.map((f) => f.session);
+
+  const pruned = pruneFailures([live, ...settled], processed, 2000);
+  assert.equal(pruned.length, 2000);
+  // The live row survived WITH ITS ORIGINAL TIMESTAMP. Dropping it would
+  // restart the 6h budget from the next failure, so a session that should be
+  // handed to a human retries forever instead.
+  assert.deepEqual(pruned.find((f) => f.session === 'cs_live'), live);
+  const transient = Object.assign(new Error('502'), { status: 502 });
+  assert.ok(
+    !shouldRetryInvite(transient, pruned, 'cs_live', now),
+    'the 6h window must still read as expired after pruning'
+  );
+  // oldest settled rows go first and the surviving order is unchanged
+  assert.deepEqual(pruned.slice(1), settled.slice(1001));
+  // under the cap it is a no-op, returned as-is
+  const few = [live, settled[0]];
+  assert.equal(pruneFailures(few, processed, 2000), few);
+  // live rows outrank the cap: 3000 unsettled sessions are all kept, because
+  // every one of them is still owed a delivery
+  const allLive = settled.map((f) => ({ ...f }));
+  assert.equal(pruneFailures(allLive, [], 2000).length, 3000);
+});
+
 test('transient retries are time-boxed to the delivery promise, not attempt-counted', () => {
   // An attempt cap of 5 burns out in ~10 minutes on the 2-minute local
   // runner, which a routine GitHub incident outlasts. The retry budget is
@@ -1307,5 +1415,124 @@ test('a zero-cost fulfillment is distinguishable from a real sale', () => {
   for (const s of [{ amount_total: 2900, payment_status: 'paid' },
                    { amount_total: 1, payment_status: 'paid' }]) {
     assert.equal(isFreeFulfillment(s), false, JSON.stringify(s));
+  }
+});
+
+test('every theme lets a sized image keep its aspect ratio', () => {
+  // The defect this pins, found on the live-preview pass before it shipped:
+  // once <img> carries real width/height, a rule of `max-width: 100%` WITHOUT
+  // `height: auto` honours the explicit height literally while clamping the
+  // width. A 1200x630 landscape panel then rendered as a 358x630 portrait —
+  // every gallery image on the product page stretched, desktop and mobile.
+  //
+  // It was latent in all six themes long before the attributes existed, and it
+  // would bite any seller who put a sized image in their own prose. The
+  // .showcase rules already set width/height explicitly and were never
+  // affected, which is exactly why the homepage looked fine and the product
+  // page did not.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const themesDir = path.join(__dirname, '..', '..', 'themes');
+  const themes = fs.readdirSync(themesDir).filter((t) =>
+    fs.existsSync(path.join(themesDir, t, 'style.css'))
+  );
+  assert.ok(themes.length > 0, 'expected at least one theme to check');
+  for (const t of themes) {
+    const css = fs.readFileSync(path.join(themesDir, t, 'style.css'), 'utf8');
+    // Isolate the declaration block that styles prose/gallery images, with
+    // comments stripped FIRST: the fix ships next to a comment explaining it,
+    // and matching that comment is how this assertion quietly passed against
+    // deliberately broken CSS the first time it was written.
+    const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const m = /\.prose img[^{]*\{([^}]*)\}/.exec(bare);
+    assert.ok(m, `${t}: no ".prose img" rule found — did the selector change?`);
+    assert.match(
+      m[1], /height:\s*auto/,
+      `${t}/style.css: ".prose img" sets max-width without "height: auto", so an ` +
+        `image with width/height attributes will render stretched`
+    );
+  }
+});
+
+test('the social card is a decision, and a fallback is never silent', () => {
+  // The failure this closes: moving the gallery to WebP made firstRasterImage
+  // find nothing a scraper could decode, so og:image, twitter:image and the
+  // JSON-LD Product.image ALL silently changed from the terminal screenshot to
+  // the theme preview. The build stayed green while the product's link preview
+  // quietly became a different picture — success reported, something else done.
+  const { firstRasterImage } = require('../lib/md.js');
+  const OG_SAFE = /\.(png|jpe?g|gif)$/i;
+  const body = [
+    '![terminal](./assets/previews/terminal.webp)',
+    '![midnight](./assets/previews/midnight.webp)',
+  ].join('\n');
+
+  // A body of WebP has images, but none a card scraper can be trusted with.
+  assert.equal(firstRasterImage(body), './assets/previews/terminal.webp',
+    'the page itself still has images');
+  assert.equal(firstRasterImage(body, { ext: OG_SAFE }), null,
+    'none of them is usable as a social card');
+  // Those two disagreeing is exactly the condition that must warn rather than
+  // substitute: pictures present, none card-safe, nobody chose one.
+
+  // A PNG in the body is still picked up automatically, so a store that never
+  // adopts WebP keeps working with no frontmatter at all.
+  assert.equal(
+    firstRasterImage('![t](./assets/previews/terminal.png)', { ext: OG_SAFE }),
+    './assets/previews/terminal.png'
+  );
+  // An SVG is not a raster and was never a candidate either way.
+  assert.equal(firstRasterImage('![l](./logo.svg)', { ext: OG_SAFE }), null);
+});
+
+test('a named social card must be real and scraper-safe, or the build stops', () => {
+  // og_image is an explicit choice, so a broken one is an error rather than
+  // something to paper over — the whole point is to stop cards changing by
+  // accident. Driven through the real builder in a child process, because the
+  // check lives in the build's problem gate and exits the process.
+  // spawnSync, not execFileSync: execFileSync only surfaces stderr on the
+  // throw path, so a SUCCESSFUL build's warnings would be invisible — and the
+  // whole point of case (c) is that a green build still speaks up.
+  const { spawnSync } = require('node:child_process');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const ROOT = path.join(__dirname, '..', '..');
+  const src = path.join(ROOT, 'products', 'honorbox-pro.md');
+  const original = fs.readFileSync(src, 'utf8');
+  assert.match(original, /^og_image:/m, 'the Pro product must name its card explicitly');
+
+  const build = () => {
+    const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'build.js')], {
+      cwd: ROOT, encoding: 'utf8',
+    });
+    return { code: r.status, err: String(r.stderr || '') };
+  };
+
+  try {
+    // (a) points at nothing
+    fs.writeFileSync(src, original.replace(/^og_image: .*$/m, 'og_image: ./assets/previews/nope.png'));
+    let r = build();
+    assert.equal(r.code, 2, 'a missing card file must fail the build');
+    assert.match(r.err, /og_image .*does not exist/);
+
+    // (b) a format scrapers do not reliably render
+    fs.writeFileSync(src, original.replace(/^og_image: .*$/m, 'og_image: ./assets/previews/terminal.webp'));
+    r = build();
+    assert.equal(r.code, 2, 'a WebP card must fail the build, not ship a blank preview');
+    assert.match(r.err, /og_image must be \.png/);
+
+    // (c) no card named at all, and a body of WebP: builds, but says so
+    fs.writeFileSync(src, original.replace(/^og_image: .*$/m, ''));
+    r = build();
+    assert.equal(r.code, 0, 'a store with no card named must still build');
+    assert.match(r.err, /WARN .*fell back to/, 'the fallback must be loud, never silent');
+
+    // (d) as shipped
+    fs.writeFileSync(src, original);
+    r = build();
+    assert.equal(r.code, 0, `the real product must build clean:\n${r.err}`);
+    assert.doesNotMatch(r.err, /WARN/, 'the shipped store must not be warning about its own card');
+  } finally {
+    fs.writeFileSync(src, original);
   }
 });

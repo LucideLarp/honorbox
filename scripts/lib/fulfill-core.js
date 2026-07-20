@@ -42,6 +42,31 @@ function extractGithubUsername(session, fieldKey = 'github_username') {
   return u;
 }
 
+// How long GitHub itself says to wait, in ms, or null if it said nothing.
+// Documented order of precedence (REST "rate limits" / "best practices"):
+//   1. `retry-after: <seconds>` — what a SECONDARY limit sends. Short, and the
+//      one a burst actually trips.
+//   2. `x-ratelimit-remaining: 0` + `x-ratelimit-reset: <unix>` — a PRIMARY
+//      limit. Waits until the top of the hour window, i.e. potentially ~1h.
+// The two behave differently and that difference is the whole reason to read
+// headers instead of guessing: a secondary limit is worth waiting out inside
+// the run, a primary one never is.
+function retryAfterMs(headers, now = Date.now()) {
+  if (!headers) return null;
+  const get = (k) => {
+    const v = typeof headers.get === 'function' ? headers.get(k) : headers[k];
+    return v == null ? null : String(v).trim();
+  };
+  const ra = get('retry-after');
+  if (ra && /^\d+$/.test(ra)) return Number(ra) * 1000;
+  const remaining = get('x-ratelimit-remaining');
+  const reset = get('x-ratelimit-reset');
+  if (remaining !== null && /^\d+$/.test(remaining) && Number(remaining) === 0 && reset && /^\d+$/.test(reset)) {
+    return Math.max(0, Number(reset) * 1000 - now);
+  }
+  return null;
+}
+
 // Invite failures split two ways. Transient (no HTTP verdict at all, 429,
 // 5xx, or a rate-limited 403): worth retrying on the next poll, so the
 // session is NOT marked processed. Everything else (no such user, bad
@@ -50,7 +75,56 @@ function isTransientInviteError(err) {
   if (!err || err.permanent) return false;
   if (err.status == null) return true; // fetch threw: DNS, timeout, reset
   if (err.status === 429 || err.status >= 500) return true;
-  return err.status === 403 && /rate limit|secondary/i.test(String(err.message));
+  if (err.status !== 403) return false;
+  // A 403 is transient ONLY when it is a rate limit — otherwise it is a token
+  // that lacks admin, which retrying cannot fix. GitHub signals a limit in the
+  // headers as well as the prose; matching prose alone (the old test) misses a
+  // limit worded any other way, and the wording is not part of any contract.
+  // Headers first, prose kept as the fallback.
+  return retryAfterMs(err.headers) !== null || /rate limit|secondary/i.test(String(err.message));
+}
+
+// --- in-run retry -----------------------------------------------------------
+// A transient invite failure used to cost the buyer a WHOLE POLL INTERVAL,
+// because the only retry was "next poll". Once the poll became hourly
+// reconciliation rather than the delivery path, that worst case became ~60
+// min for a failure that typically clears in seconds — and the failure it
+// covers, a secondary rate limit, is exactly what a launch-day burst trips.
+//
+// So retry inside the run that is already running. The run costs a whole
+// billed Actions minute regardless of whether it spends 13s or 60s (jobs bill
+// rounded up), so a bounded wait here is close to free, while the alternative
+// is an hour of a paying buyer staring at nothing.
+//
+// Bounded three ways so this can never become the thing that hangs delivery:
+//   - RUN budget, shared across every session in the run, so ten failing
+//     buyers cannot serialize into ten separate waits.
+//   - a per-wait ceiling, so a PRIMARY limit's "come back in 50 minutes" is
+//     declined rather than slept through.
+//   - attempts, so a server erroring instantly in a loop still terminates.
+// Anything the budget declines falls through to the existing behaviour
+// unchanged: not marked processed, retried by the next poll.
+const IN_RUN_RETRY_BUDGET_MS = 60_000;
+const IN_RUN_MAX_WAIT_MS = 30_000;
+const IN_RUN_MAX_ATTEMPTS = 3;
+
+// Backoff for a transient with no header to go on (timeout, reset, 5xx).
+const IN_RUN_BACKOFF_MS = [1_000, 4_000];
+
+// How long to wait before retrying this invite inside the run, or null for
+// "don't — let the poll have it". `spentMs` is the run's cumulative wait so far.
+function inRunRetryDelayMs(err, attempt, spentMs, now = Date.now()) {
+  if (!isTransientInviteError(err)) return null;
+  if (attempt >= IN_RUN_MAX_ATTEMPTS) return null;
+  const left = IN_RUN_RETRY_BUDGET_MS - spentMs;
+  if (left <= 0) return null;
+  const stated = retryAfterMs(err.headers, now);
+  // GitHub said how long: honour it exactly, or decline if it is too long to
+  // be worth holding the run open. Never wait less than it asked — that is
+  // how a secondary limit gets extended.
+  const wait = stated === null ? IN_RUN_BACKOFF_MS[Math.min(attempt - 1, IN_RUN_BACKOFF_MS.length - 1)] : stated;
+  if (wait > IN_RUN_MAX_WAIT_MS || wait > left) return null;
+  return Math.max(0, wait);
 }
 
 // The retry budget is TIME, not attempts: an attempt cap burns out in
@@ -67,6 +141,32 @@ function shouldRetryInvite(err, failures, sessionId, now = Date.now()) {
 
 function inviteAttempts(failures, sessionId) {
   return failures.filter((f) => f.session === sessionId && f.transient).length;
+}
+
+// state.failures was the only array in the state file with no ceiling, while
+// processed and unmatched both have one. It is appended to on every failed
+// attempt and the whole file is committed to git every cycle, so a sustained
+// GitHub incident grows it without bound.
+//
+// It cannot be trimmed by age alone. shouldRetryInvite dates the 6h retry
+// window from a session's FIRST transient row, so dropping that row silently
+// restarts the budget and the session retries forever instead of surfacing to
+// a human. The safe cut is by SETTLEMENT: a row whose session is already in
+// processed is never consulted again (shouldRetryInvite only runs for sessions
+// that are not processed), so those are the droppable ones — oldest first,
+// original order preserved.
+function pruneFailures(failures, processedIds, cap = 2000) {
+  const rows = Array.isArray(failures) ? failures : [];
+  if (rows.length <= cap) return rows;
+  const settled = new Set(processedIds);
+  const droppable = rows.reduce((n, f) => n + (settled.has(f.session) ? 1 : 0), 0);
+  const keep = rows.length - droppable;
+  let toDrop = Math.min(droppable, Math.max(0, rows.length - Math.max(cap, keep)));
+  if (toDrop <= 0) return rows;
+  return rows.filter((f) => {
+    if (toDrop > 0 && settled.has(f.session)) { toDrop--; return false; }
+    return true;
+  });
 }
 
 function isPaidComplete(session) {
@@ -206,9 +306,15 @@ module.exports = {
   INVITE_STATUS_HINT,
   inviteStatusHint,
   INVITE_RETRY_WINDOW_SECONDS,
+  IN_RUN_RETRY_BUDGET_MS,
+  IN_RUN_MAX_WAIT_MS,
+  IN_RUN_MAX_ATTEMPTS,
+  retryAfterMs,
+  inRunRetryDelayMs,
   isTransientInviteError,
   shouldRetryInvite,
   inviteAttempts,
+  pruneFailures,
   isRepoOwner,
   isFreeFulfillment,
   grantProblems,

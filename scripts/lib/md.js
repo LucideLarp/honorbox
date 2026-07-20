@@ -206,7 +206,11 @@ function listAt(lines, start, base) {
   };
 }
 
-function renderMarkdown(src) {
+// opts.sizeOf(src) -> {width, height} | null. Optional, and optional on
+// purpose: markdown rendering stays a pure string->string function with no
+// filesystem in it, so the caller that KNOWS where the images live is the one
+// that measures them. Without it the markup is byte-for-byte what it was.
+function renderMarkdown(src, opts = {}) {
   const lines = src.split(/\r?\n/);
   const out = [];
   let i = 0;
@@ -233,8 +237,14 @@ function renderMarkdown(src) {
       while (i < lines.length && /^!\[[^\]]*\]\([^)\s]+\)\s*$/.test(lines[i])) {
         const m = /^!\[([^\]]*)\]\(([^)\s]+)\)\s*$/.exec(lines[i++]);
         if (safeUrl(m[2])) {
+          // Reserve the box before the lazy image arrives. Markdown has no
+          // syntax for dimensions, so without this the gallery on
+          // honorbox-pro.html shifted the page under the reader on a slow
+          // connection (measured CLS 0.14-0.28, over the 0.1 threshold).
+          const d = typeof opts.sizeOf === 'function' ? opts.sizeOf(m[2]) : null;
+          const dims = d && d.width > 0 && d.height > 0 ? ` width="${d.width}" height="${d.height}"` : '';
           // escape the URL for the attribute — same discipline as link hrefs
-          imgs.push(`<img src="${escapeHtml(m[2])}" alt="${escapeHtml(m[1])}" loading="lazy">`);
+          imgs.push(`<img src="${escapeHtml(m[2])}" alt="${escapeHtml(m[1])}" loading="lazy"${dims}>`);
         } else {
           // rejected scheme: keep the line visible instead of vanishing silently
           rejected.push(`<p>${inline(m[0])}</p>`);
@@ -330,14 +340,19 @@ function excerpt(src, max = 160) {
 // as the renderer. The extension test ignores any ?query or #fragment, so a
 // cache-busted "cover.png?v=2" still qualifies: missing one means the page
 // silently ships with no social card.
-function firstRasterImage(src) {
+// opts.ext narrows which formats count. The caller picking an og:image passes
+// a stricter set than the caller picking any image: link-preview scrapers are
+// not browsers, and X in particular still declines WebP cards, so a shared
+// product link would render with no image at all.
+function firstRasterImage(src, opts = {}) {
+  const ext = opts.ext || /\.(png|jpe?g|webp|gif)$/i;
   // own instance: LINKISH is module-level and exec() would share its lastIndex
   const re = new RegExp(LINKISH.source, 'g');
   let m;
   while ((m = re.exec(String(src == null ? '' : src)))) {
     const [, bang, , href] = m;
     const bare = href.split(/[?#]/)[0];
-    if (bang && safeUrl(href) && /\.(png|jpe?g|webp|gif)$/i.test(bare)) return href;
+    if (bang && safeUrl(href) && ext.test(bare)) return href;
   }
   return null;
 }

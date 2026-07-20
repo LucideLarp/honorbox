@@ -107,8 +107,8 @@ design, switchable with one config line:
 
 | | |
 |---|---|
-| ![terminal](assets/previews/terminal.png) | ![brutalist](assets/previews/brutalist.png) |
-| ![editorial](assets/previews/editorial.png) | ![midnight](assets/previews/midnight.png) |
+| ![terminal](assets/previews/terminal.webp) | ![brutalist](assets/previews/brutalist.webp) |
+| ![editorial](assets/previews/editorial.webp) | ![midnight](assets/previews/midnight.webp) |
 
 ## Free core vs Pro
 

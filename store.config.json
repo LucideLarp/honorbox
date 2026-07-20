@@ -17,36 +17,36 @@
       "note": "Real screenshots of this same storefront rebuilt with each HonorBox Pro theme.",
       "items": [
         {
-          "img": "./assets/previews/terminal.png",
+          "img": "./assets/previews/terminal.webp",
           "alt": "The same storefront in the terminal theme: phosphor green type on black",
           "caption": "terminal: phosphor-on-black, for CLI tools",
           "href": "./honorbox-pro.html",
-          "width": 1360,
-          "height": 900
+          "width": 1200,
+          "height": 630
         },
         {
-          "img": "./assets/previews/editorial.png",
+          "img": "./assets/previews/editorial.webp",
           "alt": "The same storefront in the editorial theme: serif type, magazine rules",
           "caption": "editorial: serif, magazine-calm",
           "href": "./honorbox-pro.html",
-          "width": 1360,
-          "height": 900
+          "width": 1200,
+          "height": 630
         },
         {
-          "img": "./assets/previews/brutalist.png",
+          "img": "./assets/previews/brutalist.webp",
           "alt": "The same storefront in the brutalist theme: loud type, hard shadows",
           "caption": "brutalist: loud, typographic",
           "href": "./honorbox-pro.html",
-          "width": 1360,
-          "height": 900
+          "width": 1200,
+          "height": 630
         },
         {
-          "img": "./assets/previews/midnight.png",
+          "img": "./assets/previews/midnight.webp",
           "alt": "The same storefront in the midnight theme: deep blue, product-launch look",
           "caption": "midnight: deep-blue product-launch",
           "href": "./honorbox-pro.html",
-          "width": 1360,
-          "height": 900
+          "width": 1200,
+          "height": 630
         }
       ]
     },
