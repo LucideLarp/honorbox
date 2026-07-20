@@ -482,7 +482,7 @@ function section(s, sizeOf = sizeOfLocal) {
     const rows = s.rows
       .map((r) => `<tr>${r.map((c, i) => `<td${i === 0 ? ' class="rowhead"' : ''}>${escapeHtml(c)}</td>`).join('')}</tr>`)
       .join('');
-    return `<section class="compare"><h2>${escapeHtml(s.title)}</h2>${s.note ? `<p class="muted">${escapeHtml(s.note)}</p>` : ''}<div class="table-scroll"><table>${head}${rows}</table></div></section>`;
+    return `<section class="compare"><h2>${escapeHtml(s.title)}</h2>${s.note ? `<p class="muted">${escapeHtml(s.note)}</p>` : ''}<div class="table-scroll" tabindex="0" role="region" aria-label="Comparison table, scrolls sideways"><table>${head}${rows}</table></div></section>`;
   }
   if (s.type === 'faq') {
     // Optional `href`/`href_label`: an answer that points at a doc gets a real

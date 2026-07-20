@@ -196,7 +196,7 @@
         },
         {
           "q": "Do I need HonorBox Pro to use the engine?",
-          "a": "No. The free core is a complete store: two themes, checkout, fulfillment, docs. Pro is mostly a conformance suite: sixteen checks for the known ways this architecture loses money quietly, run against your own account on every push, so you can tell \"nobody came\" apart from \"my store is silently broken\". The failure catalogue behind it is published free. Pro also adds reconcile, which pairs every paid order back to whether that buyer has access right now, a store doctor, refund and support bots, tracker-free stats, four more themes, an offline license-key module, and a commerce playbook. Buying it funds the free core."
+          "a": "No, and you should start on the free core. It is a working store: checkout, fulfillment, docs, two themes. What it does not do is tell you whether a specific order actually reached the person who paid for it. An empty ledger and a broken store look identical from the outside, and you find out from the buyer. Pro is the half you want once money is moving: sixteen checks for the known ways this architecture loses money quietly, run against your own account on every push. Buy it when you have orders to prove, not to feel like you have started."
         },
         {
           "q": "Does the fulfillment bot need my full Stripe secret key?",
