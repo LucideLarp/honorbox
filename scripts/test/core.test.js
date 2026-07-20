@@ -9,6 +9,8 @@ const {
   nextCursor,
   matchGrant,
   isFreeFulfillment,
+  stripeMode,
+  redactKeys,
 } = require('../lib/fulfill-core.js');
 const { parseFrontmatter } = require('../lib/fm.js');
 const { renderMarkdown, excerpt, firstRasterImage, safeUrl } = require('../lib/md.js');
@@ -1698,4 +1700,63 @@ test('a named social card must be real and scraper-safe, or the build stops', ()
   } finally {
     fs.writeFileSync(src, original);
   }
+});
+
+// Which Stripe account a key reaches. The point of the function is that
+// nothing else in a run tells you: STRIPE_SECRET_KEY is an ordinary variable
+// name and a live key sitting in it looks exactly like a test key.
+test('stripeMode reads live and test off the key prefix', () => {
+  assert.equal(stripeMode('sk_live_' + 'x'.repeat(24)), 'live');
+  assert.equal(stripeMode('rk_live_' + 'x'.repeat(24)), 'live');
+  assert.equal(stripeMode('sk_test_' + 'x'.repeat(24)), 'test');
+  assert.equal(stripeMode('rk_test_' + 'x'.repeat(24)), 'test');
+});
+
+// The direction that costs money. Anything unrecognised must NOT come back as
+// 'test', or a typo'd or future key shape reads as safe and a live run goes
+// out under a test banner.
+test('stripeMode calls an unrecognised key unknown, never test', () => {
+  for (const k of ['', null, undefined, 'sk_' + 'x'.repeat(24), 'pk_live_x', 'whsec_x', 'not-a-key']) {
+    assert.equal(stripeMode(k), 'unknown', `expected unknown for ${JSON.stringify(k)}`);
+  }
+});
+
+// Prefix must anchor. A key that merely CONTAINS the text is not a live key,
+// and more importantly a live key with something pasted in front of it must
+// not read as unknown-and-therefore-ignorable either way round.
+test('stripeMode anchors the prefix', () => {
+  assert.equal(stripeMode('xsk_live_' + 'x'.repeat(24)), 'unknown');
+  assert.equal(stripeMode(' sk_live_' + 'x'.repeat(24)), 'unknown');
+});
+
+// Stripe answers a bad key with `Invalid API Key provided: sk_test_****0000`,
+// and that body is logged verbatim by the driver. The key must not survive the
+// trip into a CI log.
+test('redactKeys removes key material from a provider error body', () => {
+  const live = 'sk_live_' + 'A1b2C3d4'.repeat(3);
+  const body = `{"error":{"message":"Invalid API Key provided: ${live}"}}`;
+  const out = redactKeys(body);
+  assert.ok(!out.includes(live), 'the key survived redaction');
+  assert.ok(!out.includes('A1b2C3d4'), 'a fragment of the key survived redaction');
+});
+
+// Which ACCOUNT failed is the useful half of that message and is not secret,
+// so the mode prefix is kept deliberately.
+test('redactKeys keeps the mode prefix, which is the diagnostic half', () => {
+  const out = redactKeys('Invalid API Key provided: sk_live_' + 'x'.repeat(24));
+  assert.match(out, /sk_live_<redacted>/);
+});
+
+// Stripe echoes a malformed key in full rather than masking it, and a value
+// that never matched the key shape cannot be found by prefix. The phrase that
+// carries it is cut instead.
+test('redactKeys cuts a malformed key that has no recognisable prefix', () => {
+  const out = redactKeys('Invalid API Key provided: totally-wrong-value');
+  assert.ok(!out.includes('totally-wrong-value'));
+  assert.match(out, /<redacted>/);
+});
+
+test('redactKeys leaves ordinary error text alone', () => {
+  const msg = 'No such checkout session: cs_test_abc123';
+  assert.equal(redactKeys(msg), msg);
 });

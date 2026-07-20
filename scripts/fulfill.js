@@ -7,7 +7,9 @@
 // State (cursor + processed ids + failures) is written to disk; committing
 // is the calling workflow's job. No webhooks, no server, no dependencies.
 //
-// Env:  STRIPE_SECRET_KEY  (required)
+// Env:  STRIPE_SECRET_KEY  (required; its sk_live_/sk_test_ prefix decides
+//                          which Stripe account this run reaches, and the run
+//                          prints that mode before its first API call)
 //       GH_FULFILL_TOKEN   (required: token with admin on the product repos)
 // Usage: node scripts/fulfill.js --config store.config.json \
 //          --state state/fulfill-state.json --ledger ledger/ledger.json
@@ -37,6 +39,8 @@ const {
   IN_RUN_MAX_ATTEMPTS,
   isInvitationCapError,
   INVITE_CAP_PER_REPO_PER_DAY,
+  stripeMode,
+  redactKeys,
 } = require('./lib/fulfill-core.js');
 
 // Injectable so tests exercise the real retry paths without real waiting.
@@ -89,7 +93,7 @@ async function stripeGet(pathname, params, key, sleep = defaultSleep) {
     if (res.ok) return res.json();
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= STRIPE_RETRY_DELAYS_MS.length) {
-      throw new Error(`Stripe ${pathname} -> ${res.status}: ${await res.text()}`);
+      throw new Error(`Stripe ${pathname} -> ${res.status}: ${redactKeys(await res.text())}`);
     }
     console.error(`RETRY Stripe ${pathname} -> ${res.status} (attempt ${attempt + 1})`);
     await sleep(STRIPE_RETRY_DELAYS_MS[attempt]);
@@ -176,6 +180,35 @@ async function main(sleep = defaultSleep) {
   const ghToken = process.env.GH_FULFILL_TOKEN;
   if (!stripeKey || !ghToken) {
     console.error('Missing STRIPE_SECRET_KEY or GH_FULFILL_TOKEN');
+    process.exit(2);
+  }
+
+  // Say which Stripe account this run reaches, before it reaches it. Nothing
+  // in STRIPE_SECRET_KEY's name says whether it is live, so a shell profile
+  // that exports the live key turns `node scripts/fulfill.js` into real
+  // delivery to real buyers, silently. One line, every run, ahead of the first
+  // API call, so the answer is on screen before anything is sent.
+  const mode = stripeMode(stripeKey);
+  console.log(`stripe mode=${mode}`);
+  if (mode === 'unknown') {
+    console.error(
+      'WARN: STRIPE_SECRET_KEY does not look like a Stripe secret key ' +
+        '(expected an sk_live_/sk_test_/rk_live_/rk_test_ prefix). Proceeding, ' +
+        'but this run cannot tell you whether it is about to touch real money.'
+    );
+  }
+
+  // Opt-in hard gate for anyone who wants intent stated rather than inferred:
+  // `--require-mode live` in the production workflow, `--require-mode test`
+  // when working locally. Off by default, because turning it on by default
+  // would break every store already running without it.
+  const requireMode = arg('require-mode', null);
+  if (requireMode && requireMode !== mode) {
+    console.error(
+      `Refusing to run: --require-mode ${requireMode} was asked for, but ` +
+        `STRIPE_SECRET_KEY is a ${mode} key. Point STRIPE_SECRET_KEY at a ` +
+        `${requireMode} key, or change the flag to match what you meant.`
+    );
     process.exit(2);
   }
 

@@ -20,6 +20,49 @@ const OVERLAP_SECONDS = 25 * 3600;
 // carries no .status, so it lands in the transient bucket and simply retries.
 const REQUEST_TIMEOUT_MS = 20_000;
 
+// Which Stripe account a key talks to, read off the key's own prefix. Stripe
+// publishes these: `sk_live_`/`rk_live_` reach real customers and real money,
+// `sk_test_`/`rk_test_` reach the test account.
+//
+// Worth a function because the name a store reads, STRIPE_SECRET_KEY, is an
+// ordinary environment variable and nothing about it says which account is on
+// the other end. A shell profile that exports the live key, a copied .env, a
+// CI secret set on the wrong repo: in every case fulfillment runs against real
+// buyers and looks exactly like a test run while it does it. So the run says
+// which one it is, out loud, before it calls Stripe.
+//
+// An unrecognised prefix is 'unknown', never 'test'. A key shape we do not
+// recognise is not evidence of safety, and treating it as safe is how this
+// would fail in the one direction that costs money.
+function stripeMode(key) {
+  if (/^(sk|rk)_live_/.test(String(key || ''))) return 'live';
+  if (/^(sk|rk)_test_/.test(String(key || ''))) return 'test';
+  return 'unknown';
+}
+
+// Provider error bodies get logged verbatim, and Stripe quotes the key back in
+// them: a 401 answers `Invalid API Key provided: sk_test_****...0000`, and a
+// malformed key is echoed whole rather than masked. Those lines land in CI
+// logs and in an operator's terminal, so anything key-shaped is replaced
+// before the body is used in a message. The mode prefix survives on purpose,
+// as `sk_live_<redacted>`: which account failed is the useful half, and it is
+// the half that is not a secret.
+const KEYISH_RE = /\b((?:sk|rk|pk)_(?:live|test)_)[A-Za-z0-9]+/g;
+
+function redactKeys(text) {
+  return String(text ?? '')
+    .replace(KEYISH_RE, '$1<redacted>')
+    // A key that never matched the shape above (a truncated paste, a wrong
+    // value) is echoed by Stripe in full and cannot be recognised by prefix,
+    // so the one phrase that carries it is cut at the phrase. The lookahead
+    // keeps this from swallowing the prefix the rule above just preserved:
+    // `sk_live_<redacted>` is itself one \S+ run.
+    .replace(
+      /(Invalid API Key provided:\s*)(?!(?:sk|rk|pk)_(?:live|test)_<redacted>)\S+/gi,
+      '$1<redacted>'
+    );
+}
+
 // GitHub username: 1-39 chars, alphanumeric + hyphen, no leading/trailing
 // hyphen, no consecutive hyphens.
 const USERNAME_RE = /^[a-zA-Z0-9](?:-?[a-zA-Z0-9]){0,38}$/;
@@ -377,6 +420,8 @@ function inviteStatusHint(status, body = '') {
 module.exports = {
   OVERLAP_SECONDS,
   REQUEST_TIMEOUT_MS,
+  stripeMode,
+  redactKeys,
   INVITE_STATUS_HINT,
   inviteStatusHint,
   INVITE_RETRY_WINDOW_SECONDS,

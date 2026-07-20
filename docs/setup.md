@@ -113,6 +113,21 @@ Keep secrets and state **out of your public repo**:
    - `STRIPE_SECRET_KEY`: create a **restricted key** in Stripe (Developers →
      API keys → Create restricted key) with only **Checkout Sessions: Read**.
      Don't use your full secret key if you don't have to.
+
+     Nothing in that variable's *name* says whether the key behind it is live
+     or test, so every run prints which one it reached before it calls Stripe:
+
+     ```
+     stripe mode=live
+     ```
+
+     Worth knowing because the reverse is the easy mistake. If your shell
+     profile exports a live `STRIPE_SECRET_KEY` (a `.env`, a secrets file you
+     source from `.zshrc`), then running `node scripts/fulfill.js` by hand
+     delivers to real buyers, and without that line it looks exactly like a
+     rehearsal. If you want the intent stated rather than inferred, pass
+     `--require-mode live` (or `test`) and the run refuses to start against
+     the wrong kind of key.
    - `GH_FULFILL_TOKEN`: a fine-grained PAT scoped to your private product
      repo(s) with **Administration: Read & write** (for collaborator invites).
      The ops-repo state commit uses the workflow's own `GITHUB_TOKEN`, not this

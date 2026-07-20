@@ -856,3 +856,91 @@ test('the cap gates invitations only, not the orders that never needed one', asy
   assert.ok(warns.some((l) => /1 paid buyer is waiting behind the invitation cap/.test(l)),
     'the queue count must count only buyers who actually need an invitation');
 });
+
+// ---- which Stripe account a run reaches -------------------------------
+//
+// These spawn the REAL script rather than calling main(), because the thing
+// under test is what an operator sees on their terminal and what exit code
+// the workflow gets. Both land before the first Stripe call, so no network
+// and no key beyond an obviously fake one are involved.
+const { execFileSync } = require('node:child_process');
+
+// `--config` points at a path that does not exist, on purpose. The banner and
+// the mode gate both land before the config is read, so the run prints what is
+// under test here and then stops at "no config" WITHOUT ever calling Stripe.
+// Without this the run reaches the real API, and Stripe's 401 body quotes the
+// key back at you: a test of what gets printed must not itself go and print
+// something.
+function runCli(env, extraArgs = []) {
+  const script = path.join(__dirname, '..', 'fulfill.js');
+  const args = extraArgs.includes('--config')
+    ? [script, ...extraArgs]
+    : [script, '--config', path.join(os.tmpdir(), 'honorbox-no-such-config.json'), ...extraArgs];
+  try {
+    const out = execFileSync(process.execPath, args, {
+      env: { ...process.env, ...env },
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return { code: 0, out, err: '' };
+  } catch (e) {
+    return { code: e.status, out: e.stdout || '', err: e.stderr || '' };
+  }
+}
+
+const FAKE_TEST_KEY = 'sk_test_' + '0'.repeat(24);
+const FAKE_LIVE_KEY = 'sk_live_' + '0'.repeat(24);
+
+test('a run says which Stripe account it reaches, before it reaches it', () => {
+  const r = runCli({ STRIPE_SECRET_KEY: FAKE_TEST_KEY, GH_FULFILL_TOKEN: 'x' });
+  assert.match(r.out, /stripe mode=test/);
+});
+
+// The whole point: a live key must announce itself, so `node scripts/fulfill.js`
+// with a live key exported cannot look like a rehearsal.
+test('a live key announces live', () => {
+  const r = runCli({ STRIPE_SECRET_KEY: FAKE_LIVE_KEY, GH_FULFILL_TOKEN: 'x' });
+  assert.match(r.out, /stripe mode=live/);
+  assert.doesNotMatch(r.out, /stripe mode=test/);
+});
+
+test('a key of unrecognised shape warns rather than claiming test', () => {
+  const r = runCli({ STRIPE_SECRET_KEY: 'not-a-key', GH_FULFILL_TOKEN: 'x' });
+  assert.match(r.out, /stripe mode=unknown/);
+  assert.match(r.err, /WARN: STRIPE_SECRET_KEY does not look like/);
+});
+
+test('--require-mode test refuses to run against a live key', () => {
+  const r = runCli({ STRIPE_SECRET_KEY: FAKE_LIVE_KEY, GH_FULFILL_TOKEN: 'x' }, ['--require-mode', 'test']);
+  assert.equal(r.code, 2);
+  assert.match(r.err, /Refusing to run/);
+  assert.match(r.err, /is a live key/);
+});
+
+test('--require-mode live refuses to run against a test key', () => {
+  const r = runCli({ STRIPE_SECRET_KEY: FAKE_TEST_KEY, GH_FULFILL_TOKEN: 'x' }, ['--require-mode', 'live']);
+  assert.equal(r.code, 2);
+  assert.match(r.err, /Refusing to run/);
+});
+
+// Opt-in: a store that never passes the flag must behave exactly as before.
+test('--require-mode matching the key does not stop the run', () => {
+  const r = runCli({ STRIPE_SECRET_KEY: FAKE_TEST_KEY, GH_FULFILL_TOKEN: 'x' }, ['--require-mode', 'test']);
+  // The run still stops, at the deliberately absent config, which is what keeps
+  // this test off the network. What must NOT happen is the mode gate refusing.
+  assert.doesNotMatch(r.err, /Refusing to run/, 'a matching mode must not be the thing that stops the run');
+  assert.match(r.out, /stripe mode=test/);
+});
+
+// Never, under any of these paths, may the key itself reach the output.
+test('no part of the key is ever printed', () => {
+  for (const key of [FAKE_LIVE_KEY, FAKE_TEST_KEY, 'not-a-key']) {
+    for (const args of [[], ['--require-mode', 'live'], ['--require-mode', 'test']]) {
+      const r = runCli({ STRIPE_SECRET_KEY: key, GH_FULFILL_TOKEN: 'x' }, args);
+      const all = r.out + r.err;
+      assert.ok(!all.includes(key), `whole key leaked with args ${JSON.stringify(args)}`);
+      // and not a fragment either: the tail is the secret part
+      assert.ok(!all.includes(key.slice(-12)), `key tail leaked with args ${JSON.stringify(args)}`);
+    }
+  }
+});

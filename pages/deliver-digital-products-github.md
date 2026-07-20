@@ -53,8 +53,8 @@ something must read it and send the invite:
    MIT-licensed [HonorBox](https://github.com/Honorboxx/honorbox) engine
    does)*. A GitHub Action lists recent paid sessions and invites each
    buyer. No server, no webhook secret, delivery in minutes. The engine is
-   766 dependency-free lines you can read before trusting: a 359-line driver on
-   a 407-line pure core.
+   844 dependency-free lines you can read before trusting: a 392-line driver on
+   a 452-line pure core.
 3. **By hand.** Works for the first sales; does not survive a weekend away.
 
 Whichever you pick: make fulfillment **idempotent** (track processed session

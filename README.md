@@ -65,8 +65,8 @@ buyer ──▶ storefront (GitHub Pages, static)
                      ──▶ appends your (private) sales ledger
 ```
 
-The fulfillment path is two dependency-free Node files: a 359-line driver on a
-407-line pure logic core (which is why it can be unit-tested without a
+The fulfillment path is two dependency-free Node files: a 392-line driver on a
+452-line pure logic core (which is why it can be unit-tested without a
 network). Read both: [`scripts/fulfill.js`](scripts/fulfill.js)
 and [`scripts/lib/fulfill-core.js`](scripts/lib/fulfill-core.js).
 
