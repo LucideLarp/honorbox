@@ -1,6 +1,6 @@
 {
   "name": "honorbox",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Sell digital products with just Stripe + GitHub. No platform, no monthly fee, no server.",
   "license": "MIT",
   "private": true,

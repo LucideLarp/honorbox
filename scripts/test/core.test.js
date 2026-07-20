@@ -1508,6 +1508,24 @@ test('faq: a hostile href in config cannot become a javascript: link', () => {
   assert.ok(!out.includes('javascript:'), out);
 });
 
+test('steps: a section note is rendered rather than silently dropped', () => {
+  // `compare` and `showcase` already honoured `note`; `steps` did not, so a
+  // note written on a steps section vanished with a green build. That is the
+  // failure shape this repo keeps fixing: config that looks honoured and is not.
+  const withNote = section({
+    type: 'steps', title: 'T', note: 'why this list exists', items: [{ title: 'a', text: 'b' }],
+  });
+  assert.ok(withNote.includes('why this list exists'), withNote);
+  // escaped like every other config-authored string, never raw HTML
+  const hostile = section({
+    type: 'steps', title: 'T', note: '<img src=x onerror=alert(1)>', items: [{ title: 'a', text: 'b' }],
+  });
+  assert.ok(!hostile.includes('<img'), hostile);
+  // and a steps section without one is unchanged
+  const plain = section({ type: 'steps', title: 'T', items: [{ title: 'a', text: 'b' }] });
+  assert.ok(!plain.includes('class="muted"'), plain);
+});
+
 // ---------- markdown tables ----------
 
 test('markdown: a pipe table renders as a table, not a paragraph of pipes', () => {

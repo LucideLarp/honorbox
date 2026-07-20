@@ -452,7 +452,11 @@ function productCard(p, variant = '') {
 
 function section(s, sizeOf = sizeOfLocal) {
   if (s.type === 'steps') {
-    return `<section class="steps"><h2>${escapeHtml(s.title)}</h2><ol class="steps-list">${s.items
+    // Optional `note`, same contract as `compare` and `showcase` already have.
+    // Without it a note written on a steps section is silently dropped, which
+    // is the failure shape this repo keeps fixing: config that looks honoured
+    // and is not.
+    return `<section class="steps"><h2>${escapeHtml(s.title)}</h2>${s.note ? `<p class="muted">${escapeHtml(s.note)}</p>` : ''}<ol class="steps-list">${s.items
       .map((it) => {
         const h = it.href
           ? `<a href="${safeHref(it.href)}">${escapeHtml(it.title)}</a>`
