@@ -82,8 +82,14 @@ function writeJson(file, obj) {
 // A fresh read, not a cached one. Anything else in that file belongs to another
 // program and is left exactly as found.
 function loadState(file) {
-  const raw = readJson(file, {});
-  const state = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const state = readJson(file, {});
+  // Parses but is not an object: a list, a string, null. That is just as
+  // unreadable as a truncated file, and treating it as "{}" would mean an empty
+  // denylist and a refunded buyer renewed. Absence of a readable state is not
+  // evidence that nobody is revoked.
+  if (!state || typeof state !== 'object' || Array.isArray(state)) {
+    throw new Error(`${file}: expected a JSON object, got ${Array.isArray(state) ? 'an array' : typeof state}`);
+  }
   for (const k of [REVOKED_FIELD, REINVITES_FIELD]) {
     if (!Array.isArray(state[k])) state[k] = [];
   }
@@ -125,6 +131,27 @@ async function gh(method, pathname, token, body) {
   return res.json();
 }
 
+// Every pending invitation on a repo, not just the first page.
+//
+// GitHub returns 30 by default. A store that sells steadily can easily hold
+// more than that unaccepted at once (they live for seven days, and renewal
+// keeps them alive for weeks), and reading one page would mean the buyers past
+// the first thirty are never renewed. That failure is invisible: the log would
+// report a clean sweep of the page it happened to see.
+const PER_PAGE = 100;
+
+async function listInvitations(repo, token) {
+  const all = [];
+  for (let page = 1; ; page++) {
+    const rows = await gh('GET', `/repos/${repo}/invitations?per_page=${PER_PAGE}&page=${page}`, token);
+    if (rows == null) break;
+    if (!Array.isArray(rows)) return rows; // caller reports the shape it got
+    all.push(...rows);
+    if (rows.length < PER_PAGE) break;
+  }
+  return all;
+}
+
 // Re-issue one buyer's invitation, restarting GitHub's seven-day clock.
 //
 // The order is the whole safety argument. We ADD first and only then remove the
@@ -150,7 +177,7 @@ async function renewInvite(state, r, token, flush) {
       `WARN: refusing to re-invite ${JSON.stringify(r.login)} on ${r.repo}: not a valid GitHub username; ` +
         'invite them by hand or refund them'
     );
-    return;
+    return false;
   }
   const wasCreated = Date.parse(r.inv.created_at);
   const res = await ghRequest('PUT', `/repos/${r.repo}/collaborators/${encodeURIComponent(r.login)}`, token, { permission: 'pull' });
@@ -161,7 +188,7 @@ async function renewInvite(state, r, token, flush) {
   if (res.status === 204) {
     state[REINVITES_FIELD] = forgetReinvites(state[REINVITES_FIELD], r.key);
     console.log(`invite ${r.login} on ${r.repo}: already a collaborator, nothing to renew`);
-    return;
+    return false;
   }
 
   // 404: there is no such account any more, so this buyer cannot be reached at
@@ -173,7 +200,7 @@ async function renewInvite(state, r, token, flush) {
       `WARN: giving up on re-inviting ${r.login} to ${r.repo}: GitHub no longer knows that account ` +
         '(renamed or deleted); check the username they gave at checkout, or refund them'
     );
-    return;
+    return false;
   }
 
   if (res.status !== 201) {
@@ -188,7 +215,7 @@ async function renewInvite(state, r, token, flush) {
       `WARN: re-invite of ${r.login} on ${r.repo} failed: GitHub returned ${res.status}; ` +
         'their invitation still expires on its original schedule'
     );
-    return;
+    return false;
   }
 
   const fresh = await res.json().catch(() => null);
@@ -201,11 +228,11 @@ async function renewInvite(state, r, token, flush) {
     // Best effort: a 404 here just means GitHub already retired the old row.
     await gh('DELETE', `/repos/${r.repo}/invitations/${r.inv.id}`, token).catch(() => {});
     console.log(`invite RENEWED for ${r.login} on ${r.repo} (${r.attempt}/${MAX_REINVITES}, invitation ${r.inv.id} -> ${newId}); 7-day clock restarted`);
-    return;
+    return true;
   }
   if (Number.isFinite(newCreated) && Number.isFinite(wasCreated) && newCreated > wasCreated) {
     console.log(`invite RENEWED in place for ${r.login} on ${r.repo} (${r.attempt}/${MAX_REINVITES}); 7-day clock restarted`);
-    return;
+    return true;
   }
   if (newId == null && !Number.isFinite(newCreated)) {
     // 201 with a body we could not read. GitHub documents 201 as "Response when
@@ -213,7 +240,7 @@ async function renewInvite(state, r, token, flush) {
     // worked than one that did nothing, and it is logged rather than alerted: a
     // warning nobody can act on is how a log stops being read.
     console.log(`invite renewed for ${r.login} on ${r.repo} (${r.attempt}/${MAX_REINVITES}); GitHub returned 201 with no readable invitation body`);
-    return;
+    return true;
   }
   // GitHub accepted the call and changed nothing. Renewal does not work the way
   // this code believes it does, which is worth saying loudly exactly once per
@@ -222,6 +249,7 @@ async function renewInvite(state, r, token, flush) {
     `WARN: re-invite of ${r.login} on ${r.repo} did not restart the clock ` +
       `(invitation ${r.inv.id} still reads created ${r.inv.created_at}); invite them by hand before it expires`
   );
+  return false;
 }
 
 // Take access away and write it down so renewal can never hand it back.
@@ -251,7 +279,7 @@ async function revokeAccess(statePath, repo, login, token, { dryRun = false } = 
   fresh[REINVITES_FIELD] = state[REINVITES_FIELD];
   writeJson(statePath, fresh);
   await gh('DELETE', `/repos/${repo}/collaborators/${encodeURIComponent(login)}`, token);
-  const invitations = (await gh('GET', `/repos/${repo}/invitations`, token)) || [];
+  const invitations = await listInvitations(repo, token);
   for (const inv of Array.isArray(invitations) ? invitations : []) {
     if (inv && inv.invitee && String(inv.invitee.login).toLowerCase() === login.toLowerCase()) {
       await gh('DELETE', `/repos/${repo}/invitations/${inv.id}`, token);
@@ -285,7 +313,8 @@ async function sweepRepo(statePath, repo, token, { now = Date.now(), dryRun = fa
   // An email that went out is a fact about the world. Get it on disk the moment
   // it happens, so a crash on the next repo cannot make us send it twice.
   const flush = () => persist(statePath, state);
-  const invitations = (await gh('GET', `/repos/${repo}/invitations`, token)) || [];
+  let renewed = 0;
+  const invitations = await listInvitations(repo, token);
   // If this ever stops being a list, the planner would quietly see "no
   // invitations" and report a clean sweep forever. Say so instead: a guard that
   // cannot read its input must not claim everything is fine.
@@ -317,14 +346,22 @@ async function sweepRepo(statePath, repo, token, { now = Date.now(), dryRun = fa
     // email and costs the buyer nothing; leaving it would double every future
     // renewal for that buyer.
     for (const s of plan.superseded) {
-      await gh('DELETE', `/repos/${repo}/invitations/${s.inv.id}`, token).catch(() => {});
-      console.log(`invites ${repo}: removed superseded duplicate invitation ${s.inv.id} for ${s.login}`);
+      // Best effort, but it must not claim a removal that did not happen: this
+      // line is how an operator tells tidy-up from a duplicate still in flight.
+      try {
+        await gh('DELETE', `/repos/${repo}/invitations/${s.inv.id}`, token);
+        console.log(`invites ${repo}: removed superseded duplicate invitation ${s.inv.id} for ${s.login}`);
+      } catch (e) {
+        console.error(`WARN: could not remove superseded duplicate invitation ${s.inv.id} on ${repo}: ${e.message}`);
+      }
     }
     for (const r of plan.reinvite) {
       // One buyer's renewal must never take out the buyers behind them.
-      await renewInvite(state, r, token, flush).catch((e) =>
-        console.error(`WARN: re-invite of ${r.login} on ${repo} failed: ${e.message}`)
-      );
+      const ok = await renewInvite(state, r, token, flush).catch((e) => {
+        console.error(`WARN: re-invite of ${r.login} on ${repo} failed: ${e.message}`);
+        return false;
+      });
+      if (ok) renewed++;
     }
   }
 
@@ -337,7 +374,7 @@ async function sweepRepo(statePath, repo, token, { now = Date.now(), dryRun = fa
     const held = plan.blocked.length ? `, ${plan.blocked.length} held back (access revoked)` : '';
     console.log(`invites ${repo}: ${invitations.length} pending, renewal at ${REINVITE_AFTER_HOURS}h${held}`);
   }
-  return plan.reinvite.length;
+  return renewed;
 }
 
 async function main() {

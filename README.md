@@ -10,9 +10,11 @@ for the internet:
 - **Checkout:** Stripe Payment Links on *your own* Stripe account. Buyers pay
   you directly. No middleman fee, ever.
 - **Fulfillment:** a scheduled GitHub Action polls Stripe, invites each buyer's
-  GitHub account to your private product repo, and keeps your books. No
-  webhooks required, no database, no server to babysit (opt-in webhook mode
-  available when you want near-instant delivery).
+  GitHub account to your private product repo, and keeps your books. GitHub
+  expires an unaccepted invitation after seven days, so it re-issues before that
+  happens: a buyer who missed the email does not quietly lose what they paid
+  for. No webhooks required, no database, no server to babysit (opt-in webhook
+  mode available when you want near-instant delivery).
 
 **Live demo: [the HonorBox store](https://honorboxx.github.io/honorbox/).** This
 repo *is* a working store selling
@@ -49,9 +51,10 @@ buyer ──▶ storefront (GitHub Pages, static)
                      ──▶ appends your (private) sales ledger
 ```
 
-The fulfillment engine is 229 lines of dependency-free Node on a 223-line pure
-logic core (which is why it can be unit-tested without a network). Read both in
-ten minutes: [`scripts/fulfill.js`](scripts/fulfill.js).
+The fulfillment engine is under 300 lines of dependency-free Node on a pure
+logic core of similar size (which is why it can be unit-tested without a
+network). Read both in ten minutes: [`scripts/fulfill.js`](scripts/fulfill.js)
+and [`scripts/lib/fulfill-core.js`](scripts/lib/fulfill-core.js).
 
 ## Quickstart
 

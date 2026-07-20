@@ -1,14 +1,33 @@
 # Least privilege: the two keys, scoped honestly
 
 "You want my Stripe secret key in a GitHub Action?" No. HonorBox never
-needs your full secret key, and it never needs a broad GitHub token. The
-engine's whole API surface is two calls, both visible in
-[`scripts/fulfill.js`](../scripts/fulfill.js) (229 lines, read it):
+needs your full secret key, and it never needs a broad GitHub token.
+Delivering a sale is two calls, both visible in
+[`scripts/fulfill.js`](../scripts/fulfill.js) (under 300 lines, read it):
 
 | Call | Why | Secret |
 |---|---|---|
 | `GET /v1/checkout/sessions` (list, expanding line items) | find new paid checkouts | `STRIPE_SECRET_KEY` |
 | `PUT /repos/{repo}/collaborators/{user}` (read-only invite) | deliver the product | `GH_FULFILL_TOKEN` |
+
+Keeping that sale delivered adds three more, in
+[`scripts/renew-invites.js`](../scripts/renew-invites.js). GitHub expires an
+unaccepted invitation after seven days, so the fulfillment workflow re-issues
+one before that happens ([how-it-works](how-it-works.md#delivery-model)):
+
+| Call | Why | Secret |
+|---|---|---|
+| `GET /repos/{repo}/invitations` | find invitations about to lapse | `GH_FULFILL_TOKEN` |
+| `PUT /repos/{repo}/collaborators/{user}` | re-issue, restarting the 7-day clock | `GH_FULFILL_TOKEN` |
+| `DELETE /repos/{repo}/invitations/{id}` | remove the invitation it just superseded | `GH_FULFILL_TOKEN` |
+
+No Stripe key is involved: renewal never looks at money, so the step that runs
+it is not given one. The same file's `--revoke`, which you run by hand after a
+refund, additionally calls `DELETE /repos/{repo}/collaborators/{user}`.
+
+Selling a subscription adds its own calls on top, in
+[`scripts/reconcile-subs.js`](../scripts/reconcile-subs.js). That feature makes
+no call at all until you configure it ([subscriptions.md](subscriptions.md)).
 
 Both providers support scoping a credential down to exactly that. This page
 gives the exact toggles, what breaks if you cut too deep, and what a leaked
@@ -100,6 +119,7 @@ Stripe on every run.
 | PAT lacks Administration write | invite returns 403; run logs `FAILED`, ledger row flagged `needs_attention` | order is flagged, not retried; fix the token and invite the buyer from the repo page (ten seconds) |
 | PAT missing the product repo | GitHub answers 404 (fine-grained tokens don't see repos outside their list) | same flagged path as above |
 | PAT lacks storefront Contents write (ledger publishing on) | the publish step fails | delivery already done; only the public trust page lags |
+| PAT loses Administration write later | renewal logs `WARN: re-invite ... GitHub returned 403` and does not spend the buyer's renewal allowance; it retries about once a day | the invitation still expires on its original schedule, so fix the token within a few days or re-invite by hand |
 
 ## Blast radius, honestly
 

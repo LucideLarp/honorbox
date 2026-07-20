@@ -62,10 +62,19 @@ function fakeGitHub(initial = []) {
     const u = String(url);
     const method = init.method || 'GET';
     calls.push({ method, url: u });
-    const inviteList = u.match(/\/repos\/([^/]+\/[^/]+)\/invitations$/);
-    const inviteOne = u.match(/\/repos\/[^/]+\/[^/]+\/invitations\/(\d+)$/);
-    const collab = u.match(/\/repos\/[^/]+\/[^/]+\/collaborators\/(.+)$/);
-    if (method === 'GET' && inviteList) return res(200, invitations);
+    // Match on the path, not the whole URL: the invitation list is paginated,
+    // so it arrives with a query string.
+    const parsed = new URL(u);
+    const p = parsed.pathname;
+    const inviteList = p.match(/\/repos\/([^/]+\/[^/]+)\/invitations$/);
+    const inviteOne = p.match(/\/repos\/[^/]+\/[^/]+\/invitations\/(\d+)$/);
+    const collab = p.match(/\/repos\/[^/]+\/[^/]+\/collaborators\/(.+)$/);
+    if (method === 'GET' && inviteList) {
+      // Serve real pages, so a driver that reads only the first one is caught.
+      const per = Number(parsed.searchParams.get('per_page')) || 30;
+      const page = Number(parsed.searchParams.get('page')) || 1;
+      return res(200, invitations.slice((page - 1) * per, page * per));
+    }
     if (method === 'DELETE' && inviteOne) {
       invitations = invitations.filter((i) => String(i.id) !== inviteOne[1]);
       return res(204);
@@ -402,6 +411,20 @@ test('a corrupt state file stops the run instead of reading as an empty denylist
   assert.deepEqual(gh.putsTo(), [], 'nothing may be renewed on a state file we could not read');
 });
 
+test('a state file that parses but is not an object also stops the run', async () => {
+  // Subtler than a truncated file and just as dangerous: `[]` or `null` is valid
+  // JSON, and shrugging it off as "no state" means an empty denylist. Absence of
+  // a readable state is not evidence that nobody is revoked.
+  for (const junk of ['[]', 'null', '"nope"', '42']) {
+    const dir = tmp();
+    fs.mkdirSync(path.join(dir, 'state'), { recursive: true });
+    fs.writeFileSync(statePath(dir), junk);
+    const gh = fakeGitHub([{ id: 1, invitee: { login: 'refunded' }, created_at: stale() }]);
+    await assert.rejects(() => runMain(dir, [], { fetchStub: gh }), /bots-state\.json/, junk);
+    assert.deepEqual(gh.putsTo(), [], `nothing may be renewed on state we could not read: ${junk}`);
+  }
+});
+
 test('an invitation accepted between the read and the renewal is not double counted', async () => {
   const dir = tmp();
   const orig = globalThis.fetch;
@@ -530,4 +553,24 @@ test('--revoke refuses anything it cannot parse rather than guessing', async () 
   }
   assert.deepEqual(driver.parseRevokeTarget('o/r:octocat'), { repo: 'o/r', login: 'octocat' });
   assert.deepEqual(driver.parseRevokeTarget('Honorboxx/honorbox-pro:Octo-Cat'), { repo: 'Honorboxx/honorbox-pro', login: 'Octo-Cat' });
+});
+
+test('every pending invitation is swept, not just GitHub\'s first page', async () => {
+  // GitHub returns 30 invitations per page by default. A store that sells
+  // steadily holds more than that unaccepted at once, and reading one page would
+  // silently stop renewing everyone past the thirtieth: a clean-looking log and
+  // a cohort of buyers whose invitations quietly expire.
+  const dir = tmp();
+  const many = Array.from({ length: 105 }, (_, i) => ({
+    id: i + 1, invitee: { login: `buyer${i}` }, created_at: stale(),
+  }));
+  const gh = fakeGitHub(many);
+  const out = captureLog();
+  try { await runMain(dir, [], { fetchStub: gh }); } finally { out.restore(); }
+
+  assert.equal(gh.putsTo().length, 105, 'every buyer past the first page must be renewed too');
+  assert.equal(new Set(gh.putsTo()).size, 105, 'and each exactly once');
+  const pages = gh.calls.filter((c) => c.method === 'GET' && c.url.includes('/invitations?'));
+  assert.equal(pages.length, 2, `expected 2 pages of 100, got ${pages.length}`);
+  assert.equal(readState(dir).reinvites.length, 105);
 });
