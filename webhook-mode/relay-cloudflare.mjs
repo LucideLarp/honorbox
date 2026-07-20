@@ -114,7 +114,11 @@ export async function handleWebhook(request, env) {
 
   let event;
   try { event = JSON.parse(rawBody); } catch { return new Response('bad json', { status: 400 }); }
-  if (!RELEVANT.includes(event.type)) return new Response('ignored', { status: 200 });
+  // `event?.` because a signed body of literal `null` parses to null and would
+  // otherwise throw here — a 1101 from the Worker and a Stripe retry loop for a
+  // request that can never succeed. Stripe does not send that, so this is
+  // robustness rather than a hole, but the relay now takes real money traffic.
+  if (!RELEVANT.includes(event?.type)) return new Response('ignored', { status: 200 });
 
   const res = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/dispatches`, {
     method: 'POST',

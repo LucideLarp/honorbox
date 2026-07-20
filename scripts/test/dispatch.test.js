@@ -226,3 +226,93 @@ test('relay variants share an identical verification/dispatch core', async () =>
     assert.equal(cloudflare[fn].toString(), valtown[fn].toString(), fn);
   }
 });
+
+// --- Secret containment ------------------------------------------------------
+// The relay is deployed and takes live Stripe traffic, holding a GitHub token
+// and the Stripe signing secret. Nothing it can emit may carry either — not a
+// whole value, not a distinguishing fragment. Without this, "no code path
+// echoes the secret" is a property that happened to be true the last time
+// somebody read the file, which is not a property at all once the file is
+// deployed and being edited.
+const SECRET_NEEDLES = (env) => [
+  env.GITHUB_TOKEN, env.GITHUB_TOKEN.slice(0, 8), 'SENTINEL', SECRET, 'whsec_',
+];
+const LEAK_ENV = { ...ENV, GITHUB_TOKEN: 'ghp_SENTINEL_do_not_echo_9z' };
+
+function leakedIn(text, env) {
+  return SECRET_NEEDLES(env).find((n) => text.includes(n)) || null;
+}
+
+test('no response path leaks a secret (body or headers)', async () => {
+  const t = Math.floor(Date.now() / 1000);
+  const env = LEAK_ENV;
+  const signed = (b) => postReq(b, sigHeader(b, { t }));
+  const other = JSON.stringify({ ...EVENT, type: 'invoice.paid' });
+  const paths = [
+    ['valid sale', 204, () => signed(BODY)],
+    ['bad signature', 204, () => postReq(BODY, `t=${t},v1=${'a'.repeat(64)}`)],
+    ['missing header', 204, () => postReq(BODY, null)],
+    ['malformed json', 204, () => signed('{not json')],
+    ['unsupported event', 204, () => signed(other)],
+    ['github 401', 401, () => signed(BODY)],
+    ['github 500', 500, () => signed(BODY)],
+  ];
+  for (const [relay, mod] of Object.entries(await relays)) {
+    for (const [name, ghStatus, mkReq] of paths) {
+      const { result } = await withFetchStub(ghStatus, () => mod.handleWebhook(mkReq(), env));
+      const blob = (await result.text()) + JSON.stringify([...result.headers]);
+      assert.equal(leakedIn(blob, env), null, `${relay} ${name} leaked a secret`);
+    }
+    // Early returns (non-POST, unconfigured) never reach the branches above.
+    const get = await mod.handleWebhook(new Request('http://relay.test/'), env);
+    assert.equal(leakedIn((await get.text()) + JSON.stringify([...get.headers]), env), null,
+      `${relay} non-POST leaked a secret`);
+    const { result: unconf } = await withFetchStub(204, () => mod.handleWebhook(signed(BODY), {}));
+    assert.equal(leakedIn(await unconf.text(), env), null, `${relay} unconfigured leaked a secret`);
+  }
+});
+
+// The deployment was verified by observing outcome:ok on every event and the
+// absence of console.log — i.e. no throw was ever forced. This forces one. A
+// rejecting fetch is not hypothetical: GitHub being unreachable (DNS, reset,
+// timeout) is the ordinary failure and there is no try/catch around the
+// dispatch, so the rejection escapes the handler. That is acceptable
+// behaviour — the Worker 500s and Stripe retries — but only if what escapes
+// carries no secret, and the Authorization header is built one line above it.
+test('a throw escaping the handler carries no secret in message or stack', async () => {
+  const t = Math.floor(Date.now() / 1000);
+  const env = LEAK_ENV;
+  const boom = Object.assign(new Error('network connection lost'), { cause: 'test' });
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => { throw boom; };
+  try {
+    for (const [relay, mod] of Object.entries(await relays)) {
+      await assert.rejects(
+        () => mod.handleWebhook(postReq(BODY, sigHeader(BODY, { t })), env),
+        (err) => {
+          const blob = `${err.message}\n${err.stack || ''}`;
+          assert.equal(leakedIn(blob, env), null,
+            `${relay}: escaping throw leaked a secret -> ${blob}`);
+          return true;
+        }
+      );
+    }
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+// A signed body of literal `null` used to throw on event.type. Stripe never
+// sends it, so this was never attacker-reachable — the signature gate is
+// upstream — but it is a crash on a live money path, so it is pinned shut.
+test('a signed body that parses to null or a non-object is acked, not crashed', async () => {
+  const t = Math.floor(Date.now() / 1000);
+  for (const [relay, mod] of Object.entries(await relays)) {
+    for (const body of ['null', '123', '"str"', '[]', 'true']) {
+      const { result, calls } = await withFetchStub(204, () =>
+        mod.handleWebhook(postReq(body, sigHeader(body, { t })), ENV));
+      assert.equal(result.status, 200, `${relay} body=${body}`);
+      assert.equal(calls.length, 0, `${relay} body=${body} must not dispatch`);
+    }
+  }
+});
