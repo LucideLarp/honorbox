@@ -207,6 +207,50 @@ test('an armed reconciler within the limit does revoke, loudly', async () => {
   assert.ok(state.grants['acme/widget|u1'], 'and the active customers are untouched');
 });
 
+// --- the page boundary -------------------------------------------------------
+
+test('an unreadable page of sessions is refused, not read as no new customers', async () => {
+  const dir = tmpdir();
+  // The subscription list is fine; the session list comes back unreadable.
+  // Reading that as "nobody new" means a customer who just subscribed is never
+  // matched to their GitHub username and never gets access, and the pass
+  // reports a clean run over the top of it.
+  await assert.rejects(
+    runMain(
+      dir,
+      [
+        { match: '/v1/subscriptions', res: () => jsonRes({ data: [subscription('sub_a', 'active')], has_more: false }) },
+        { match: '/v1/checkout/sessions', res: () => jsonRes({ data: null, has_more: false }) },
+      ],
+      { fulfillment: FULFILLMENT, subscriptions: { enforce: true } },
+      { version: 1, cursor: 1, users: {}, grants: {}, breaker: {} }
+    ),
+    /unreadable response/
+  );
+});
+
+test('a page cursor Stripe did not supply stops the pass instead of looping forever', async () => {
+  const dir = tmpdir();
+  // has_more says there is another page, but the last row carries no id to page
+  // from. Asking again with the same parameters returns the same page, so the
+  // reconciler would fetch it for ever, holding its lock and never exiting.
+  await assert.rejects(
+    runMain(
+      dir,
+      [
+        {
+          match: '/v1/subscriptions',
+          res: () => jsonRes({ data: [{ status: 'active', items: { data: [] } }], has_more: true }),
+        },
+        { match: '/v1/checkout/sessions', res: () => jsonRes({ data: [], has_more: false }) },
+      ],
+      { fulfillment: FULFILLMENT, subscriptions: { enforce: true } },
+      { version: 1, cursor: 1, users: {}, grants: {}, breaker: {} }
+    ),
+    /cannot be paged|no id/
+  );
+});
+
 // --- two runners, and a pass that dies halfway -------------------------------
 
 test('a second runner does not start while the first is mid-pass', async () => {

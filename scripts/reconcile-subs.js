@@ -164,9 +164,27 @@ async function listAllSubscriptions(key, sleep = defaultSleep) {
     }
     subs.push(...page.data);
     if (!page.has_more || page.data.length === 0) break;
-    startingAfter = page.data[page.data.length - 1].id;
+    startingAfter = nextCursor(page, '/v1/subscriptions');
   }
   return subs;
+}
+
+// The id to page from, or an error.
+//
+// Cursor pagination asks for "everything after this id". If the last row of a
+// page carries no id there is nothing to ask from, and the natural shape of the
+// loop is to send the same request again, receive the same page, and do it
+// forever: a reconciler that never exits, holds its lock, and enumerates the
+// payment processor in a tight loop while looking like a long-running pass.
+// A response we cannot page through is a response we do not understand, and the
+// only safe reading of that is to stop.
+function nextCursor(page, label) {
+  const last = page.data[page.data.length - 1];
+  const id = last && last.id;
+  if (typeof id !== 'string' || !id) {
+    throw new Error(`Stripe ${label} says there are more pages but the last row has no id, so it cannot be paged; refusing to loop`);
+  }
+  return id;
 }
 
 // Learn which GitHub username belongs to which subscription. The username is
@@ -181,14 +199,21 @@ async function learnUsernames(sinceTs, key, sleep = defaultSleep) {
     const params = { limit: '100', 'created[gt]': String(Math.max(0, sinceTs - OVERLAP_SECONDS)) };
     if (startingAfter) params.starting_after = startingAfter;
     const page = await stripeGet('/v1/checkout/sessions', params, key, sleep);
-    for (const s of page.data || []) {
+    // Refused for the same reason the subscription list refuses: a response we
+    // cannot read is not a store with no new customers. Reading it as one means
+    // somebody who subscribed a minute ago is never matched to their GitHub
+    // username, never gets access, and the pass reports a clean run over it.
+    if (!Array.isArray(page.data)) {
+      throw new Error('Stripe /v1/checkout/sessions returned no data array, refusing to reconcile on an unreadable response');
+    }
+    for (const s of page.data) {
       newest = Math.max(newest, s.created || 0);
       if (!s.subscription) continue;
       const u = extractGithubUsername(s);
       if (validUsername(u)) map[s.subscription] = u;
     }
-    if (!page.has_more || (page.data || []).length === 0) break;
-    startingAfter = page.data[page.data.length - 1].id;
+    if (!page.has_more || page.data.length === 0) break;
+    startingAfter = nextCursor(page, '/v1/checkout/sessions');
   }
   return { map, cursor: newest };
 }
