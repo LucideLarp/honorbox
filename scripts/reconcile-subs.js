@@ -478,7 +478,14 @@ async function main(sleep = defaultSleep) {
           invited_at: new Date(now).toISOString(),
           lapsed_since: null, suppressed: null,
         };
-        console.log(`granted ${g.user} -> ${g.repo} (subscription ${g.sub} ${g.reason}, HTTP ${code})`);
+        // 201 created an invitation; 204 means the account was already a
+        // collaborator. fulfill.js was fixed to tell these apart and this file,
+        // written after that fix, collapsed them again: a renewal that let
+        // nobody in read exactly like a new customer arriving. The numeric code
+        // was always in the line, but an operator scanning a log reads the
+        // words, not a status they have to decode.
+        const outcome = code === 201 ? 'invitation sent' : 'already had access';
+        console.log(`granted ${g.user} -> ${g.repo}: ${outcome} (subscription ${g.sub} ${g.reason}, HTTP ${code})`);
       } catch (err) {
         console.error(`FAILED grant ${g.user} -> ${g.repo}: ${err.message}`);
       }
