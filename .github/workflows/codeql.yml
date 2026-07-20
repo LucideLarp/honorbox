@@ -1,0 +1,71 @@
+# CodeQL code scanning.
+#
+# This runs here and NOT in the private repos on purpose. Code scanning is free
+# on public repositories; on a private repo it is billed against the same 2,000
+# free Actions minutes a month that the fulfillment poll depends on, and an
+# analysis run costs minutes rather than seconds. Spending the delivery budget
+# to scan a repo with no attacker-reachable surface would be paying real money
+# to make delivery less reliable.
+#
+# Two languages, both earning their place:
+#   javascript-typescript  the engine itself, including the fulfillment path a
+#                          buyer's input reaches.
+#   actions                the workflow files. This repo publishes workflow
+#                          TEMPLATES that sellers copy into their own repos, so
+#                          an injection pattern here would be copied along with
+#                          them. Scanning the thing we tell people to reuse is
+#                          worth more than scanning the thing only we run.
+#
+# `pull_request` is deliberate and safe: a fork's pull request runs with a
+# read-only token and no access to secrets, and CodeQL analyses interpreted
+# languages statically (build-mode: none), so nothing in a contributor's branch
+# is executed. Catching a finding before merge is the whole point of the tool.
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly, at an off-peak minute. Never on the hour: GitHub documents the top
+    # of the hour as the worst scheduler contention, and the same reasoning that
+    # picked :17 and :47 for the fulfillment poll applies to anything scheduled.
+    - cron: "31 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    permissions:
+      # Least privilege, per language. security-events:write is what uploads the
+      # results; nothing here needs write access to the repository contents.
+      security-events: write
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@b7351df727350dca84cb9d725d57dcf5bc82ba26 # v3.37.1
+        with:
+          languages: ${{ matrix.language }}
+          # No build step exists and none is needed: both languages here are
+          # analysed from source. Stating it explicitly stops the action from
+          # trying to autobuild a repository that has nothing to build.
+          build-mode: none
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@b7351df727350dca84cb9d725d57dcf5bc82ba26 # v3.37.1
+        with:
+          category: /language:${{ matrix.language }}
