@@ -5,10 +5,11 @@
 HonorBox turns a GitHub repo into an unattended store, a roadside honor box
 for the internet:
 
-- **Storefront:** a fast static site, built by a zero-dependency Node script,
-  hosted free on GitHub Pages.
+- **Storefront:** a static site built by a zero-dependency Node script and
+  hosted free on GitHub Pages. It ships no JavaScript: the only `<script>` on a
+  built page is the JSON-LD block search engines read.
 - **Checkout:** Stripe Payment Links on *your own* Stripe account. Buyers pay
-  you directly. No middleman fee, ever.
+  you directly; you pay Stripe's processing rate and nothing on top of it.
 - **Fulfillment:** a scheduled GitHub Action polls Stripe, invites each buyer's
   GitHub account to your private product repo, and keeps your books. GitHub
   expires an unaccepted invitation after seven days, so it re-issues before that
@@ -139,8 +140,8 @@ catalog patterns, and a commerce playbook. Buying it funds the free core.
 
 `store.config.json`, the product frontmatter, and the fulfillment grant format
 are **stable**: breaking changes only in a major version, always with an
-UPGRADING note and a migration path. Fast iteration happens behind the config;
-the format holds still.
+UPGRADING note and a migration path. The internals move fast; the format holds
+still.
 
 ## Development
 

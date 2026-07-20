@@ -68,7 +68,7 @@
         },
         {
           "title": "Put out your goods",
-          "text": "Create a Stripe Payment Link for each product and drop the URL in the config. Buyers pay you directly on your own Stripe account. Nobody stands between you and your balance."
+          "text": "Create a Stripe Payment Link for each product and drop the URL in the config. Buyers pay you directly on your own Stripe account, so the money never sits with anyone else on its way to you."
         },
         {
           "title": "Let the box collect",
@@ -78,12 +78,12 @@
     },
     {
       "type": "note",
-      "text": "Who sells this way: indie hackers and SaaS builders, template and boilerplate makers, coding-course creators, CLI and API authors, open-source maintainers funding their work, agencies productizing internal tools, students selling a first project. The one hard requirement: your buyers need GitHub accounts, because delivery is a repo invite. Selling physical goods, ebooks for lay readers, or to a general consumer audience? A merchant-of-record platform will serve you better; the first guide below compares them. Selling a handful of copies a month? Also use one. At that volume the fee saving is a couple of dollars, and a merchant of record will handle your VAT for it, which is the better trade. This earns its keep at volume, or when owning the Stripe account and the customer relationship matters to you for its own sake."
+      "text": "The one hard requirement: your buyers need GitHub accounts, because delivery is a repo invite. The second thing to check is your volume. At ten sales a month of a $29 product the fee you would save against a merchant of record is about $8, and for that $8 they do your VAT, which is the better trade; the first guide below has the arithmetic. This earns its keep at volume, or when owning the Stripe account and the customer relationship matters to you for its own sake."
     },
     {
       "type": "compare",
       "title": "Side by side",
-      "note": "Fees as published on each vendor's own pricing page, checked July 2026. Polar is the closest comparison: it delivers private-repo access natively and instantly, and it handles your VAT. The row that matters most is the last one. If you want a merchant of record, one of the first three is the better tool, and the guides below say when.",
+      "note": "Fees as published on each vendor's own pricing page, checked July 2026. Polar is the closest comparison: it delivers private-repo access natively and instantly, and it handles your VAT. If you want a merchant of record, one of the first three is the better tool, and the guides below say when.",
       "columns": [
         "",
         "Gumroad",
@@ -149,7 +149,7 @@
       "items": [
         {
           "q": "What exactly do I get when I buy?",
-          "a": "Your GitHub account is invited to the product's private repository, usually within minutes and always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive there is a defined recovery path, ending in access or a refund; you are never left holding a receipt for nothing.",
+          "a": "Your GitHub account is invited to the product's private repository, usually within minutes and always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive, the recovery path is written down and ends in either access or a refund.",
           "href": "./support.html",
           "href_label": "If a delivery fails"
         },
@@ -224,7 +224,7 @@
     },
     {
       "type": "note",
-      "text": "This store dogfoods its own engine. The checkout you go through is the same one your buyers would. If something feels off, that's a bug report we want."
+      "text": "The checkout above is the same code your buyers would go through, running unmodified. If something feels off in it, that is a bug report we want."
     }
   ],
   "fulfillment": [

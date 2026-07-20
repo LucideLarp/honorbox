@@ -37,9 +37,8 @@ the money: renewal reads GitHub's pending invitations and holds no Stripe key.
 **Pro is the operational half.** Reconcile walks the money and names the paid
 order that is still undelivered, the store doctor catches the setup mistakes
 before they cost you a launch, and the refund bot revokes what a refund should
-revoke without waiting for you to run a command. Themes, license keys, and the
-playbook are what Pro *contains*. Not quietly losing a sale you already made is
-what it is *for*.
+revoke without waiting for you to run a command. The themes, the license keys
+and the playbook come with it. The reason to buy it is the first three.
 
 ## What's inside
 
@@ -49,8 +48,7 @@ plus drop-in verification snippets for JavaScript and Python. Your app checks
 licenses **offline**: no license server, no phoning home, nothing to keep
 running. Signing happens in CI with the private key held as an Actions secret,
 and keys are delivered through the same private-repo channel as everything
-else. Getting signature crypto right takes days; this is that work, done and
-tested.
+else.
 
 **Five premium themes.** Each one is a complete, hand-tuned design with fluid
 type, visible focus states and print styles: `atrium` (minimal, gallery-quiet),
@@ -67,7 +65,8 @@ Switch with one config line.
 **The store doctor.** One read-only command that checks your whole pipe:
 config shape, the pasted-URL-instead-of-id mistake, whether your payment links
 are live, whether your fulfillment token can actually invite buyers, whether
-your product repo is accidentally public. Run it before launch; sleep after.
+your product repo is accidentally public. Run it before launch and after every
+config change.
 
 **Reconcile.** Doctor checks that your store is set up right, which you ask once.
 Reconcile answers the question that only starts costing money after launch: for
@@ -80,8 +79,7 @@ paid, your ledger says delivered, the run is green. They have nothing.
 
 The engine will not let that invitation lapse quietly. It re-issues an
 unaccepted one before GitHub's seven-day expiry, three times, then warns you by
-name: about three and a half weeks of open door, and it is part of the free
-engine, because a sale that never lands was never delivered
+name: four contacts across about 24 days, and all of it in the free engine
 ([how that works](https://github.com/Honorboxx/honorbox/blob/main/docs/how-it-works.md#delivery-model)).
 
 That is also where it stops. Renewal works from GitHub's list of pending

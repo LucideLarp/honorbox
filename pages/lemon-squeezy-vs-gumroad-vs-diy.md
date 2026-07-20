@@ -101,23 +101,25 @@ fee is cheaper than your time.
 
 Two reasons, and they are not the same reason. The first is arithmetic: you
 sell code, templates, courses, or tools to people who have GitHub accounts, at
-enough volume that keeping the 5-15% is worth doing your own tax. As the
-low-volume point above says, that is not 10 sales a month; it is the point
-where the percentage outgrows the paperwork. The second is ownership, and it holds at any volume:
-you sell on your own Stripe account, so the balance and the customer are yours,
-there is no platform account to be declined for or removed from, and nothing to
-migrate off if a platform changes its terms. Stripe can still act on your
-account, so it is one less intermediary rather than none. The checkout half
-takes minutes
-with [Stripe Payment Links](./sell-with-stripe-payment-links.html); the
-delivery half is the actual gap. [HonorBox](./index.html) fills it without a
-server: a static storefront on GitHub Pages and a scheduled GitHub Action
-that polls your Stripe account and invites each buyer to a private repo,
-[through GitHub, done right](./deliver-digital-products-github.html). 0%
-platform fee, $0/month, MIT-licensed and
-[open to read](https://github.com/Honorboxx/honorbox). The costs: buyers
-need GitHub accounts, delivery is an invite that usually lands in minutes
-(opt-in webhook mode brings it to seconds), and you are the merchant.
+enough volume that keeping another 3 to 12 points of every sale (the spread in
+the table above, against Lemon Squeezy and against Gumroad) is worth doing your
+own tax. As the low-volume point above says, that is not 10 sales a month; it
+is the point where the percentage outgrows the paperwork. The second is
+ownership, and it holds at any volume: you sell on your own Stripe account, so
+the balance and the customer are yours, there is no platform account to be
+declined for or removed from, and nothing to migrate off if a platform changes
+its terms. Stripe can still act on your account, so it is one less intermediary
+rather than none.
+
+The checkout half takes minutes with
+[Stripe Payment Links](./sell-with-stripe-payment-links.html); the delivery
+half is the actual gap. [HonorBox](./index.html) fills it without a server: a
+static storefront on GitHub Pages and a scheduled GitHub Action that polls your
+Stripe account and invites each buyer to a private repo,
+[through GitHub, done right](./deliver-digital-products-github.html). MIT, and
+[open to read](https://github.com/Honorboxx/honorbox) before you trust it. The
+costs are the ones listed above: GitHub accounts, minutes rather than seconds,
+and your own tax.
 
 ## Related
 

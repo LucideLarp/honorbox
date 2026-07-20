@@ -21,13 +21,12 @@ features:
 30 days to change your mind, no questions asked, refunded through Stripe.
 [The refund policy in full](./refunds.html).
 
-## A small roster, designed together
+## Every file has one job, and one non-job
 
-There are thousand-file prompt collections. Crew is the opposite bet: a small
-roster where every agent has one job, explicit boundaries, and named
-escalation paths to the others. Designed as one system, so the reviewer knows
-what the debugger owns, and the verification skill knows what "done" means for
-both.
+The reviewer knows what the debugger owns. The verification skill knows what
+"done" means for both. `ROSTER.md` is the design document that assigns each of
+the twenty-four files a job, a boundary and a hand-off, and it says plainly
+that any overlap between two of them is a bug worth filing an issue over.
 
 ## Check it before you pay
 
@@ -43,8 +42,8 @@ you have judged it on the files you have not read.
 
 The same page carries a recorded run of the free reviewer and a paid agent
 against the same public commit of this store's engine. They overlapped on one
-observation out of fifteen and disposed of it differently, which is the only
-honest way to show that a roster stays in its lanes. The free reviewer also
+observation out of fifteen, and disposed of it in opposite directions, each
+correctly for its own job. The free reviewer also
 found a real bug on a money path in our own code, and that finding is
 published intact rather than edited out of the transcript.
 

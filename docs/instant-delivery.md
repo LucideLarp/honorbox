@@ -140,6 +140,10 @@ eventually loses its heartbeat (you get an email; any push re-arms).
   Hourly here + hourly in `fulfill.yml` = 1,488 min/month, inside the free
   2,000. A `*/5` heartbeat would be 8,928 min/month, 4.5x the free tier.
   The arithmetic is in [setup.md](setup.md).
+- **Staying on the plain poll costs nothing** and remains the default:
+  set the buyer's expectation at checkout ("usually within minutes, always
+  within a few hours") and beat it.
+
 **What none of this speeds up:** GitHub's cap of 50 repository invitations per
 24 hours. Webhook mode makes the 50th delivery instant; it does not make the
 51st possible, and nothing does. Moving the repo into an organization does not
@@ -147,7 +151,3 @@ lift it either: inviting a buyer to the org is itself capped, and it would let
 every buyer list every other buyer. Past the 50th, the queue is the answer, and
 it drains on its own. See
 [how-it-works.md](how-it-works.md#githubs-invitation-cap-50-per-repo-per-day).
-
-- **Staying on the plain poll costs nothing** and remains the default:
-  set the buyer's expectation at checkout ("usually within minutes, always
-  within a few hours") and beat it.
