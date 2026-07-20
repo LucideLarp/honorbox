@@ -28,6 +28,8 @@ const {
   isRepoOwner,
   grantProblems,
   unmatchedPaidSessions,
+  REQUEST_TIMEOUT_MS,
+  inviteStatusHint,
 } = require('./lib/fulfill-core.js');
 
 function arg(name, fallback) {
@@ -53,6 +55,7 @@ async function stripeGet(pathname, params, key) {
   // Stripe-Version pinned: the account default may be a broken preview
   const res = await fetch(url, {
     headers: { Authorization: `Basic ${Buffer.from(key + ':').toString('base64')}`, 'Stripe-Version': '2024-06-20' },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Stripe ${pathname} -> ${res.status}: ${await res.text()}`);
   return res.json();
@@ -73,20 +76,33 @@ async function listSessionsSince(createdGt, key) {
 }
 
 async function inviteCollaborator(repo, username, token) {
-  const res = await fetch(`https://api.github.com/repos/${repo}/collaborators/${username}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      'User-Agent': 'honorbox-fulfill',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: JSON.stringify({ permission: 'pull' }),
-  });
-  // 201 = invitation created, 204 = already a collaborator (or invite updated)
+  let res;
+  try {
+    res = await fetch(`https://api.github.com/repos/${repo}/collaborators/${username}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'honorbox-fulfill',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: JSON.stringify({ permission: 'pull' }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (err) {
+    // No HTTP verdict at all: DNS, connection reset, or our own deadline. The
+    // rethrow deliberately carries NO .status, which is what puts it in the
+    // transient bucket for a retry on the next poll. Naming the error class
+    // matters at 3am: "TimeoutError" and "ENOTFOUND" want different humans.
+    throw new Error(`GitHub invite ${repo} <- ${username} -> no response from GitHub (${err.name}: ${err.message})`);
+  }
+  // The ONLY two statuses that mean the buyer has their access:
+  //   201 = invitation created (a real stranger being let in)
+  //   204 = already a collaborator
+  // Everything else is a failure, including anything unrecognized. Widening
+  // this set is how a delivery failure starts reading like a delivery.
   if (res.status === 201 || res.status === 204) return res.status;
-  const hint = res.status === 404 ? ' (no such GitHub user, check for a typo in the checkout field)' : '';
-  const msg = `GitHub invite ${repo} <- ${username} -> ${res.status}${hint}: ${await res.text()}`;
+  const msg = `GitHub invite ${repo} <- ${username} -> ${res.status}${inviteStatusHint(res.status)}: ${await res.text()}`;
   throw Object.assign(new Error(msg), { status: res.status });
 }
 

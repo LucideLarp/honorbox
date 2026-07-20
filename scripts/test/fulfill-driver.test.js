@@ -378,3 +378,108 @@ test('buyers type their username dirty: @, case, and profile URLs still reach Gi
   assert.deepEqual(invited, ['octocat', 'OctoCat', 'Octo-Cat', 'octocat']);
   assert.equal(readState('fulfill-state.json').failures.length, 0);
 });
+
+test('every GitHub invite outcome is distinguishable in the log, and none of them reads like success', async () => {
+  // The full matrix. For each status the fulfillment log must say which
+  // buyer, which repo, and what happened -- and only 201/204 may ever appear
+  // as a delivery. An unrecognized status falling through to something that
+  // reads like success is the failure mode this test exists to prevent.
+  const cases = [
+    { status: 201, delivered: true, log: /invited buyer-x to o\/r \(HTTP 201\)/ },
+    { status: 204, delivered: true, log: /buyer-x already had access to o\/r \(HTTP 204\)/ },
+    { status: 404, delivered: false, log: /no such GitHub user/ },
+    { status: 403, delivered: false, log: /forbidden — the token lacks admin/ },
+    { status: 422, delivered: false, log: /GitHub rejected the invite as invalid/ },
+    { status: 401, delivered: false, log: /token is bad or expired/ },
+    { status: 500, delivered: false, log: /GitHub server error/ },
+    { status: 429, delivered: false, log: /rate limited/ },
+    { status: 418, delivered: false, log: /UNRECOGNIZED status — treated as NOT delivered/ },
+    { status: 200, delivered: false, log: /UNRECOGNIZED status — treated as NOT delivered/ },
+  ];
+
+  for (const c of cases) {
+    const dir = tmp();
+    const s = paidSession(`cs_matrix_${c.status}`, 1_700_000_000, {
+      custom_fields: [{ key: 'github_username', text: { value: 'buyer-x' } }],
+    });
+    const out = captureLog();
+    const err = captureErr();
+    try {
+      await runMain(dir, [
+        { match: 'api.stripe.com', res: () => jsonRes({ data: [s], has_more: false }) },
+        { match: 'api.github.com', res: () => jsonRes({ message: 'x' }, c.status) },
+      ]);
+    } finally { err.restore(); out.restore(); }
+
+    const ledger = JSON.parse(fs.readFileSync(path.join(dir, 'ledger', 'ledger.json'), 'utf8'));
+    if (c.delivered) {
+      const line = out.lines.find((l) => l.includes(`cs_matrix_${c.status}`));
+      assert.ok(line, `${c.status}: expected a delivery line, got:\n${out.lines.join('\n')}`);
+      assert.match(line, c.log);
+      assert.equal(ledger.total_sales, 1, `${c.status} should count as a sale`);
+    } else {
+      const line = err.lines.find((l) => l.includes(`cs_matrix_${c.status}`));
+      assert.ok(line, `${c.status}: expected a loud failure, got:\n${err.lines.join('\n')}`);
+      assert.match(line, /^FAILED/, `${c.status} must be greppable as FAILED`);
+      assert.match(line, c.log);
+      assert.match(line, new RegExp(`-> ${c.status}`), `${c.status} must name the status`);
+      assert.equal(ledger.total_sales, 0, `${c.status} must NOT count as a sale`);
+      assert.ok(
+        !out.lines.some((l) => /invited|already had access/.test(l)),
+        `${c.status} must never print a delivery line: ${out.lines.join('\n')}`
+      );
+    }
+  }
+});
+
+test('a GitHub call that never answers is aborted, blamed by name, and retried', async () => {
+  // Node's fetch has no overall request timeout. Without a deadline one
+  // unresponsive socket holds the single launchd cycle open and every buyer
+  // behind that one waits. The abort must (a) be loud, (b) name the error
+  // class, and (c) count as TRANSIENT so the next poll picks the buyer up
+  // rather than writing them off as undeliverable.
+  const dir = tmp();
+  const s = paidSession('cs_hang_1', 1_700_000_000);
+  const err = captureErr();
+  let run;
+  try {
+    run = await runMain(dir, [
+      { match: 'api.stripe.com', res: () => jsonRes({ data: [s], has_more: false }) },
+      {
+        match: 'api.github.com',
+        res: () => { throw Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' }); },
+      },
+    ]);
+  } finally { err.restore(); }
+
+  const line = err.lines.find((l) => l.includes('cs_hang_1'));
+  assert.ok(line, `expected a loud failure, got:\n${err.lines.join('\n')}`);
+  assert.match(line, /^FAILED/);
+  assert.match(line, /no response from GitHub/);
+  assert.match(line, /TimeoutError/, 'the error class is the difference between a network blip and a dead token');
+  assert.match(line, /will retry next poll/);
+
+  const state = run.readState('fulfill-state.json');
+  assert.deepEqual(state.processed, [], 'a hung call must not write the buyer off');
+  assert.equal(state.failures[0].transient, true);
+  const ledger = JSON.parse(fs.readFileSync(path.join(dir, 'ledger', 'ledger.json'), 'utf8'));
+  assert.equal(ledger.rows.length, 0, 'no needs_attention row while retries are still owed');
+});
+
+test('both APIs are called with a deadline attached', async () => {
+  // Belt and braces: the timeout is only real if it is actually passed to
+  // fetch. Assert the signal reaches BOTH the Stripe poll and the GitHub
+  // invite, so a future refactor that drops one gets caught here.
+  const dir = tmp();
+  const s = paidSession('cs_deadline_1', 1_700_000_000);
+  const { calls } = await runMain(dir, [
+    { match: 'api.stripe.com', res: () => jsonRes({ data: [s], has_more: false }) },
+    { match: 'api.github.com', res: () => jsonRes({}, 201) },
+  ]);
+  for (const host of ['api.stripe.com', 'api.github.com']) {
+    const call = calls.find((c) => c.url.includes(host));
+    assert.ok(call, `${host} was never called`);
+    assert.ok(call.init.signal, `${host} call has no abort signal — an unanswered socket would stall the cycle`);
+    assert.equal(typeof call.init.signal.aborted, 'boolean', `${host} signal is not an AbortSignal`);
+  }
+});

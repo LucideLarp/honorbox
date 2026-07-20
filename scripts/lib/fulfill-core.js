@@ -10,6 +10,16 @@ const crypto = require('crypto');
 // free (processed-id set), a missed sale is not.
 const OVERLAP_SECONDS = 25 * 3600;
 
+// Every outbound call gets a deadline. Node's fetch has no overall request
+// timeout, and undici's header/body defaults are 300s each: an accepted-but-
+// unanswered socket stalls the whole poll. Measured on Node 24 — a bare fetch
+// against a server that accepts and never replies had still not settled after
+// 8s, while AbortSignal.timeout aborts on the dot. That matters because the
+// runner is a single launchd job: while one cycle is stuck on one buyer's
+// invite, no other cycle starts and EVERY buyer behind them waits. An abort
+// carries no .status, so it lands in the transient bucket and simply retries.
+const REQUEST_TIMEOUT_MS = 20_000;
+
 // GitHub username: 1-39 chars, alphanumeric + hyphen, no leading/trailing
 // hyphen, no consecutive hyphens.
 const USERNAME_RE = /^[a-zA-Z0-9](?:-?[a-zA-Z0-9]){0,38}$/;
@@ -161,8 +171,28 @@ function isRepoOwner(repo, username) {
   return !!username && owner.toLowerCase() === String(username).toLowerCase();
 }
 
+// What a GitHub invite status MEANS, in the operator's words. Anything not
+// listed is unrecognized, and unrecognized must never read like success: the
+// engine treats it as an outright failure and says so in the log line.
+const INVITE_STATUS_HINT = {
+  404: 'no such GitHub user, check for a typo in the checkout field',
+  403: 'forbidden — the token lacks admin on this repo, org policy blocks the invite, or a secondary rate limit is in force',
+  422: 'GitHub rejected the invite as invalid (the account cannot be added to this repo)',
+  401: 'the fulfillment token is bad or expired — NOTHING is being delivered until it is replaced',
+};
+
+function inviteStatusHint(status) {
+  if (INVITE_STATUS_HINT[status]) return ` (${INVITE_STATUS_HINT[status]})`;
+  if (status >= 500) return ' (GitHub server error — transient, will retry)';
+  if (status === 429) return ' (rate limited — transient, will retry)';
+  return ' (UNRECOGNIZED status — treated as NOT delivered)';
+}
+
 module.exports = {
   OVERLAP_SECONDS,
+  REQUEST_TIMEOUT_MS,
+  INVITE_STATUS_HINT,
+  inviteStatusHint,
   INVITE_RETRY_WINDOW_SECONDS,
   isTransientInviteError,
   shouldRetryInvite,
