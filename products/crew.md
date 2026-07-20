@@ -57,7 +57,8 @@ reasons. You would find them a day after paying anyway.
 review-detectable bugs live in unchanged code whose assumptions just broke), a
 systematic debugger that forms ranked hypotheses before touching anything, a
 planner that argues scope before code, plus tester, security, performance,
-refactoring, docs, simplifier, and a captain that coordinates multi-agent work.
+refactoring, docs, simplifier, and a release captain that takes a branch from
+code-done to published and stops the line when preflight fails.
 
 **Fourteen skills.** The disciplines that keep agent work verifiable:
 test-driven development, verification before claiming done, PR authoring,
