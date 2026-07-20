@@ -5,8 +5,8 @@
 //     --name "My Tool" --price 2900 --currency usd --repo you/my-tool-access
 //
 // Creates on your Stripe account:  Product -> Price -> Payment Link with the
-// required github_username field, promo codes enabled, and a delivery
-// confirmation message. Then wires everything into store.config.json and
+// required github_username field and a delivery confirmation message.
+// Promotion codes are OFF by default — see paymentLinkParams. Then wires everything into store.config.json and
 // scaffolds products/<id>.md. Idempotent-ish: run once per product.
 //
 // Optional: --id <slug>  --config <path>  --products <dir>  --dry-run
@@ -48,6 +48,31 @@ async function stripe(pathname, form) {
   const body = await res.json();
   if (!res.ok) throw new Error(`${pathname}: ${body.error ? body.error.message : res.status}`);
   return body;
+}
+
+// Payment link form. Pure so the defaults are pinned by a test rather than by
+// whoever last read the file.
+//
+// allow_promotion_codes is OFF deliberately. A link with the promo field open
+// is a live discount surface on a money path, and the seller who later makes a
+// 100%-off code to test delivery has handed that code's value to anyone who
+// guesses it — we did exactly that to ourselves on 2026-07-20 and found two
+// live 100%-off codes on our own checkout the day before a launch. Sellers who
+// want typed codes can enable it per link in the Stripe Dashboard, which is the
+// right direction for a default that costs money when it is wrong.
+function paymentLinkParams(priceId, repo) {
+  return {
+    'line_items[0][price]': priceId,
+    'line_items[0][quantity]': '1',
+    'custom_fields[0][key]': 'github_username',
+    'custom_fields[0][label][type]': 'custom',
+    'custom_fields[0][label][custom]': 'GitHub username (for repo access)',
+    'custom_fields[0][type]': 'text',
+    'after_completion[type]': 'hosted_confirmation',
+    'after_completion[hosted_confirmation][custom_message]':
+      `You're in. The fulfillment bot will invite your GitHub account to the private ${repo} repository — usually within 30 minutes, always within a few hours. No invite? Reply to your Stripe receipt and it will be fixed or refunded.`,
+    allow_promotion_codes: 'false',
+  };
 }
 
 async function confirm(question) {
@@ -92,18 +117,7 @@ async function main() {
     product: product.id, unit_amount: String(priceCents), currency,
   });
   created.push(`price ${price.id}`);
-  const link = await stripe('/v1/payment_links', {
-    'line_items[0][price]': price.id,
-    'line_items[0][quantity]': '1',
-    'custom_fields[0][key]': 'github_username',
-    'custom_fields[0][label][type]': 'custom',
-    'custom_fields[0][label][custom]': 'GitHub username (for repo access)',
-    'custom_fields[0][type]': 'text',
-    'after_completion[type]': 'hosted_confirmation',
-    'after_completion[hosted_confirmation][custom_message]':
-      `You're in. The fulfillment bot will invite your GitHub account to the private ${repo} repository — usually within 30 minutes, always within a few hours. No invite? Reply to your Stripe receipt and it will be fixed or refunded.`,
-    allow_promotion_codes: 'true',
-  });
+  const link = await stripe('/v1/payment_links', paymentLinkParams(price.id, repo));
   created.push(`payment link ${link.id}`);
   console.log(`created: ${product.id} / ${price.id} / ${link.id}`);
 
@@ -150,7 +164,9 @@ access permanently; updates land in the same repo.
 Checkout URL: ${link.url}`);
 }
 
-main().catch((e) => {
+module.exports = { paymentLinkParams };
+
+if (require.main === module) main().catch((e) => {
   if (created.length) {
     console.error(`init: FAILED PARTWAY. Already live on Stripe (archive in the Dashboard, or re-run and reuse): ${created.join(', ')}`);
   }

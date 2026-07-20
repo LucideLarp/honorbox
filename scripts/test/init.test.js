@@ -66,3 +66,36 @@ test('init: missing required args die with exit 2', () => {
     assert.equal(res.status, 2, `${args.join(' ')}: ${res.stdout}${res.stderr}`);
   }
 });
+
+// The payment link init generates is a money path, so its defaults are pinned
+// here rather than left to whoever last edited the file.
+//
+// allow_promotion_codes must stay 'false'. A link with the promo field open is
+// a live discount surface: the seller who later makes a 100%-off code to test
+// delivery has handed that code's value to anyone who guesses it. We did this
+// to ourselves — on 2026-07-20 two live 100%-off codes were found on our own
+// checkout the day before a launch. If this assertion is failing because
+// someone flipped the default back, that is the bug, not the test.
+test('init: generated payment links have promotion codes OFF by default', () => {
+  const { paymentLinkParams } = require('../init.js');
+  const params = paymentLinkParams('price_abc', 'you/my-tool-access');
+  assert.equal(params.allow_promotion_codes, 'false');
+});
+
+// The params were extracted from main() to make the above testable; this pins
+// that the extraction stayed faithful, so a refactor cannot quietly drop the
+// field fulfillment depends on.
+test('init: payment link still carries the github_username field and the price', () => {
+  const { paymentLinkParams } = require('../init.js');
+  const params = paymentLinkParams('price_abc', 'you/my-tool-access');
+  assert.equal(params['line_items[0][price]'], 'price_abc');
+  assert.equal(params['line_items[0][quantity]'], '1');
+  // fulfill.js reads the buyer's username out of this exact custom field key.
+  assert.equal(params['custom_fields[0][key]'], 'github_username');
+  assert.equal(params['custom_fields[0][type]'], 'text');
+  assert.equal(params['after_completion[type]'], 'hosted_confirmation');
+  assert.match(
+    params['after_completion[hosted_confirmation][custom_message]'],
+    /you\/my-tool-access/
+  );
+});
