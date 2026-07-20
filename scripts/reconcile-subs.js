@@ -83,6 +83,16 @@ function writeJson(file, obj) {
 // rather than the file's contents, because a corrupt lock must not be able to
 // wedge enforcement shut: a lock is evidence of a live pass only while it is
 // young enough to be one.
+//
+// A kernel lock (flock, as run-fulfill.sh takes via lockf) would be stronger,
+// because the kernel drops it when the process dies and no staleness rule is
+// needed at all. Node's standard library does not expose one and this engine
+// takes no dependencies, so the staleness window below is the price of that.
+// It is set well above any plausible pass: the slowest thing here is one
+// GitHub call per invitation, and a pass long enough to exceed this would have
+// to be doing thousands of them. If two runners ever did overlap because of it,
+// they would compute the same answer from the same state, so the exposure is
+// the shared revocation record, not a wrong decision.
 const LOCK_MAX_AGE_MS = 30 * 60 * 1000;
 
 function acquireLock(lockPath, now) {
