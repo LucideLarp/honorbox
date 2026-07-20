@@ -152,21 +152,36 @@ back in, check for a pending invitation on the repo.
 
 ### If they resubscribe
 
-Every removal is also written to a list of people whose access was taken away on
-purpose. That list is what stops other parts of the system from quietly inviting
+Every removal is written to a list of people whose access was taken away on
+purpose, and each entry records **why**: a subscription that lapsed, or a
+refund. That list is what stops other parts of the system from quietly inviting
 a removed customer back in.
 
-When a former customer subscribes again they are invited normally, so they get
-back in. But their entry on that list is **not** cleared automatically, and that
-is deliberate: from the reconciler's side, a subscription that lapsed looks the
-same as a refund, and clearing the wrong one would hand access back to somebody
-who was refunded.
+When a former customer subscribes again they are invited normally, and what
+happens to their old entry depends on why they were removed.
 
-The practical effect is small. Their invitation still arrives and still works.
-It just will not be automatically renewed if they leave it unaccepted for a
-week. The reconciler prints a warning naming them when this happens, and you
-clear their entry from `revoked_access` in your bots state file to restore
-normal behaviour.
+**They lapsed and have now resubscribed.** The entry is cleared automatically.
+A new subscription answers a lapse, so everything returns to normal, including
+automatic renewal of their invitation.
+
+**They were refunded and have now subscribed again.** The entry stays. They are
+still invited and the invitation still works, it just will not be automatically
+renewed if they leave it unaccepted for a week. The reconciler prints a warning
+naming them.
+
+That difference is deliberate and it is not symmetric. The cost of leaving a
+refund entry in place is that one returning customer may have to click a second
+invitation email. The cost of clearing it wrongly is that anyone who gets a
+refund and then starts a subscription is handed their old access back
+automatically. Those are not the same size of mistake, so they do not get the
+same rule.
+
+If a refunded customer really has returned for good, clear their entry from
+`revoked_access` in your bots state file and renewals resume.
+
+Entries written before this behaviour existed carry no reason, and those are
+treated as refunds. Not knowing why access was removed is not a good enough
+reason to give it back.
 
 ## Who can never be removed
 

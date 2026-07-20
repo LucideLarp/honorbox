@@ -20,6 +20,7 @@ const {
   breakerLine,
   subscriptionConfigProblems,
 } = require('../lib/subs-core.js');
+const { recordRevocation, revocationSource, clearLapse } = require('../lib/access-record.js');
 
 const DAY = 86_400_000;
 const NOW = Date.parse('2026-07-20T12:00:00.000Z');
@@ -312,6 +313,69 @@ test('a customer entitled by a second subscription is never revoked for the firs
   const d = diffEntitlements(desired, records, { graceDays: 7, now: NOW, knownRepos: new Set(['acme/widget']) });
   assert.deepEqual(d.due, [], 'still paying through another subscription');
   assert.deepEqual(d.keep.map((p) => p.user), ['alice'], 'and their lapse clock is cleared');
+});
+
+// --- the revocation record's source ----------------------------------------
+
+test('a revocation record says who wrote it', () => {
+  const lapse = recordRevocation([], 'acme/widget', 'alice', 100, 'lapse');
+  assert.equal(lapse[0].source, 'lapse');
+  const refund = recordRevocation([], 'acme/widget', 'alice', 100, 'refund');
+  assert.equal(refund[0].source, 'refund');
+});
+
+test('a caller that forgets the source gets the safe one', () => {
+  // Defaulting to 'lapse' would make a forgotten argument auto-clearable,
+  // which is the dangerous direction.
+  const rows = recordRevocation([], 'acme/widget', 'alice', 100);
+  assert.equal(rows[0].source, 'refund');
+  assert.equal(recordRevocation([], 'a/b', 'c', 1, 'nonsense')[0].source, 'refund');
+});
+
+test('a record written before the source field existed reads as a refund', () => {
+  // "Absence is not evidence" again. A missing source tells us nothing about
+  // provenance, so it takes the branch where being wrong is survivable.
+  assert.equal(revocationSource({ key: 'a/b#c', ts: 1 }), 'refund');
+  assert.equal(revocationSource({ key: 'a/b#c', ts: 1, source: undefined }), 'refund');
+  assert.equal(revocationSource(null), 'refund');
+  assert.equal(revocationSource({ key: 'a/b#c', ts: 1, source: 'lapse' }), 'lapse');
+});
+
+test('a returning customer clears a lapse block', () => {
+  const rows = recordRevocation([], 'acme/widget', 'alice', 100, 'lapse');
+  assert.deepEqual(clearLapse(rows, 'acme/widget', 'alice'), []);
+  // Case folds, because Octocat and octocat are one person.
+  assert.deepEqual(clearLapse(rows, 'Acme/Widget', 'Alice'), []);
+});
+
+test('a returning customer does NOT clear a refund block', () => {
+  // The dangerous half. Clearing this would hand a refunded buyer their access
+  // back automatically, which is refund fraud we would have built ourselves.
+  const rows = recordRevocation([], 'acme/widget', 'alice', 100, 'refund');
+  assert.deepEqual(clearLapse(rows, 'acme/widget', 'alice'), rows);
+  // And neither does a legacy record with no source at all.
+  const legacy = [{ key: 'acme/widget#alice', ts: 100 }];
+  assert.deepEqual(clearLapse(legacy, 'acme/widget', 'alice'), legacy);
+});
+
+test('clearing one person leaves everybody else alone', () => {
+  let rows = recordRevocation([], 'acme/widget', 'alice', 100, 'lapse');
+  rows = recordRevocation(rows, 'acme/widget', 'bob', 200, 'lapse');
+  rows = recordRevocation(rows, 'acme/gadget', 'alice', 300, 'lapse');
+  const after = clearLapse(rows, 'acme/widget', 'alice');
+  assert.deepEqual(after.map((r) => r.key).sort(), ['acme/gadget#alice', 'acme/widget#bob']);
+});
+
+test('a later revocation replaces an earlier one, keeping one row per person', () => {
+  // Latest-record-per-key, so a future state field composes through the same
+  // merge instead of needing new collision rules.
+  let rows = recordRevocation([], 'acme/widget', 'alice', 100, 'lapse');
+  rows = recordRevocation(rows, 'acme/widget', 'alice', 200, 'refund');
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].source, 'refund');
+  assert.equal(rows[0].ts, 200);
+  // A refund landing on top of a lapse must make it unclearable.
+  assert.deepEqual(clearLapse(rows, 'acme/widget', 'alice'), rows);
 });
 
 // --- the circuit breaker ----------------------------------------------------

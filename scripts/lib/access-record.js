@@ -49,14 +49,53 @@ function capRecords(rows, cap = 500) {
 // re-purchase (which it must not touch). And it is the shape a lapse/restore
 // lane needs: adding a `state` field later resolves through the same
 // latest-record-per-key merge, with no change to how collisions are settled.
-function recordRevocation(rows, repo, login, ts = Date.now()) {
+// `source` says WHO took the access away, and it exists so that a returning
+// customer can be told apart from a refunded one. Two writers use it:
+// 'lapse' for a subscription the reconciler enforced, 'refund' for the refund
+// guard. It defaults to 'refund', the branch that is never cleared
+// automatically, so a caller that forgets to pass one fails safe.
+function recordRevocation(rows, repo, login, ts = Date.now(), source = 'refund') {
   const key = inviteKey(repo, login);
   const kept = (Array.isArray(rows) ? rows : []).filter((r) => r && r.key !== key);
-  return capRecords([...kept, { key, ts }]);
+  return capRecords([...kept, { key, ts, source: source === 'lapse' ? 'lapse' : 'refund' }]);
 }
 
 function revocationFor(rows, key) {
   return findRecord(rows, key);
 }
 
-module.exports = { inviteKey, findRecord, capRecords, recordRevocation, revocationFor };
+// A record written before `source` existed has none. It is read as 'refund',
+// which is the branch that is never auto-cleared.
+//
+// This is the "absence is not evidence" rule again, and the direction is the
+// whole point. Reading a missing field as 'lapse' would auto-clear every
+// historical record the moment its buyer appeared entitled, and those records
+// are mostly refunds. Absence tells us nothing about provenance, so it takes
+// the branch where being wrong is survivable.
+function revocationSource(row) {
+  return row && row.source === 'lapse' ? 'lapse' : 'refund';
+}
+
+// The customer is entitled again, so stop blocking their invitation renewals.
+// Clears the record ONLY when we recorded it ourselves as a lapse.
+//
+// A refund record is deliberately left in place, and the asymmetry is the
+// point. The cost of not clearing a refund is that one returning buyer clicks a
+// second invitation email. The cost of wrongly clearing one is handing a
+// refunded buyer their access back automatically, which is refund fraud we
+// would have built. Those are not comparable, so the rule is not symmetric.
+function clearLapse(rows, repo, login) {
+  const key = inviteKey(repo, login);
+  const list = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  return list.filter((r) => !(r.key === key && revocationSource(r) === 'lapse'));
+}
+
+module.exports = {
+  inviteKey,
+  findRecord,
+  capRecords,
+  recordRevocation,
+  revocationFor,
+  revocationSource,
+  clearLapse,
+};

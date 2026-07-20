@@ -31,7 +31,7 @@ const {
   grantKey,
   normalizeUser,
 } = require('./lib/subs-core.js');
-const { recordRevocation, revocationFor, inviteKey } = require('./lib/access-record.js');
+const { recordRevocation, revocationFor, revocationSource, clearLapse, inviteKey } = require('./lib/access-record.js');
 const { REQUEST_TIMEOUT_MS, validUsername, extractGithubUsername, inviteStatusHint } = require('./lib/fulfill-core.js');
 
 const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -263,25 +263,29 @@ async function main(sleep = defaultSleep) {
   // not take anything away". It must never mean "stop letting customers in".
   for (const g of diff.grants) {
     try {
-      // Somebody entitled again who is still on the revocation denylist. We do
-      // NOT clear it here, and that restraint is deliberate: the record carries
-      // no source, so from here a lapse we enforced looks identical to a
-      // revocation the refund guard wrote. Clearing it blindly would re-open
-      // access to a refunded buyer whose subscription happens to still be
-      // active, which is the refund fraud the denylist exists to stop.
-      //
-      // The cost of not clearing is small and safe: this invitation still goes
-      // out and can still be accepted, it just will not be auto-renewed if it
-      // expires unaccepted. So say so where a human will see it.
+      const code = await invite(g.repo, g.user, ghToken);
+
+      // They are back in, so stop blocking their invitation renewals, but only
+      // if the block was ours. A 'lapse' is a subscription we enforced and a
+      // new subscription answers it. A 'refund' is not ours to reverse: a
+      // refunded buyer whose subscription is live again gets their invitation
+      // and it works, it simply is not auto-renewed. The asymmetry is
+      // deliberate, because the two costs are not comparable. Cleared AFTER the
+      // invite, so a failed invite leaves the block intact.
       const botsNow = readJson(botsStatePath, null) || {};
-      if (revocationFor(botsNow.revoked_access, inviteKey(g.repo, g.user))) {
+      const existing = revocationFor(botsNow.revoked_access, inviteKey(g.repo, g.user));
+      if (existing && revocationSource(existing) === 'lapse') {
+        botsNow.revoked_access = clearLapse(botsNow.revoked_access, g.repo, g.user);
+        writeJson(botsStatePath, botsNow);
+        console.log(`restored ${g.user} on ${g.repo}: subscribed again, the lapse block is cleared`);
+      } else if (existing) {
         console.error(
-          `WARN: ${g.user} is entitled again on ${g.repo} (subscription ${g.sub}) but is still on the ` +
-            `revocation denylist, so this invitation will not be auto-renewed if it expires unaccepted. ` +
-            `If they resubscribed legitimately, clear their entry from revoked_access in ${botsStatePath}`
+          `WARN: ${g.user} is entitled again on ${g.repo} (subscription ${g.sub}) but was previously ` +
+            `revoked after a REFUND, so that block stays. Their invitation works, it just will not be ` +
+            `auto-renewed if it expires unaccepted. If this is a legitimate return, clear their entry ` +
+            `from revoked_access in ${botsStatePath}`
         );
       }
-      const code = await invite(g.repo, g.user, ghToken);
       state.grants[grantKey(g.repo, g.user)] = {
         sub: g.sub, repo: g.repo, user: g.user,
         granted_at: new Date(now).toISOString(),
@@ -341,7 +345,9 @@ async function main(sleep = defaultSleep) {
         bots.revoked_access = recordRevocation(
           Array.isArray(bots.revoked_access) ? bots.revoked_access : [],
           p.repo,
-          p.user
+          p.user,
+          Date.now(),
+          'lapse' // ours, and therefore the only kind we may later clear
         );
         writeJson(botsStatePath, bots);
         await revoke(p.repo, p.user, ghToken);
