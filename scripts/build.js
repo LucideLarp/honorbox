@@ -91,6 +91,52 @@ function guideSlugs(sections) {
   return slugs;
 }
 
+// ---------- docs ----------
+
+// Which docs/*.md become pages on the store, in reading order (the docs index
+// and the nav follow this order, not the alphabet).
+//
+// pro-evidence.md is deliberately NOT here. It is Pro sales collateral — dated
+// transcripts of live-store runs plus a paid playbook's table of contents —
+// rather than store documentation, and publishing it as a peer of the setup
+// guide both dilutes the docs and creates a page that silently goes stale.
+// It stays readable in the repo, where an auditing buyer already looks.
+const PUBLISHED_DOCS = ['how-it-works', 'setup', 'least-privilege', 'instant-delivery', 'tax'];
+
+// docs/*.md carry no frontmatter: the first "# " line is the title. Split it
+// off so the page template owns the <h1> (same shape as pages/) instead of the
+// document rendering a second one under the theme's.
+function docTitle(md, fallback) {
+  const m = /^\s*#\s+(.+?)\s*$/m.exec(md);
+  if (!m) return { title: fallback, body: md };
+  return { title: m[1], body: md.slice(0, m.index) + md.slice(m.index + m[0].length) };
+}
+
+// Rewrite a doc's repo-relative links for the published site:
+//   [x](setup.md)        -> ./setup.html         (a sibling doc we publish)
+//   [x](pro-evidence.md) -> GitHub blob URL      (a doc we do not publish)
+//   [x](../webhook-mode/)-> GitHub tree URL      (a directory outside docs/)
+//   [x](../scripts/f.js) -> GitHub blob URL      (a file outside docs/)
+// http(s) and #anchors are left exactly as authored.
+//
+// This runs on the markdown source, so it must not corrupt a link-looking
+// string inside a code span — docs/how-it-works.md carries the username regex
+// `...](?:-?[a-zA-Z0-9]){0,38}$`. The targets below are anchored to real path
+// shapes (a .md suffix, or a leading ../), which that regex is not.
+function rewriteDocLinks(md, { repo, published = PUBLISHED_DOCS } = {}) {
+  const blob = (p) => (repo ? `https://github.com/${repo}/blob/main/${p}` : `#${p}`);
+  const tree = (p) => (repo ? `https://github.com/${repo}/tree/main/${p}` : `#${p}`);
+  return String(md)
+    // sibling doc: bare name, no slash, .md suffix, optional #anchor
+    .replace(/(\]\()([A-Za-z0-9_-]+)\.md(#[A-Za-z0-9_-]+)?(\))/g, (m, open, slug, hash, close) =>
+      published.includes(slug) ? `${open}./${slug}.html${hash || ''}${close}` : `${open}${blob(`docs/${slug}.md`)}${close}`
+    )
+    // anything one level up: ../dir/ (tree) or ../dir/file.ext (blob)
+    .replace(/(\]\()\.\.\/([A-Za-z0-9_./-]+)(\))/g, (m, open, rest, close) =>
+      `${open}${rest.endsWith('/') ? tree(rest) : blob(rest)}${close}`
+    );
+}
+
 function productJsonLd(p, config, image) {
   const site = config.url.replace(/\/$/, '');
   const url = `${site}/${p.id}.html`;
@@ -291,11 +337,11 @@ ${ledgerRows || '<tr><td colspan="5" class="muted">No sales yet. The box is open
 // Products and pages share one output namespace and pages are written second,
 // so a colliding slug silently replaces a product page (and its Buy button)
 // with prose. Pure so the collision rule is testable without a real tree.
-function slugProblems(productIds, pageSlugs) {
+function slugProblems(productIds, pageSlugs, { dir = 'pages', what = 'product id' } = {}) {
   const ids = new Set(productIds);
   return pageSlugs
     .filter((slug) => ids.has(slug))
-    .map((slug) => `pages/${slug}.md: slug "${slug}" collides with product id "${slug}" (the page would overwrite the product's checkout)`);
+    .map((slug) => `${dir}/${slug}.md: slug "${slug}" collides with ${what} "${slug}" (the page would overwrite the product's checkout)`);
 }
 
 function buyButton(p, big = false) {
@@ -347,8 +393,16 @@ function section(s) {
     return `<section class="compare"><h2>${escapeHtml(s.title)}</h2>${s.note ? `<p class="muted">${escapeHtml(s.note)}</p>` : ''}<div class="table-scroll"><table>${head}${rows}</table></div></section>`;
   }
   if (s.type === 'faq') {
+    // Optional `href`/`href_label`: an answer that points at a doc gets a real
+    // link. The answer itself stays plain escaped text (no HTML in config), so
+    // the link is appended rather than embedded — same discipline as `steps`.
     return `<section class="faq"><h2>${escapeHtml(s.title)}</h2>${s.items
-      .map((it) => `<details><summary>${escapeHtml(it.q)}</summary><p>${escapeHtml(it.a)}</p></details>`)
+      .map((it) => {
+        const more = it.href
+          ? ` <a class="faq-more" href="${safeHref(it.href)}">${escapeHtml(it.href_label || 'Read the guide')}</a>`
+          : '';
+        return `<details><summary>${escapeHtml(it.q)}</summary><p>${escapeHtml(it.a)}${more}</p></details>`;
+      })
       .join('')}</section>`;
   }
   if (s.type === 'note') {
@@ -409,7 +463,29 @@ function main() {
     };
   });
 
+  // Published docs, in PUBLISHED_DOCS order. Links are rewritten before the
+  // markdown is rendered so sibling-doc references resolve on the site.
+  const docsDir = path.join(ROOT, 'docs');
+  const docs = PUBLISHED_DOCS.flatMap((slug) => {
+    const file = path.join(docsDir, `${slug}.md`);
+    if (!fs.existsSync(file)) {
+      problems.push(`docs/${slug}.md: listed in PUBLISHED_DOCS but missing`);
+      return [];
+    }
+    const raw = read(file);
+    const { title, body } = docTitle(raw, slug);
+    const src = rewriteDocLinks(body, { repo: config.repo });
+    return [{ slug, title, body: src, html: renderMarkdown(src) }];
+  });
+
   problems.push(...slugProblems(ids, pages.map((p) => p.slug)));
+  // Docs share the flat output namespace with products and pages.
+  problems.push(...slugProblems(ids, docs.map((d) => d.slug), { dir: 'docs' }));
+  problems.push(...slugProblems(
+    new Set(pages.map((p) => p.slug)),
+    docs.map((d) => d.slug),
+    { dir: 'docs', what: 'page slug' }
+  ));
   problems.push(...templateProblems(config, products));
   if (problems.length) {
     console.error(`build: fix your store config and frontmatter first:\n  ${problems.join('\n  ')}`);
@@ -443,6 +519,7 @@ function main() {
   function page({ title, description, slug, content, bodyClass = '', ogTitle, ogType = 'website', ogImage = defaultOgImage, jsonLd, noindex = false }) {
     const nav = [
       `<a href="./">Store</a>`,
+      ...(docs.length ? [`<a href="./docs.html">Docs</a>`] : []),
       ...(hasLedger ? [`<a href="./trust.html">Ledger</a>`] : []),
       ...(config.repo ? [`<a href="https://github.com/${escapeHtml(config.repo)}">GitHub</a>`] : []),
     ].join('');
@@ -561,6 +638,43 @@ function main() {
     );
   }
 
+  // ---------- docs ----------
+  for (const d of docs) {
+    const url = `${site}/${d.slug}.html`;
+    const desc = excerpt(d.body);
+    write(
+      path.join(DIST, `${d.slug}.html`),
+      page({
+        title: `${d.title} · ${config.name}`,
+        ogTitle: d.title,
+        description: desc,
+        slug: d.slug,
+        content: `<article class="prose doc"><h1>${escapeHtml(d.title)}</h1>${d.html}</article>`,
+        ogType: 'article',
+        jsonLd: articleJsonLd({ title: d.title, description: desc, url, config, image: defaultOgImage, dateModified: buildDate }),
+      })
+    );
+  }
+
+  if (docs.length) {
+    const list = docs
+      .map(
+        (d) =>
+          `<li><h3><a href="./${escapeHtml(d.slug)}.html">${escapeHtml(d.title)}</a></h3><p>${escapeHtml(excerpt(d.body))}</p></li>`
+      )
+      .join('');
+    write(path.join(DIST, 'docs.html'), page({
+      title: `Docs · ${config.name}`,
+      ogTitle: 'Docs',
+      description: `How ${config.name} works, how to set it up, what it can and cannot do.`,
+      slug: 'docs',
+      content: `<article class="prose"><h1>Docs</h1>
+<p class="lede">How it works, how to run it, and where the limits are. The same
+files that ship in the repo.</p>
+<ol class="doc-list">${list}</ol></article>`,
+    }));
+  }
+
   // ---------- trust / ledger page (opt-in: only if ledger/ledger.json exists) ----------
   if (hasLedger) {
     const ledger = JSON.parse(read(ledgerFile));
@@ -593,18 +707,21 @@ function main() {
     ...(hasLedger ? [{ path: 'trust.html', lastmod: buildDate, priority: 0.5 }] : []),
     ...products.map((p) => ({ path: `${p.id}.html`, lastmod: buildDate, priority: 0.9 })),
     ...pages.map((p) => ({ path: `${p.slug}.html`, lastmod: buildDate, priority: guides.has(p.slug) ? 0.7 : 0.3 })),
+    ...(docs.length ? [{ path: 'docs.html', lastmod: buildDate, priority: 0.6 }] : []),
+    ...docs.map((d) => ({ path: `${d.slug}.html`, lastmod: buildDate, priority: 0.7 })),
   ];
   write(path.join(DIST, 'sitemap.xml'), sitemapXml(site, sitemapEntries));
   write(path.join(DIST, '404.html'), page({ title: `Not found · ${config.name}`, slug: '404', content: `<article class="prose"><h1>Nothing at this stand</h1><p>That page doesn't exist. <a href="./">Back to the store.</a></p></article>`, noindex: true }));
   write(path.join(DIST, '.nojekyll'), '');
 
-  console.log(`built dist/: ${products.length} product(s), ${pages.length} page(s), ledger page: ${hasLedger ? 'on' : 'off'}`);
+  console.log(`built dist/: ${products.length} product(s), ${pages.length} page(s), ${docs.length} doc(s), ledger page: ${hasLedger ? 'on' : 'off'}`);
 }
 
 module.exports = {
   escapeHtml, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems, section,
   usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs, trustArticle,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
+  PUBLISHED_DOCS, docTitle, rewriteDocLinks,
 };
 
 if (require.main === module) main();

@@ -59,7 +59,7 @@ plainly: delivery is a repo invite that lands in minutes; your buyers need
 GitHub accounts (fine for code, templates, and courses aimed at technical
 people, wrong for lay-reader ebooks); and **you are the merchant, so tax is
 yours**. Under most registration thresholds that's simpler than it sounds;
-[our tax doc](https://github.com/Honorboxx/honorbox/blob/main/docs/tax.md)
+[our tax doc](./tax.html)
 covers it without hand-waving. The engine is MIT-licensed and
 [open to read](https://github.com/Honorboxx/honorbox).
 

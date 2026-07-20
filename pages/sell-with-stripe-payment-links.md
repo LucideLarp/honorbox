@@ -72,7 +72,7 @@ goods is your responsibility, unlike on Gumroad or Lemon Squeezy where the
 platform is the seller. Practically: most small sellers start below
 registration thresholds; enable Stripe Tax's free threshold monitoring on day
 one, and read the rules for your own country once. Our
-[plain-language tax explainer](https://github.com/Honorboxx/honorbox/blob/main/docs/tax.md)
+[plain-language tax explainer](./tax.html)
 goes one level deeper without the hand-waving. Not tax advice.
 
 ## 6. The launch checklist

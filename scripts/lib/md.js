@@ -95,6 +95,60 @@ function inline(s) {
 // swallowed because a hand-copied variant here lacked `!\[`).
 const STRUCTURAL = /^(#{1,4}\s|```|[-*]\s|\d+\.\s|>|!\[|(-{3,}|\*{3,})\s*$)/;
 
+// GFM pipe tables. The delimiter row is what makes a table a table: a row of
+// only -, :, | and spaces, with at least one dash. Without this second-line
+// check, any prose line containing a pipe would open a table.
+const TABLE_DELIM = /^\s*\|?(?:\s*:?-+:?\s*\|)*\s*:?-+:?\s*\|?\s*$/;
+
+// Split one table row into cells. A pipe inside a code span is content, not a
+// separator (`a|b` is one cell), and \| is a literal pipe — the docs' cron and
+// regex snippets rely on both.
+function splitRow(line) {
+  const s = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  const cells = [];
+  let cur = '';
+  let inCode = false;
+  for (let j = 0; j < s.length; j++) {
+    const ch = s[j];
+    if (ch === '\\' && s[j + 1] === '|') { cur += '|'; j++; continue; }
+    if (ch === '`') inCode = !inCode;
+    if (ch === '|' && !inCode) { cells.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  cells.push(cur);
+  return cells.map((c) => c.trim());
+}
+
+function alignOf(spec) {
+  const s = spec.trim();
+  if (/^:-+:$/.test(s)) return ' style="text-align:center"';
+  if (/-+:$/.test(s)) return ' style="text-align:right"';
+  return '';
+}
+
+// A table starts here when line i has a pipe and line i+1 is a delimiter row
+// with the same cell count (GFM's own rule; it keeps a stray pipe in prose
+// from swallowing the next line).
+function tableAt(lines, start) {
+  if (start + 1 >= lines.length) return null;
+  if (!lines[start].includes('|')) return null;
+  if (!TABLE_DELIM.test(lines[start + 1]) || !lines[start + 1].includes('-')) return null;
+  const head = splitRow(lines[start]);
+  const aligns = splitRow(lines[start + 1]);
+  if (head.length !== aligns.length || head.length < 2) return null;
+  const a = aligns.map(alignOf);
+  let i = start + 2;
+  const rows = [];
+  while (i < lines.length && !/^\s*$/.test(lines[i]) && lines[i].includes('|')) rows.push(splitRow(lines[i++]));
+  const th = head.map((c, n) => `<th scope="col"${a[n]}>${inline(c)}</th>`).join('');
+  const body = rows
+    .map((r) => `<tr>${head.map((_, n) => `<td${a[n]}>${inline(r[n] == null ? '' : r[n])}</td>`).join('')}</tr>`)
+    .join('');
+  // Same wrapper the builder's compare/ledger tables use, so a wide table
+  // scrolls inside itself on a phone instead of widening the page.
+  return { html: `<div class="table-scroll"><table><tr>${th}</tr>${body}</table></div>`, next: i };
+}
+
 // Lists nest by indentation. The previous rule folded ANY indented line into
 // the item above, so a nested list came out as one run-on item with its
 // markers still in the text: "- a" over "  - b" rendered <li>a - b</li>.
@@ -205,10 +259,19 @@ function renderMarkdown(src) {
       continue;
     }
 
+    const table = tableAt(lines, i);
+    if (table) {
+      out.push(table.html);
+      i = table.next;
+      continue;
+    }
+
     // paragraph: consume consecutive non-empty, non-structural lines
+    // A table needs no blank line above it: stop the paragraph at one, or the
+    // header row gets swallowed as prose and the table never renders.
     const buf = [line];
     i++;
-    while (i < lines.length && !/^\s*$/.test(lines[i]) && !STRUCTURAL.test(lines[i])) {
+    while (i < lines.length && !/^\s*$/.test(lines[i]) && !STRUCTURAL.test(lines[i]) && !tableAt(lines, i)) {
       buf.push(lines[i++]);
     }
     out.push(`<p>${inline(buf.join(' '))}</p>`);

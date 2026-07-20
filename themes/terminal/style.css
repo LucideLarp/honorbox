@@ -121,7 +121,10 @@ tr.attn td { color: #ffb86b; }
 .product-page { max-width: 44rem; margin: 0 auto; }
 .product-page .prose { margin-top: 0; }
 .prose pre { background: #050805; border: 1px solid var(--line); border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.85rem; }
-.prose p code, .prose li code { background: var(--paper-raise); border: 1px solid var(--line); border-radius: 3px; padding: 0.05em 0.3em; color: var(--accent); }
+/* overflow-wrap: a long unbroken identifier in inline code (the docs carry
+   `checkout.session.async_payment_succeeded`) otherwise widens the whole page
+   on a phone. Block code keeps its own horizontal scroll. */
+.prose p code, .prose li code, .prose td code { background: var(--paper-raise); border: 1px solid var(--line); border-radius: 3px; padding: 0.05em 0.3em; color: var(--accent); overflow-wrap: anywhere; }
 .prose blockquote { border-left: 2px solid var(--accent); margin: 1.2rem 0; padding: 0.2rem 1.1rem; color: var(--ink-soft); }
 .ledger-total { color: var(--accent); }
 

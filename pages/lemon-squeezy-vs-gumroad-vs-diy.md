@@ -74,7 +74,7 @@ fee is cheaper than your time.
 - **You never want to think about VAT or sales tax.** A merchant of record
   genuinely removes that job; Lemon Squeezy is the strongest pick here. DIY
   means tax is yours. Under most registration thresholds that's simpler than
-  it sounds ([our tax doc](https://github.com/Honorboxx/honorbox/blob/main/docs/tax.md)
+  it sounds ([our tax doc](./tax.html)
   covers it without hand-waving), but it is never zero thought.
 - **Subscriptions and license keys at volume.** You can build both on plain
   Stripe, but Lemon Squeezy ships them today.

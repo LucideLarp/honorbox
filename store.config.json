@@ -131,7 +131,9 @@
         },
         {
           "q": "Why is there no instant download?",
-          "a": "Because the product is private-repo access, which a download link can't be: per-buyer grants, clean revocation on refund, updates included forever. A scheduled job sends the invite, usually within minutes, with zero infrastructure to run or break. Sellers who want seconds can turn on the optional webhook mode. A download URL is instant, and then uncontrollable."
+          "a": "Because the product is private-repo access, which a download link can't be: per-buyer grants, clean revocation on refund, updates included forever. A scheduled job sends the invite, usually within minutes, with zero infrastructure to run or break. Sellers who want seconds can turn on the optional webhook mode. A download URL is instant, and then uncontrollable.",
+          "href": "./instant-delivery.html",
+          "href_label": "How instant delivery works"
         },
         {
           "q": "Do my buyers need GitHub accounts?",
@@ -143,11 +145,15 @@
         },
         {
           "q": "Does the fulfillment bot need my full Stripe secret key?",
-          "a": "No. A restricted key that can only read Checkout Sessions runs the whole poll; it cannot move money, refund, or create anything. Pair it with a fine-grained GitHub token valid for just the product repo. The least-privilege guide in the docs shows the exact toggles."
+          "a": "No. A restricted key that can only read Checkout Sessions runs the whole poll; it cannot move money, refund, or create anything. Pair it with a fine-grained GitHub token valid for just the product repo. The least-privilege guide in the docs shows the exact toggles.",
+          "href": "./least-privilege.html",
+          "href_label": "See the exact toggles"
         },
         {
           "q": "What about VAT and sales tax?",
-          "a": "HonorBox is not a merchant of record. You sell on your own Stripe account, so tax obligations are yours. That's workable for most small sellers under registration thresholds, and Stripe Tax can automate it beyond that. The tax doc walks through what a small seller actually owes."
+          "a": "HonorBox is not a merchant of record. You sell on your own Stripe account, so tax obligations are yours. That's workable for most small sellers under registration thresholds, and Stripe Tax can automate it beyond that. The tax doc walks through what a small seller actually owes.",
+          "href": "./tax.html",
+          "href_label": "What a small seller owes"
         },
         {
           "q": "Why does the price go up after 25 copies?",

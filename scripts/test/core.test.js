@@ -1053,3 +1053,136 @@ test('cron budget: the arithmetic is published where a skeptic will check it', (
   assert.ok(/1,488/.test(setup), 'setup.md must state the shipped poll cost');
   assert.ok(/round/i.test(setup), 'setup.md must state the per-job rounding rule');
 });
+
+// ---------- docs published as store pages ----------
+
+const { PUBLISHED_DOCS, docTitle, rewriteDocLinks } = require('../build.js');
+
+test('docTitle: the doc\'s own H1 becomes the title and leaves the body', () => {
+  // docs/*.md carry no frontmatter, and the page template renders its own
+  // <h1>. Leaving the heading in the body renders it twice.
+  const { title, body } = docTitle('# Tax, without the hand-waving\n\nBody text.\n', 'fallback');
+  assert.equal(title, 'Tax, without the hand-waving');
+  assert.ok(!/^#\s/m.test(body), 'the H1 must be removed from the body');
+  assert.ok(body.includes('Body text.'));
+  assert.equal(docTitle('no heading here', 'fallback').title, 'fallback');
+});
+
+test('rewriteDocLinks: a sibling doc we publish becomes an on-site link', () => {
+  const out = rewriteDocLinks('see [setup](setup.md) and [lp](least-privilege.md#tokens)', { repo: 'o/r' });
+  assert.ok(out.includes('](./setup.html)'), out);
+  assert.ok(out.includes('](./least-privilege.html#tokens)'), out);
+});
+
+test('rewriteDocLinks: a doc we do NOT publish keeps working, via GitHub', () => {
+  // pro-evidence.md is excluded from the store; a bare ./pro-evidence.html
+  // would be a 404 on the live site.
+  assert.ok(!PUBLISHED_DOCS.includes('pro-evidence'));
+  const out = rewriteDocLinks('[e](pro-evidence.md)', { repo: 'o/r' });
+  assert.equal(out, '[e](https://github.com/o/r/blob/main/docs/pro-evidence.md)');
+});
+
+test('rewriteDocLinks: repo paths outside docs/ resolve to GitHub, dir vs file', () => {
+  const out = rewriteDocLinks('[w](../webhook-mode/) [f](../scripts/fulfill.js)', { repo: 'o/r' });
+  assert.ok(out.includes('https://github.com/o/r/tree/main/webhook-mode/'), out);
+  assert.ok(out.includes('https://github.com/o/r/blob/main/scripts/fulfill.js'), out);
+});
+
+test('rewriteDocLinks: a link-shaped regex inside a code span is left alone', () => {
+  // docs/how-it-works.md documents the username rule as
+  // `^[a-zA-Z0-9](?:-?[a-zA-Z0-9]){0,38}$` — which contains "](...)".
+  // Rewriting runs on markdown source, so it sees inside code spans.
+  const src = 'usernames match `^[a-zA-Z0-9](?:-?[a-zA-Z0-9]){0,38}$` exactly';
+  assert.equal(rewriteDocLinks(src, { repo: 'o/r' }), src);
+});
+
+test('rewriteDocLinks: external and anchor links are untouched', () => {
+  const src = '[s](https://stripe.com/x.md) [a](#section)';
+  assert.equal(rewriteDocLinks(src, { repo: 'o/r' }), src);
+});
+
+test('docs build: every published doc exists and renders a titled page', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..', '..');
+  for (const slug of PUBLISHED_DOCS) {
+    const file = path.join(root, 'docs', `${slug}.md`);
+    assert.ok(fs.existsSync(file), `docs/${slug}.md is listed in PUBLISHED_DOCS but missing`);
+    const { title, body } = docTitle(fs.readFileSync(file, 'utf8'), slug);
+    assert.ok(title && title !== slug, `docs/${slug}.md needs an H1 for its page title`);
+    const html = renderMarkdown(rewriteDocLinks(body, { repo: 'o/r' }));
+    // a doc that still points at a bare .md would 404 on the live site
+    assert.ok(!/href="[^"]*\.md"/.test(html), `docs/${slug}.md ships an unrewritten .md link`);
+  }
+});
+
+test('faq: an answer that promises a doc renders a real link to it', () => {
+  // The live FAQ said "the least-privilege guide in the docs shows the exact
+  // toggles" with nothing to click.
+  const withHref = section({
+    type: 'faq', title: 'Q', items: [{ q: 'k', a: 'a', href: './least-privilege.html', href_label: 'The guide' }],
+  });
+  assert.ok(withHref.includes('href="./least-privilege.html"'), withHref);
+  assert.ok(withHref.includes('The guide'), withHref);
+  // and an answer without one is unchanged
+  const plain = section({ type: 'faq', title: 'Q', items: [{ q: 'k', a: 'a' }] });
+  assert.ok(!plain.includes('<a '), plain);
+});
+
+test('faq: a hostile href in config cannot become a javascript: link', () => {
+  const out = section({ type: 'faq', title: 'Q', items: [{ q: 'k', a: 'a', href: 'javascript:alert(1)' }] });
+  assert.ok(!out.includes('javascript:'), out);
+});
+
+// ---------- markdown tables ----------
+
+test('markdown: a pipe table renders as a table, not a paragraph of pipes', () => {
+  // docs/instant-delivery.md shipped a table that rendered as pipe soup
+  // because the renderer had no table support; publishing the docs exposed it.
+  const html = renderMarkdown('| Mode | Delivery |\n|---|---|\n| Poll | minutes |\n');
+  assert.ok(html.includes('<table>'), html);
+  assert.ok(html.includes('<th scope="col">Mode</th>'), html);
+  assert.ok(html.includes('<td>Poll</td>'), html);
+  assert.ok(!html.includes('|'), `no raw pipes should survive: ${html}`);
+  // wide tables scroll inside themselves rather than widening the page
+  assert.ok(html.includes('table-scroll'), html);
+});
+
+test('markdown: a table needs its delimiter row (prose with a pipe is prose)', () => {
+  const html = renderMarkdown('use grep | wc -l to count\n\nnext paragraph\n');
+  assert.ok(!html.includes('<table>'), html);
+  assert.ok(html.includes('<p>'), html);
+});
+
+test('markdown: a pipe inside a code span is content, not a cell separator', () => {
+  const html = renderMarkdown('| Cmd | Note |\n|---|---|\n| `a \\| b` | pipes |\n');
+  const cells = html.match(/<td[^>]*>/g) || [];
+  assert.equal(cells.length, 2, `expected 2 cells, got ${cells.length}: ${html}`);
+  assert.ok(html.includes('<code>a | b</code>'), html);
+});
+
+test('markdown: table cells render inline markup and escape HTML', () => {
+  const html = renderMarkdown('| A | B |\n|---|---|\n| **bold** | <script>x</script> |\n');
+  assert.ok(html.includes('<strong>bold</strong>'), html);
+  assert.ok(!html.includes('<script>'), html);
+  assert.ok(html.includes('&lt;script&gt;'), html);
+});
+
+test('markdown: a table directly under a paragraph is not swallowed by it', () => {
+  const html = renderMarkdown('Costs:\n| A | B |\n|---|---|\n| 1 | 2 |\n');
+  assert.ok(html.includes('<table>'), html);
+  assert.ok(html.includes('<p>Costs:</p>'), html);
+});
+
+test('markdown: alignment markers set text-align and are not printed', () => {
+  const html = renderMarkdown('| L | C | R |\n|:--|:-:|--:|\n| 1 | 2 | 3 |\n');
+  assert.ok(html.includes('text-align:center'), html);
+  assert.ok(html.includes('text-align:right'), html);
+  assert.ok(!html.includes(':-'), html);
+});
+
+test('markdown: a short row is padded, not shifted into the wrong column', () => {
+  const html = renderMarkdown('| A | B | C |\n|---|---|---|\n| 1 |\n');
+  const row = /<tr>(?:(?!<tr>).)*<td[^>]*>1<\/td>.*/s.exec(html)[0];
+  assert.equal((row.match(/<td/g) || []).length, 3, html);
+});

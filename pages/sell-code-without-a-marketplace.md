@@ -103,7 +103,7 @@ carrying the buyer's username. Something has to read it and send the invite:
 - **Your time**: the real cost. Checkout and delivery are an afternoon; tax
   is a decision. As the merchant, VAT and sales tax are yours. Most small
   sellers start under registration thresholds, and
-  [our tax doc](https://github.com/Honorboxx/honorbox/blob/main/docs/tax.md)
+  [our tax doc](./tax.html)
   walks through what a small seller actually owes. Not tax advice.
 
 ## When a marketplace earns its cut
