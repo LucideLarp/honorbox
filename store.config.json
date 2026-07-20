@@ -149,7 +149,9 @@
       "items": [
         {
           "q": "What exactly do I get when I buy?",
-          "a": "Your GitHub account is invited to the product's private repository, usually within minutes and always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive, email honorbox@proton.me or open an issue and it will be fixed or refunded."
+          "a": "Your GitHub account is invited to the product's private repository, usually within minutes and always within a few hours. You keep access permanently, updates included. If the invite doesn't arrive there is a defined recovery path, ending in access or a refund; you are never left holding a receipt for nothing.",
+          "href": "./support.html",
+          "href_label": "What happens if a delivery fails"
         },
         {
           "q": "Why is there no instant download?",
@@ -183,7 +185,9 @@
         },
         {
           "q": "Who's behind this?",
-          "a": "HonorBox is an independent project. Support: honorbox@proton.me or GitHub issues; both are answered fast."
+          "a": "HonorBox is an independent project, MIT-licensed, and versioned in the open: every change ships as a tagged release with notes. It is young, and the release history says exactly how young. Support runs through GitHub issues, which are public and tracked, or honorbox@proton.me for anything about your own order.",
+          "href": "./support.html",
+          "href_label": "Support, limits and delivery problems"
         }
       ]
     },

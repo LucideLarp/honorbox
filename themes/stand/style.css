@@ -1,17 +1,14 @@
-/* HonorBox theme: "stand", the type studio's monochrome.
-   Strict black and white, with one struck exception: the coin in the mark
-   is metal. The page is carried by type weight, size contrast, spacing,
-   and two chunky devices, a solid ink buy block and one inverted plate.
-   Palette: ink #0d0d0f, white #ffffff, and three functional grays (wash,
-   line, soft text) that are neutral, not tinted. Display face: Schibsted
-   Grotesk (OFL, self-hosted in assets/fonts/). The scheme mirrors
-   perfectly in dark mode: white-on-ink.
-   Signature: the slot and the box print in ink; the coin alone is gold,
-   the same coin under two lights, deep brass #a8862c on white paper
-   (3.4:1 non-text) and gleam #e8b054 on ink (10:1). Weight is the only
-   hierarchy, and the one thing you can buy is the blackest object on the
-   page. The showcase band's theme screenshots supply the rest of the
-   page's color: the product does. */
+/* HonorBox theme: "stand", the honesty box set as a technical document.
+   The page is a well-set spec sheet, not a launch page: left-set, one column
+   of authority, hierarchy carried by size and colour rather than by weight.
+   Space separates sections; hairlines only where a divider earns its keep.
+   Palette: warm near-black ink on white paper, three neutral grays, and one
+   colour. The accent red is the coin: #b5482a on paper, #d9603c on ink, and
+   it is allowed in six places only (the mark's coin and slot, the buy
+   button, the price, focus rings, and the note's rule). Everything else,
+   headings included, prints in ink. Display face: Schibsted Grotesk (OFL,
+   self-hosted in assets/fonts/). Both schemes are first class; the theme
+   mirrors rather than dims. */
 
 @font-face {
   font-family: "Schibsted Grotesk";
@@ -31,35 +28,40 @@
 :root {
   color-scheme: light dark;
   --paper: #ffffff;
-  --wash: #f4f4f6;
-  --line: #e0e0e4;
-  --line-strong: #0d0d0f;
-  --ink: #0d0d0f;
-  --ink-soft: #5d5d66;
-  --plate: #0d0d0f;       /* the inverted device */
-  --plate-ink: #f2f2f4;
-  --plate-soft: #c9c9cf;
-  --accent: #0d0d0f;      /* the mark's box and slot, and the skip link, stay ink */
-  --coin: #a8862c;        /* the coin alone is metal: deep brass on white paper */
+  --wash: #f7f5f2;
+  --line: #e5e1da;
+  --ink: #14120f;
+  --ink-soft: #5f594f;
+  --accent: #b5482a;      /* the coin, and the one colour on the page */
+  --accent-deep: #8f3820; /* the accent as small text, where 5.35:1 is not enough headroom */
+  --on-accent: #ffffff;
+  --coin: #b5482a;
+
   --display: "Schibsted Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%230d0d0f%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%230d0d0f%22%2F%3E%3C%2Fsvg%3E');
+
+  /* Vertical rhythm. One scale, used everywhere, so the page has a beat
+     instead of a set of local decisions. */
+  --gap-section: clamp(3.25rem, 7vw, 5.5rem);
+  --gap-block: clamp(1.5rem, 3vw, 2.25rem);
+  --pad-page: clamp(1.15rem, 4vw, 2.25rem);
+  --measure: 62ch;
+
+  --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%2314120f%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%2314120f%22%2F%3E%3C%2Fsvg%3E');
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #0e0e10;
-    --wash: #19191c;
-    --line: #2b2b30;
-    --line-strong: #f2f2f4;
-    --ink: #f2f2f4;
-    --ink-soft: #a2a2ab;
-    --plate: #f2f2f4;
-    --plate-ink: #131316;
-    --plate-soft: #3f3f46;
-    --accent: #f2f2f4;
-    --coin: #e8b054;      /* the same coin under lamplight: gold gleams on ink */
-    --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%23f2f2f4%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%23f2f2f4%22%2F%3E%3C%2Fsvg%3E');
+    --paper: #100f0d;
+    --wash: #1a1815;
+    --line: #2e2a25;
+    --ink: #f0ece5;
+    --ink-soft: #9d958a;
+    --accent: #d9603c;
+    --accent-deep: #e8785a;
+    --on-accent: #100f0d;
+    --coin: #d9603c;
+    --mark-box: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2076%2042%22%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%2254%22%20height%3D%2233%22%20rx%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%23f0ece5%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%222%22%20width%3D%2228%22%20height%3D%227%22%20rx%3D%223.5%22%20fill%3D%22%23f0ece5%22%2F%3E%3C%2Fsvg%3E');
   }
 }
 
@@ -70,95 +72,109 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.0625rem);
+  font-size: clamp(1rem, 0.97rem + 0.16vw, 1.05rem);
   line-height: 1.65;
+  font-synthesis-weight: none;
 }
 
-main { max-width: 64rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem) 4.5rem; }
+main { max-width: 66rem; margin: 0 auto; padding: 0 var(--pad-page) var(--gap-section); }
 
-h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.08; letter-spacing: -0.022em; }
+/* Type scale. The h1-to-body ratio is deliberately about 3x, not the 4x it
+   was: a headline that stops shouting reads as a tool rather than a pitch. */
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.12; letter-spacing: -0.02em; }
 h1 {
-  font-size: clamp(2.3rem, 1.3rem + 4.2vw, 4.2rem); font-weight: 800;
-  line-height: 1.0; margin: 0.2em 0 0.4em; text-wrap: balance; letter-spacing: -0.03em;
+  font-size: clamp(2.05rem, 1.5rem + 2.4vw, 3.15rem);
+  line-height: 1.05; margin: 0 0 0.45em; text-wrap: balance; letter-spacing: -0.028em;
 }
-h2 { font-size: clamp(1.5rem, 1.15rem + 1.5vw, 2.2rem); margin: 2.2em 0 0.6em; text-wrap: balance; letter-spacing: -0.025em; }
-h3 { font-size: clamp(1.08rem, 1rem + 0.5vw, 1.28rem); margin: 0.4em 0; }
-a { color: var(--ink); text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
-a:hover { text-decoration-thickness: 3px; }
+h2 { font-size: clamp(1.3rem, 1.15rem + 0.75vw, 1.65rem); margin: 0 0 0.7em; text-wrap: balance; }
+h3 { font-size: clamp(1.05rem, 1rem + 0.28vw, 1.18rem); margin: 0 0 0.35em; }
+
+a { color: var(--ink); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
 a:focus-visible, summary:focus-visible {
-  outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 2px;
+  outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px;
 }
-::selection { background: var(--ink); color: var(--paper); }
+::selection { background: var(--accent); color: var(--on-accent); }
 .muted { color: var(--ink-soft); }
 
 .skip-link {
   position: absolute; left: 1rem; top: -3.5rem; z-index: 20;
   background: var(--paper); color: var(--ink); font-weight: 600; font-size: 0.9rem;
-  border: 2px solid var(--ink);
-  padding: 0.55rem 1rem; border-radius: 6px; text-decoration: none;
+  border: 1.5px solid var(--ink);
+  padding: 0.55rem 1rem; border-radius: 5px; text-decoration: none;
   transition: top 0.15s ease;
 }
 .skip-link:focus { top: 1rem; }
 
-/* header / footer */
+/* header: a hairline, not a rule. The chrome should not out-weigh the page. */
 .site-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem;
   flex-wrap: wrap;
-  max-width: 64rem; margin: 0 auto;
-  padding: 1.15rem clamp(1rem, 4vw, 2rem);
-  border-bottom: 2px solid var(--ink);
+  max-width: 66rem; margin: 0 auto;
+  padding: 1.35rem var(--pad-page);
+  border-bottom: 1px solid var(--line);
 }
 .brand {
-  display: inline-flex; align-items: center; gap: 0.6rem;
-  font-family: var(--display); font-weight: 800; font-size: 1.24rem;
-  color: var(--ink); text-decoration: none; letter-spacing: -0.02em;
+  display: inline-flex; align-items: center; gap: 0.55rem;
+  font-family: var(--display); font-weight: 800; font-size: 1.15rem;
+  color: var(--ink); text-decoration: none; letter-spacing: -0.022em;
 }
-.brand-mark { color: var(--ink); width: 25px; height: 25px; }
-.site-nav { display: flex; gap: 0.4rem 1.4rem; flex-wrap: wrap; }
+.brand-mark { color: var(--ink); width: 24px; height: 24px; flex-shrink: 0; }
+.site-nav { display: flex; gap: 0.3rem 1.5rem; flex-wrap: wrap; }
 .site-nav a {
-  color: var(--ink-soft); text-decoration: none; font-size: 0.95rem; font-weight: 600;
-  padding: 0.25rem 0; border-bottom: 2px solid transparent;
+  color: var(--ink-soft); text-decoration: none; font-size: 0.92rem; font-weight: 500;
+  padding: 0.2rem 0; border-bottom: 1.5px solid transparent;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
-.site-nav a:hover { color: var(--ink); border-bottom-color: var(--ink); }
-.site-foot {
-  border-top: 2px solid var(--ink);
-  color: var(--ink-soft); font-size: 0.86rem;
-  max-width: 64rem; margin: clamp(2rem, 6vw, 4rem) auto 0;
-  padding: 1.9rem clamp(1rem, 4vw, 2rem) 3.5rem;
-}
-.foot-links { line-height: 2.1; margin: 0 0 0.7rem; }
-.foot-links a, .foot-legal a { color: var(--ink-soft); }
-.foot-links a:hover, .foot-legal a:hover { color: var(--ink); }
-.foot-legal { margin: 0; }
+.site-nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
 
-/* hero: left-set, the mark prints above the headline */
+/* footer: an index, not a paragraph. The middots stay (they are text nodes in
+   one <p>), but the links stop being underlined and get room to breathe, so
+   the block reads as a list of places rather than a wall of rules. */
+.site-foot {
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft); font-size: 0.875rem;
+  max-width: 66rem; margin: 0 auto;
+  padding: 2.25rem var(--pad-page) 3.5rem;
+}
+.foot-links { max-width: 52rem; line-height: 2.4; margin: 0 0 1.1rem; color: var(--line); }
+.foot-links a, .foot-legal a { color: var(--ink-soft); text-decoration: none; }
+.foot-links a { padding: 0.15rem 0.25rem; }
+.foot-links a:hover, .foot-legal a:hover { color: var(--accent-deep); text-decoration: underline; }
+.foot-legal { margin: 0; font-size: 0.83rem; }
+
+/* hero: left-set. The mark prints above the headline and the coin is caught
+   mid-drop, part way into the slot, which is the whole idea of the product. */
 .hero {
   position: relative; text-align: left;
-  padding: clamp(2.6rem, 6vw, 4.4rem) 0 1.6rem;
+  padding: clamp(2.5rem, 6vw, 4rem) 0 0;
 }
 .hero::before {
   content: ""; display: block;
-  width: 96px; height: 53px; margin-bottom: clamp(1.4rem, 3vw, 2rem);
+  width: 128px; height: 71px; margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
   background: var(--mark-box) left center / contain no-repeat;
 }
+/* Geometry, not guesswork: the mark's viewBox is 76 wide, so at 128px it
+   scales by 1.684. The slot (x 24 to 52) centres on 64px, and its band lands
+   3px to 15px below the mark's top edge. The coin is 12 wide, so it starts at
+   58px, and its lower half seats into that band. */
 .hero::after {
   content: ""; position: absolute;
-  top: calc(clamp(2.6rem, 6vw, 4.4rem) - 22px); left: 43px;
-  width: 9px; height: 21px; border-radius: 4.5px;
+  top: calc(clamp(2.5rem, 6vw, 4rem) - 14px); left: 58px;
+  width: 12px; height: 27px; border-radius: 6px;
   background: var(--coin);
   transform: rotate(-22deg);
-  animation: coin-drop 0.65s cubic-bezier(0.22, 1.35, 0.36, 1) 0.1s both;
+  animation: coin-drop 0.7s cubic-bezier(0.22, 1.3, 0.36, 1) 0.15s both;
 }
 @keyframes coin-drop {
-  from { transform: translateY(-22px) rotate(-40deg); }
+  from { transform: translateY(-26px) rotate(-42deg); }
   to { transform: translateY(0) rotate(-22deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero::after { animation: none; }
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
 }
-/* sections settle into view like sheets squared on a desk. Scroll-driven,
+/* Sections settle into view like sheets squared on a desk. Scroll-driven,
    CSS-only; browsers without animation-timeline (and reduced-motion users)
    simply get the static page. Transform-only on purpose: no opacity, so
    print, full-page captures, and non-scrolling contexts never hide content. */
@@ -167,259 +183,304 @@ a:focus-visible, summary:focus-visible {
     .showcase, .steps, .compare, .faq, .note {
       animation: settle linear both;
       animation-timeline: view();
-      animation-range: entry 0% entry 24%;
+      animation-range: entry 0% entry 22%;
     }
   }
 }
 @keyframes settle {
-  from { transform: translateY(10px); }
+  from { transform: translateY(8px); }
   to { transform: none; }
 }
 .kicker {
-  font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.18em;
-  text-transform: uppercase; color: var(--ink-soft); margin: 0 0 0.8em;
+  font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink-soft); margin: 0 0 1.1em;
 }
-.hero h1 { max-width: 20ch; }
+.hero h1 { max-width: 18ch; }
 .lede {
-  font-size: clamp(1.1rem, 1rem + 0.6vw, 1.32rem); line-height: 1.58;
-  color: var(--ink-soft); max-width: 56ch; margin: 0 0 1.9rem; text-wrap: pretty;
+  font-size: clamp(1.08rem, 1rem + 0.42vw, 1.24rem); line-height: 1.6;
+  color: var(--ink-soft); max-width: 54ch; margin: 0 0 2rem; text-wrap: pretty;
 }
-.hero-ctas { display: flex; gap: 0.9rem; justify-content: flex-start; flex-wrap: wrap; }
+.hero-ctas { display: flex; gap: 0.75rem; justify-content: flex-start; flex-wrap: wrap; align-items: center; }
 .hero-sub {
-  font-family: var(--mono); font-size: 0.8rem; color: var(--ink-soft);
-  margin-top: 1.5rem; letter-spacing: 0.01em;
+  font-family: var(--mono); font-size: 0.78rem; color: var(--ink-soft);
+  margin: 1.6rem 0 0; max-width: 60ch; line-height: 1.7;
 }
 
-/* buttons: ink blocks and ink outlines; the outline fills on hover, the
-   solid block underlines its label instead (never flickers to white) */
+/* buttons: one filled in the accent, the rest outlined in a hairline. The
+   filled button is the only saturated object on the page, which is what makes
+   it findable without any of the usual shouting. */
 .btn {
-  display: inline-block; padding: 0.7rem 1.4rem; border-radius: 7px;
-  font-weight: 700; text-decoration: none;
-  border: 2px solid var(--ink); color: var(--ink); background: transparent;
-  font-size: 1rem; line-height: 1.35;
-  transition: background 0.13s ease, color 0.13s ease, transform 0.13s ease;
+  display: inline-block; padding: 0.68rem 1.3rem; border-radius: 5px;
+  font-weight: 600; text-decoration: none;
+  border: 1.5px solid var(--line); color: var(--ink); background: var(--paper);
+  font-size: 0.97rem; line-height: 1.35;
+  transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease, transform 0.14s ease;
 }
-.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .btn:active { transform: translateY(1px); }
-.btn-buy { background: var(--ink); color: var(--paper); }
-.btn-buy:hover {
-  transform: translateY(-1px);
-  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px;
-}
-.btn-ghost:hover { background: var(--ink); color: var(--paper); }
-.btn-big { padding: 0.9rem 1.85rem; font-size: 1.08rem; }
-.btn-disabled { opacity: 0.55; border-style: dashed; cursor: not-allowed; }
+.btn-buy { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+.btn-buy:hover { background: var(--accent-deep); border-color: var(--accent-deep); transform: translateY(-1px); }
+.btn-ghost:hover { border-color: var(--ink); color: var(--ink); }
+.btn-big { padding: 0.85rem 1.7rem; font-size: 1.03rem; }
+.btn-disabled { opacity: 0.6; border-style: dashed; cursor: not-allowed; }
 
 /* product cards */
 .products {
-  display: grid; gap: clamp(1.1rem, 2.5vw, 1.5rem);
+  display: grid; gap: var(--gap-block);
   grid-template-columns: 1fr; justify-items: center;
-  margin-top: clamp(2.6rem, 6vw, 4rem);
+  margin-top: var(--gap-section);
 }
 .product-card {
-  --card-pad: clamp(1.35rem, 3vw, 2rem);
+  --card-pad: clamp(1.4rem, 3vw, 2.15rem);
   display: flex; flex-direction: column;
-  border: 1.5px solid var(--line); border-radius: 10px;
+  border: 1px solid var(--line); border-radius: 8px;
   background: var(--paper);
   padding: var(--card-pad);
 }
 .pc-head { margin-bottom: 0.2rem; }
 .badge {
-  display: inline-block; font-family: var(--mono); font-size: 0.7rem;
-  letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700;
-  color: var(--ink); border: 2px solid var(--ink);
-  border-radius: 5px; padding: 0.18rem 0.6rem; margin-bottom: 0.75rem;
+  display: inline-block; font-family: var(--mono); font-size: 0.68rem;
+  letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;
+  color: var(--ink-soft); border: 1px solid var(--line);
+  border-radius: 3px; padding: 0.2rem 0.55rem; margin-bottom: 0.9rem;
 }
-.product-card h3 { margin: 0; font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.7rem); }
+.product-card h3 { margin: 0; font-size: clamp(1.3rem, 1.15rem + 0.6vw, 1.55rem); }
 .product-card h3 a { color: var(--ink); text-decoration: none; }
-.product-card h3 a:hover { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 4px; }
-.pc-tagline { color: var(--ink-soft); margin: 0.45rem 0 0; text-wrap: pretty; }
-.pc-features { list-style: square; padding-left: 1.15rem; margin: 1.1rem 0 1.5rem; }
-.pc-features li { margin: 0.45rem 0; font-size: 0.95rem; }
-.pc-features li::marker { color: var(--ink); }
+.product-card h3 a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.pc-tagline { color: var(--ink-soft); margin: 0.5rem 0 0; text-wrap: pretty; }
+/* Feature lines, not bullets. Ten markered items in two columns read as a
+   pitch deck; the same ten set as plain lines with room between them read as
+   a specification, which is what they are. */
+.pc-features { list-style: none; padding: 0; margin: 1.4rem 0 1.6rem; }
+.pc-features li {
+  margin: 0; padding: 0.5rem 0 0.5rem 1.05rem; position: relative;
+  font-size: 0.94rem; line-height: 1.55; color: var(--ink-soft);
+}
+.pc-features li::before {
+  content: ""; position: absolute; left: 0; top: 1.05em;
+  width: 5px; height: 1px; background: var(--ink-soft);
+}
 .pc-buy {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 0.8rem 1rem; flex-wrap: wrap;
-  margin-top: auto; padding-top: 1.15rem;
-  border-top: 1.5px solid var(--line);
+  gap: 0.9rem 1.25rem; flex-wrap: wrap;
+  margin-top: auto; padding-top: 1.3rem;
+  border-top: 1px solid var(--line);
 }
 .pc-buy.standalone {
-  margin: 1.7rem 0 2.4rem; padding: 1.05rem 1.25rem;
-  border: 2px solid var(--ink); border-radius: 10px;
-  background: var(--paper);
+  margin: 1.9rem 0 2.5rem; padding: 1.15rem 1.35rem;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--wash);
 }
 .pc-buy.standalone:not(:has(.price)) {
   border: none; background: none;
-  justify-content: center; margin: 2.6rem 0 0.5rem; padding: 0;
+  justify-content: flex-start; margin: 2.75rem 0 0.5rem; padding: 0;
 }
-.price { font-family: var(--display); font-size: 1.6rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
-.price small { font-family: var(--sans); font-size: 0.72rem; font-weight: 400; color: var(--ink-soft); display: block; margin-top: 0.2rem; letter-spacing: 0.02em; }
+.price {
+  font-family: var(--display); font-size: 1.55rem; font-weight: 800;
+  line-height: 1.2; letter-spacing: -0.02em; color: var(--accent-deep);
+}
+.price small {
+  font-family: var(--sans); font-size: 0.72rem; font-weight: 400; color: var(--ink-soft);
+  display: block; margin-top: 0.25rem; letter-spacing: 0.01em;
+}
 
-/* flagship: the only heavy frame on the page */
+/* flagship: the one card with any weight to it */
 .product-card.flagship {
-  width: min(100%, 46rem);
-  border: 2.5px solid var(--ink);
+  width: min(100%, 48rem);
+  border-color: var(--ink);
 }
-.product-card.flagship h3 { font-size: clamp(1.5rem, 1.25rem + 1vw, 1.95rem); }
-.product-card.flagship .pc-tagline { max-width: 65ch; }
-.product-card.flagship .pc-features { columns: 2; column-gap: 2.4rem; }
+.product-card.flagship h3 { font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.8rem); }
+.product-card.flagship .pc-tagline { max-width: 62ch; }
+.product-card.flagship .pc-features { columns: 2; column-gap: 2.75rem; }
 .product-card.flagship .pc-features li { break-inside: avoid; }
 
 /* companion: a slim stub */
 .product-card.companion {
-  width: min(100%, 46rem);
+  width: min(100%, 48rem);
   flex-direction: row; align-items: center; gap: 0.5rem 1.5rem;
   padding: 1.15rem var(--card-pad);
-  border-color: var(--line);
 }
 .product-card.companion .badge,
 .product-card.companion .pc-features,
 .product-card.companion .price small { display: none; }
 .product-card.companion .pc-head { flex: 1; min-width: 14rem; margin: 0; }
-.product-card.companion h3 { font-size: 1.2rem; }
+.product-card.companion h3 { font-size: 1.12rem; }
 .product-card.companion .pc-tagline { font-size: 0.88rem; margin-top: 0.3rem; max-width: 48ch; }
 .product-card.companion .pc-buy {
   margin: 0; padding: 0 0 0 1.5rem;
-  align-self: stretch; align-items: center; flex-wrap: nowrap; gap: 1.1rem;
-  border-top: none; border-left: 1.5px solid var(--line);
+  align-self: stretch; align-items: center; flex-wrap: nowrap; gap: 1.15rem;
+  border-top: none; border-left: 1px solid var(--line);
 }
-.product-card.companion .price { font-size: 1.2rem; }
-.product-card.companion .btn { padding: 0.55rem 1.05rem; font-size: 0.92rem; }
+.product-card.companion .price { font-size: 1.12rem; }
+.product-card.companion .btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
 
-/* home sections: chunky rules, not hairlines */
+/* home sections: space does the separating, a hairline only marks the seam */
 .steps, .compare, .faq, .showcase {
-  border-top: 2px solid var(--ink);
-  margin-top: clamp(2.75rem, 7vw, 4.25rem);
-  padding-top: clamp(1.9rem, 5vw, 2.9rem);
+  border-top: 1px solid var(--line);
+  margin-top: var(--gap-section);
+  padding-top: clamp(2rem, 4.5vw, 3rem);
 }
-.steps h2, .compare h2, .faq h2, .showcase h2 { margin-top: 0; margin-bottom: 0.9em; }
-.compare h2, .showcase h2 { margin-bottom: 0.4em; }
 
-/* steps: the numerals do the work */
+/* The two sections that carry a standfirst set it beside the heading rather
+   than beneath it: the heading holds the left column, the note the right, and
+   the content spans both. Wide screens get a proper masthead, narrow ones get
+   the same two lines stacked. No markup knows about this. */
+@media (min-width: 56rem) {
+  .compare, .showcase {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(2rem, 5vw, 4rem);
+    align-items: end;
+  }
+  .compare > h2, .showcase > h2 { grid-column: 1; grid-row: 1; margin-bottom: 0; }
+  .compare > .muted, .showcase > .muted { grid-column: 2; grid-row: 1; margin: 0; }
+  .compare > .table-scroll, .showcase > .showcase-grid { grid-column: 1 / -1; }
+}
+.compare > .muted, .showcase > .muted { font-size: 0.92rem; max-width: 56ch; margin: 0 0 0.4em; }
+
+/* steps: the numerals set the order, quietly */
 .steps-list {
-  counter-reset: step; list-style: none; padding: 0; margin: 1.6rem 0 0;
-  display: grid; gap: 1.9rem 2.6rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  counter-reset: step; list-style: none; padding: 0; margin: 1.75rem 0 0;
+  display: grid; gap: 2rem 2.75rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 }
 .steps-list li { counter-increment: step; }
 .steps-list li::before {
   content: counter(step, decimal-leading-zero);
-  display: block; margin-bottom: 0.5rem;
-  font-family: var(--display); font-weight: 800;
-  color: var(--ink); font-size: 1.7rem; letter-spacing: -0.02em; line-height: 1;
+  display: block; margin-bottom: 0.75rem; padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono); font-weight: 400;
+  color: var(--accent-deep); font-size: 0.9rem; letter-spacing: 0.14em; line-height: 1;
 }
-.steps-list h3 { margin: 0 0 0.35rem; font-size: 1.15rem; }
-.steps-list p { margin: 0; color: var(--ink-soft); font-size: 0.94rem; line-height: 1.55; max-width: 58ch; }
-/* guide index rows */
-.steps-list:has(h3 a) { grid-template-columns: 1fr; gap: 0; margin-top: 1.2rem; }
-.steps-list li:has(h3 a) {
-  position: relative; padding: 1.1rem 2.6rem 1.2rem 0;
-  border-top: 1.5px solid var(--line);
+.steps-list h3 { margin: 0 0 0.4rem; font-size: 1.08rem; }
+.steps-list p { margin: 0; color: var(--ink-soft); font-size: 0.93rem; line-height: 1.6; max-width: 54ch; }
+
+/* guide index rows, and the docs index, share one row treatment */
+.steps-list:has(h3 a), .doc-list {
+  grid-template-columns: 1fr; gap: 0; margin-top: 1.4rem;
+  display: grid; list-style: none; padding: 0; counter-reset: none;
 }
-.steps-list li:has(h3 a):last-child { border-bottom: 1.5px solid var(--line); }
-.steps-list li:has(h3 a)::before { display: none; }
-.steps-list li:has(h3 a)::after {
-  content: "\2192"; position: absolute; top: 50%; right: 0.35rem;
+.steps-list li:has(h3 a), .doc-list li {
+  position: relative; padding: 1.2rem 2.75rem 1.3rem 0;
+  border-top: 1px solid var(--line);
+}
+.steps-list li:has(h3 a):last-child, .doc-list li:last-child { border-bottom: 1px solid var(--line); }
+.steps-list li:has(h3 a)::before, .doc-list li::before { display: none; }
+.steps-list li:has(h3 a)::after, .doc-list li::after {
+  content: "\2192"; position: absolute; top: 50%; right: 0.4rem;
   font-family: var(--mono); font-size: 0.95rem; color: var(--ink-soft);
   transform: translateY(-50%);
   transition: color 0.15s ease, transform 0.15s ease;
 }
-.steps-list li:has(h3 a) p { max-width: 66ch; }
-.steps-list h3 a { color: var(--ink); text-decoration: none; }
-.steps-list h3 a::after { content: ""; position: absolute; inset: 0; }
-.steps-list li:has(h3 a):hover::after { color: var(--ink); transform: translate(3px, -50%); }
-.steps-list li:has(h3 a):hover h3 a { text-decoration: underline; text-decoration-thickness: 2.5px; text-underline-offset: 4px; }
+.steps-list li:has(h3 a) p, .doc-list li p { max-width: 64ch; margin: 0; color: var(--ink-soft); font-size: 0.93rem; line-height: 1.6; }
+.doc-list h3 { margin: 0 0 0.35rem; font-size: 1.08rem; }
+.steps-list h3 a, .doc-list h3 a { color: var(--ink); text-decoration: none; }
+.steps-list h3 a::after, .doc-list h3 a::after { content: ""; position: absolute; inset: 0; }
+.steps-list li:has(h3 a):hover::after, .doc-list li:hover::after { color: var(--accent-deep); transform: translate(3px, -50%); }
+.steps-list li:has(h3 a):hover h3 a, .doc-list li:hover h3 a { color: var(--accent-deep); }
 
-/* compare table: our column prints heavy */
-.table-scroll { overflow-x: auto; margin-top: 1.2rem; }
-.table-scroll table { min-width: 38rem; }
-table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+/* compare table: hairlines, and our column marked by ground rather than bold */
+.table-scroll { overflow-x: auto; margin-top: 1.6rem; }
+.table-scroll table { min-width: 40rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
 th {
-  font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--ink-soft); font-weight: 600;
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-soft); font-weight: 500;
 }
-th, td { text-align: left; padding: 0.65rem 0.9rem; border-bottom: 1.5px solid var(--line); vertical-align: top; }
-th { border-bottom: 2px solid var(--ink); }
-td.rowhead { font-weight: 600; }
+th, td { text-align: left; padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { border-bottom: 1px solid var(--ink); }
+td.rowhead { font-weight: 600; color: var(--ink); }
+td { color: var(--ink-soft); }
 td.num { font-family: var(--mono); }
-tr.attn td { font-weight: 700; background: var(--wash); }
-.compare .muted { max-width: 66ch; font-size: 0.92rem; margin-bottom: 0; }
+tr.attn td { font-weight: 600; background: var(--wash); color: var(--ink); }
 .compare th:last-child, .compare td:last-child { background: var(--wash); }
-.compare th:last-child { color: var(--ink); font-weight: 800; }
-.compare td:last-child { font-weight: 700; }
+.compare th:last-child { color: var(--ink); }
+.compare td:last-child { color: var(--ink); font-weight: 600; }
 
 /* faq */
-.faq details { border-bottom: 1.5px solid var(--line); }
-.faq details:first-of-type { border-top: 1.5px solid var(--line); }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq details:first-of-type { border-top: 1px solid var(--line); }
 .faq summary {
   display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
-  padding: 1.05rem 0.15rem; font-weight: 600; font-size: 1.02rem; cursor: pointer;
+  padding: 1.1rem 0.15rem; font-weight: 600; font-size: 1rem; cursor: pointer;
   list-style: none;
 }
 .faq summary::-webkit-details-marker { display: none; }
 .faq summary::after {
-  content: "+"; font-family: var(--mono); font-size: 1.15rem; font-weight: 700;
-  color: var(--ink); flex-shrink: 0; line-height: 1;
+  content: "+"; font-family: var(--mono); font-size: 1.1rem; font-weight: 400;
+  color: var(--accent-deep); flex-shrink: 0; line-height: 1;
   transition: transform 0.2s ease; transform-origin: center;
 }
-.faq summary:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.faq summary:hover { color: var(--accent-deep); }
 .faq details[open] summary::after { transform: rotate(45deg); }
-.faq p { color: var(--ink-soft); margin: 0 0 1.2rem; max-width: 66ch; padding: 0 0.15rem; }
+.faq p { color: var(--ink-soft); margin: 0 0 1.3rem; max-width: var(--measure); padding: 0 0.15rem; font-size: 0.96rem; }
+.faq-more { color: var(--accent-deep); white-space: nowrap; }
 
-/* note: the inverted plate, the page's one loud object besides the buy block */
-.note { margin: clamp(2.75rem, 7vw, 4.25rem) 0 0; }
+/* note: a quiet aside marked by the accent, in both schemes. It used to be an
+   inverted plate, which in dark mode became the brightest object on the page. */
+.note { margin: var(--gap-section) 0 0; }
 .note p {
-  margin: 0; font-size: 0.95rem; max-width: none;
-  background: var(--plate); color: var(--plate-soft);
-  border-radius: 10px; padding: 1.15rem 1.4rem;
+  margin: 0; font-size: 0.94rem; line-height: 1.7; max-width: 72ch;
+  background: var(--wash); color: var(--ink-soft);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 6px 6px 0; padding: 1.2rem 1.4rem;
 }
-.note p a { color: var(--plate-ink); }
+.note p a { color: var(--ink); }
 
-/* showcase: the theme screenshots are deliberately the page's only color */
-.showcase .muted { font-size: 0.92rem; max-width: 66ch; margin: 0; }
+/* showcase: the theme screenshots are the page's colour, and they are real
+   product, not decoration */
+/* Three across on a wide screen. The band carries five themes, and five in two
+   columns leaves the last one stranded at half width, which reads as a broken
+   grid rather than a remainder. */
 .showcase-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: clamp(1.2rem, 3vw, 2rem) clamp(1.1rem, 2.5vw, 1.6rem);
-  margin-top: 1.6rem;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1.3rem, 3vw, 2rem) clamp(1.1rem, 2.5vw, 1.6rem);
+  margin-top: 1.75rem;
 }
 .showcase figure { margin: 0; }
 .showcase img {
   display: block; width: 100%; height: auto;
-  border: 1.5px solid var(--line); border-radius: 8px;
+  border: 1px solid var(--line); border-radius: 6px;
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 .showcase figcaption {
-  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.09em;
-  color: var(--ink-soft); margin-top: 0.6rem;
+  font-family: var(--mono); font-size: 0.71rem; letter-spacing: 0.06em;
+  color: var(--ink-soft); margin-top: 0.65rem;
 }
 .showcase-link { text-decoration: none; }
 .showcase-link:hover img, .showcase-link:focus-visible img {
-  border-color: var(--ink); transform: translateY(-2px);
+  border-color: var(--accent); transform: translateY(-2px);
 }
 .showcase-link:hover figcaption { color: var(--ink); }
-.showcase-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; border-radius: 8px; display: block; }
+.showcase-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; display: block; }
 
 /* prose pages */
-.prose { max-width: 42rem; margin: clamp(1.8rem, 5vw, 3rem) auto 0; }
-/* long-form running text holds a ~60ch measure; media (pre, tables,
-   galleries) may use the full 42rem column */
-.prose p, .prose ul, .prose ol, .prose blockquote { max-width: 60ch; }
-.prose h1 { font-size: clamp(1.9rem, 1.35rem + 2.2vw, 2.9rem); }
-.prose h1 + p { font-size: 1.05rem; color: var(--ink-soft); }
-.prose h2 { font-size: clamp(1.35rem, 1.15rem + 0.9vw, 1.75rem); margin: 2.4em 0 0.6em; }
-.prose li { margin: 0.3rem 0; }
-.prose li::marker { color: var(--ink); }
-.product-page { max-width: 42rem; margin: clamp(1.8rem, 5vw, 3rem) auto 0; }
-.product-page .kicker { margin-bottom: 0.8em; }
-.product-page .lede { margin-left: 0; margin-right: 0; text-wrap: pretty; }
-.product-page .prose { margin-top: 0; }
-.prose pre {
-  background: var(--wash); border: 1.5px solid var(--line); border-radius: 8px;
-  padding: 1rem 1.1rem; overflow-x: auto; font-size: 0.86rem; line-height: 1.55;
+.prose { max-width: 44rem; margin: clamp(2rem, 5vw, 3.25rem) auto 0; }
+/* Long-form running text holds a ~62ch measure; media (pre, tables,
+   galleries) may use the full column. */
+.prose p, .prose ul, .prose ol, .prose blockquote { max-width: var(--measure); }
+.prose h1 { font-size: clamp(1.85rem, 1.35rem + 1.9vw, 2.6rem); }
+.prose h1 + p { font-size: 1.05rem; color: var(--ink-soft); max-width: 56ch; }
+.prose h2 {
+  font-size: clamp(1.25rem, 1.1rem + 0.65vw, 1.5rem);
+  margin: 2.75em 0 0.75em; padding-top: 1.4em; border-top: 1px solid var(--line);
 }
-.prose code { font-family: var(--mono); font-size: 0.92em; }
+.prose h1 + p + h2, .prose > h2:first-child { border-top: none; padding-top: 0; margin-top: 1.8em; }
+.prose h3 { margin: 2em 0 0.5em; }
+.prose p { margin: 0 0 1.15em; }
+.prose li { margin: 0.4rem 0; }
+.prose li::marker { color: var(--ink-soft); }
+.product-page { max-width: 44rem; margin: clamp(2rem, 5vw, 3.25rem) auto 0; }
+.product-page .kicker { margin-bottom: 1em; }
+.product-page .lede { margin-left: 0; margin-right: 0; text-wrap: pretty; }
+.product-page .prose { margin-top: 0; max-width: none; }
+.prose pre {
+  background: var(--wash); border: 1px solid var(--line); border-radius: 6px;
+  padding: 1rem 1.1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6;
+}
+.prose code { font-family: var(--mono); font-size: 0.9em; }
 .prose p code, .prose li code, .prose td code {
   background: var(--wash); border: 1px solid var(--line);
-  border-radius: 4px; padding: 0.05em 0.3em;
+  border-radius: 3px; padding: 0.08em 0.32em; color: var(--ink);
   /* A long unbroken identifier in inline code has no wrap opportunity and
      widens the whole page on a phone (the docs carry things like
      `checkout.session.async_payment_succeeded`, 374px at 390px wide). Block
@@ -427,48 +488,53 @@ tr.attn td { font-weight: 700; background: var(--wash); }
   overflow-wrap: anywhere;
 }
 .prose blockquote {
-  border-left: 3px solid var(--ink); margin: 1.2rem 0; padding: 0.2rem 1.2rem;
+  border-left: 2px solid var(--accent); margin: 1.4rem 0; padding: 0.2rem 1.2rem;
   color: var(--ink-soft);
 }
 
-/* trust page: the public ledger prints like everything else, in ink */
-.ledger-total { font-size: 1.1rem; }
-.ledger-total strong { font-family: var(--display); font-weight: 800; }
+/* trust page: the public ledger prints like every other table */
+.ledger-total { font-size: 1.05rem; }
+.ledger-total strong { font-family: var(--display); font-weight: 800; color: var(--accent-deep); }
 .trust h1 + p { color: var(--ink-soft); }
 
-.prose figure { margin: 1.4rem 0; }
+.prose figure { margin: 1.6rem 0; }
 .prose img, .gallery img {
   /* height:auto is load-bearing, not cosmetic. These images now carry real
      width/height attributes so the browser can reserve their box; without
      height:auto the explicit height is honoured literally while max-width
      clamps the width, and a 1200x630 panel renders as a stretched portrait. */
-  max-width: 100%; height: auto; border: 1.5px solid var(--line); border-radius: 8px; display: block;
+  max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; display: block;
 }
 .gallery {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 0.9rem; margin: 1.5rem 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem; margin: 1.75rem 0;
 }
 
 /* small screens */
-@media (max-width: 700px) {
+/* Three across down to the same width the section masthead splits at, so the
+   band has one wide mode rather than a narrow window where five tiles sit two
+   abreast and strand the fifth. */
+@media (max-width: 55.99rem) {
+  .showcase-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 44rem) {
   .product-card.flagship .pc-features { columns: 1; }
   .showcase-grid { grid-template-columns: 1fr; }
 }
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .product-card.companion { flex-direction: column; align-items: stretch; }
   .product-card.companion .pc-head { min-width: 0; }
   .product-card.companion .pc-tagline { max-width: none; }
   .product-card.companion .pc-buy {
-    margin-top: 0.9rem; padding: 1rem 0 0;
+    margin-top: 1rem; padding: 1rem 0 0;
     align-self: auto; flex-wrap: wrap;
-    border-left: none; border-top: 1.5px solid var(--line);
+    border-left: none; border-top: 1px solid var(--line);
   }
 }
-@media (max-width: 560px) {
+@media (max-width: 35rem) {
   .hero-ctas .btn, .pc-buy .btn { width: 100%; text-align: center; }
   .pc-buy .price { width: 100%; }
   .pc-buy.standalone { align-items: flex-start; flex-direction: column; }
-  .pc-buy.standalone:not(:has(.price)) { align-items: center; }
 }
 
 /* Print: prefers-color-scheme still reports dark under print media, so a
@@ -476,10 +542,9 @@ tr.attn td { font-weight: 700; background: var(--wash); }
    (~2.6:1). Pin the light palette for paper regardless of screen scheme. */
 @media print {
   :root {
-    --paper: #ffffff; --wash: #f4f4f6; --line: #e0e0e4; --line-strong: #0d0d0f;
-    --ink: #0d0d0f; --ink-soft: #5d5d66;
-    --plate: #0d0d0f; --plate-ink: #f2f2f4; --plate-soft: #c9c9cf;
-    --accent: #0d0d0f; --coin: #a8862c;
+    --paper: #ffffff; --wash: #f7f5f2; --line: #e5e1da;
+    --ink: #14120f; --ink-soft: #5f594f;
+    --accent: #b5482a; --accent-deep: #8f3820; --on-accent: #ffffff; --coin: #b5482a;
   }
   body { background: #fff; color: var(--ink); }
   .site-nav, .skip-link { display: none; }

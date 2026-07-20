@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88" role="img" aria-label="HonorBox">
-  <rect width="88" height="88" fill="#0d0d0f"/>
-  <!-- the insert-coin gesture. The box and the slot print in white on the ink plate; the coin alone is gold. -->
+  <rect width="88" height="88" fill="#14120f"/>
+  <!-- the insert-coin gesture. The box and its slot print in white on the ink plate; the coin alone is the brand red. -->
   <g transform="translate(8,10)">
     <rect x="9" y="31" width="54" height="33" rx="8" fill="none" stroke="#ffffff" stroke-width="5"/>
     <rect x="22" y="27" width="28" height="7" rx="3.5" fill="#ffffff"/>
-    <rect x="-3.5" y="-8" width="7" height="16" rx="3.5" fill="#e8b054" transform="translate(36 12) rotate(-22)"/>
+    <rect x="-3.5" y="-8" width="7" height="16" rx="3.5" fill="#d9603c" transform="translate(36 21) rotate(-22)"/>
   </g>
 </svg>
