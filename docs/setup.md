@@ -38,8 +38,11 @@ correctly-configured Payment Link, and wires `store.config.json` +
    - After payment → show a confirmation message like: *"You're in. Your GitHub
      account will be invited to the private repo, usually within minutes and
      always within a few hours. Trouble? Reply to your receipt."*
-   - (Recommended) In Payment Link settings, allow promotion codes; you'll
-     want launch coupons.
+   - Leave "allow promotion codes" **off** unless you are actively running a
+     coupon. `init.js` generates links with it off on purpose: a link that
+     accepts typed codes plus any live 100%-off coupon is a free copy of your
+     product to anyone who guesses the code. Turn it on for a campaign, turn it
+     back off when the campaign ends. Section 7 shows how to test without it.
 3. The link gives you two different values, and they go in two different
    places:
    - the **URL** goes in your product's `payment_link` frontmatter; that is
@@ -158,12 +161,33 @@ here scales with sales, not with time.
 
 ## 7. Test the whole pipe before launch
 
-1. In Stripe, create a coupon for **100% off** with 1–2 max redemptions and a
-   promotion code only you know.
-2. Buy your own product with it (costs $0, no card needed), entering a real
-   GitHub username.
-3. Run the fulfillment workflow; confirm the invite arrives and the ledger row
-   appears. Refund/cleanup isn't needed; the order was $0.
+Your generated payment link does not accept typed promotion codes (see step 2),
+so a test order goes through a coupon you apply yourself. Two ways, both $0 and
+neither needing a card.
+
+**A. Temporarily allow codes on the link** (simplest, all in the Dashboard)
+
+1. In Stripe, create a coupon for **100% off**, `max_redemptions` 1–2, with an
+   expiry. Bound it; an unbounded 100% coupon is the whole risk here.
+2. On the payment link, turn "allow promotion codes" on, and create a promotion
+   code only you know. Do not use a guessable name like `FREETEST`.
+3. Buy your own product with it, entering a real GitHub username.
+4. Confirm the invite arrives and the ledger row appears. No refund needed; the
+   order was $0.
+5. **Turn "allow promotion codes" back off and deactivate the code.** This step
+   is not optional. A working 100%-off code left live on a public product page
+   is a free copy of your product for anyone who finds it.
+
+**B. Pre-applied coupon on a Checkout Session** (no flag to remember to unset)
+
+Create the Session from the API with `discounts[0][coupon]=<coupon_id>` — the
+coupon id, not the promotion code — and open the URL it returns. The link's
+promo setting is irrelevant, so there is nothing to switch back off afterwards.
+This is the path this project uses for its own testing.
+
+Either way you are exercising the real pipe: a `$0` order completes with
+`amount_total: 0`, which fulfillment treats as paid and logs distinctly from a
+paying customer, so your test never masquerades as revenue.
 
 ## 8. Going live checklist
 

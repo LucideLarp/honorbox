@@ -86,8 +86,8 @@ from Stripe's API. A forged dispatch can at worst trigger an empty run.
 5. **Test:** Stripe's endpoint page → "Send test event" →
    `checkout.session.completed`. Within seconds the ops repo should show a
    "Fulfill on sale" run; the run finds no real paid session and no-ops.
-   For a full rehearsal, self-buy with a 100%-off promo code
-   ([setup §6](setup.md)) and watch the invite arrive in under a minute.
+   For a full rehearsal, place a $0 test order using either method in
+   [setup §7](setup.md) and watch the invite arrive in seconds.
 
 ### Threat model
 
