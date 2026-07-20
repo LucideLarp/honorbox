@@ -4,7 +4,7 @@ order: 1
 name: HonorBox Pro
 meta_title: HonorBox Pro ($29): never silently lose a sale
 description: Reconcile proves every paid order reached its buyer. Plus license keys, five themes, ops bots, and a store doctor for your Stripe + GitHub store. $29 one-time.
-tagline: Your engine keeps the invitation open. Pro names which paid order is undelivered, and for how much, plus license keys, five themes, and bots for the unattended hours.
+tagline: The free engine keeps the invitation open. Pro names which paid order is undelivered, and for how much, plus license keys, five themes, and bots for the unattended hours.
 price: $29
 price_note: one-time · lifetime access & updates
 payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
@@ -131,7 +131,8 @@ so you can see the shape of it before paying.
 
 ## Who should buy this (and who shouldn't)
 
-**Buy Pro if** you sell software that needs license keys, you sell or plan
+**Buy Pro if** you are taking real orders and want each one proved delivered
+rather than assumed, you sell software that needs license keys, you sell or plan
 multiple products (templates, courses, tools, a whole catalog), or you want a
 storefront that doesn't look like every other fork.
 
