@@ -114,7 +114,7 @@ design, switchable with one config line:
 
 The free core is a **complete store**: one theme, checkout, fulfillment,
 docs. [HonorBox Pro ($29, one-time)](https://honorboxx.github.io/honorbox/honorbox-pro.html)
-adds an offline ed25519 license-key module, four premium themes, multi-product
+adds an offline ed25519 license-key module, five premium themes, multi-product
 catalog patterns, and a commerce playbook. Buying it funds the free core.
 
 ## Stability promise

@@ -3,8 +3,8 @@ id: honorbox-pro
 order: 1
 name: HonorBox Pro
 meta_title: HonorBox Pro ($29): never silently lose a sale
-description: Reconcile proves every paid order reached its buyer. Plus license keys, four themes, ops bots, and a store doctor for your Stripe + GitHub store. $29 one-time.
-tagline: Your store calls a sale delivered the moment it sends an invite. Pro is what goes back and checks, plus license keys, four themes, and bots for the unattended hours.
+description: Reconcile proves every paid order reached its buyer. Plus license keys, five themes, ops bots, and a store doctor for your Stripe + GitHub store. $29 one-time.
+tagline: Your store calls a sale delivered the moment it sends an invite. Pro is what goes back and checks, plus license keys, five themes, and bots for the unattended hours.
 price: $29
 price_note: one-time · lifetime access & updates
 payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
@@ -15,7 +15,7 @@ payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
 og_image: ./assets/previews/terminal.png
 features:
   - License-key module: ed25519 keys signed in CI, verified offline in your app (JS + Python)
-  - 4 premium storefront themes; the terminal theme is published in the free repo as a full code sample
+  - 5 premium storefront themes; the terminal theme is published in the free repo as a full code sample
   - Store doctor: preflight your config, payment links, and fulfillment permissions before launch
   - Reconcile: cross-checks Stripe against GitHub to prove every paid order actually reached its buyer, and names the ones that didn't
   - Ops bots: auto-acknowledge new support issues, auto-revoke repo access when Stripe refunds
@@ -50,15 +50,17 @@ and keys are delivered through the same private-repo channel as everything
 else. Getting signature crypto right takes days; this is that work, done and
 tested.
 
-**Four premium themes.** Each one is a complete, hand-tuned design with fluid
-type and dark-mode awareness: `terminal` (phosphor-on-black for CLI tools),
-`brutalist` (loud, typographic), `editorial` (serif, magazine-calm), and
-`midnight` (deep-blue product-launch look). Switch with one config line.
+**Five premium themes.** Each one is a complete, hand-tuned design with fluid
+type, visible focus states and print styles: `atrium` (minimal, gallery-quiet),
+`terminal` (phosphor-on-black for CLI tools), `brutalist` (loud, typographic),
+`editorial` (serif, book-calm), and `midnight` (indigo night, one amber lamp).
+Switch with one config line.
 
+![atrium theme, minimal graphite on plaster](./assets/previews/atrium.webp)
 ![terminal theme, phosphor CRT](./assets/previews/terminal.webp)
 ![brutalist theme, loud type and hard shadows](./assets/previews/brutalist.webp)
-![editorial theme, serif calm](./assets/previews/editorial.webp)
-![midnight theme, deep blue](./assets/previews/midnight.webp)
+![editorial theme, serif on book white](./assets/previews/editorial.webp)
+![midnight theme, indigo night](./assets/previews/midnight.webp)
 
 **The store doctor.** One read-only command that checks your whole pipe:
 config shape, the pasted-URL-instead-of-id mistake, whether your payment links

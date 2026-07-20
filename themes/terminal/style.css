@@ -1,7 +1,7 @@
 /* HonorBox theme: "terminal" — phosphor on glass, for CLI tools.
    Commits to dark. Mono everywhere. The product IS the aesthetic.
    This is a full Pro theme published here (MIT) as an auditable sample of
-   what the paid pack's code looks like. Three more live in Pro. */
+   what the paid pack's code looks like. Four more live in Pro. */
 
 :root {
   --paper: #0a0f0a;
@@ -11,6 +11,8 @@
   --line: #234023;
   --accent: #3dff7c;
   --accent-ink: #04140a;
+  --attn: #ffb86b;      /* amber, for the row of the table that is the argument */
+  --line-ctl: #4d7a4d;  /* control boundaries need 3:1 against the ground */
   --serif: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --sans: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -39,6 +41,11 @@ h2::before { content: "## "; color: var(--ink-soft); }
 h3 { font-size: 1.05rem; margin: 0.4em 0; }
 a { color: var(--accent); text-underline-offset: 3px; }
 .muted { color: var(--ink-soft); }
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+a:focus-visible, summary:focus-visible, .btn:focus-visible, .showcase-link:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
+}
 
 .site-head {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
@@ -59,7 +66,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .hero { padding: clamp(2rem, 6vw, 4rem) 0 1rem; }
 .kicker { color: var(--ink-soft); margin: 0; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
 .kicker::before { content: "# "; }
-.lede { color: var(--ink); max-width: 44em; margin: 0 0 1.6rem; }
+.lede { color: var(--ink); max-width: 66ch; margin: 0 0 1.6rem; text-wrap: pretty; }
 .hero-ctas { display: flex; gap: 0.8rem; flex-wrap: wrap; }
 .hero-sub { font-size: 0.85rem; color: var(--ink-soft); margin-top: 1rem; }
 
@@ -71,7 +78,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .btn-buy { background: var(--accent); color: var(--accent-ink); box-shadow: 0 0 22px rgba(61,255,124,0.3); }
 .btn-buy:hover { box-shadow: 0 0 34px rgba(61,255,124,0.55); }
 .btn-big { padding: 0.8rem 1.5rem; }
-.btn-ghost { border-color: var(--line); color: var(--ink); }
+.btn-ghost { border-color: var(--line-ctl); color: var(--ink); }
 .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 .btn-disabled { opacity: 0.4; border-style: dashed; cursor: not-allowed; }
 
@@ -85,7 +92,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .product-card h3 { margin: 0; font-size: 1.3rem; }
 .product-card h3 a { color: var(--ink); text-decoration: none; }
 .product-card h3 a:hover { color: var(--accent); }
-.pc-tagline { color: var(--ink-soft); margin: 0.4rem 0 0; }
+.pc-tagline { color: var(--ink-soft); margin: 0.4rem 0 0; max-width: 66ch; }
 .pc-features { list-style: none; padding: 0; margin: 1rem 0 1.3rem; }
 .pc-features li { margin: 0.3rem 0; padding-left: 1.8em; position: relative; }
 .pc-features li::before { content: "->"; position: absolute; left: 0; color: var(--accent); }
@@ -98,26 +105,31 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .steps-list li { counter-increment: step; border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1.1rem; background: var(--paper-raise); }
 .steps-list li::before { content: "[" counter(step, decimal-leading-zero) "]"; color: var(--accent); font-size: 0.8rem; }
 .steps-list h3 { margin: 0.2rem 0 0.3rem; }
-.steps-list p { margin: 0; color: var(--ink-soft); font-size: 0.9rem; }
+.steps-list p { margin: 0; color: var(--ink-soft); font-size: 0.9rem; max-width: 52ch; }
 
-.table-scroll { overflow-x: auto; }
+/* min-width is load-bearing: without it the table compresses to one word per
+   line on a phone and overflows anyway. With it the rows stay legible and the
+   overflow becomes an honest horizontal scroll inside .table-scroll. */
+.table-scroll { overflow-x: auto; margin-top: 1.1rem; }
+.table-scroll table { min-width: 36rem; }
 table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
 th { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 th, td { text-align: left; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--line); }
 td.rowhead { font-weight: 700; }
 td.num { color: var(--accent); }
-tr.attn td { color: #ffb86b; }
+tr.attn td { color: var(--attn); }
 
 .faq details { border-bottom: 1px solid var(--line); padding: 0.7rem 0; }
 .faq summary { font-weight: 700; cursor: pointer; }
 .faq summary::marker { color: var(--accent); }
-.faq p { color: var(--ink-soft); }
+.faq p { color: var(--ink-soft); max-width: 66ch; }
 
 .note { border: 1px dashed var(--accent); background: var(--paper-raise); padding: 0.9rem 1.1rem; margin: 2.4rem 0; border-radius: 6px; }
 .note p { margin: 0; color: var(--ink); font-size: 0.9rem; }
 .note p::before { content: "! "; color: var(--accent); font-weight: 700; }
 
 .prose { max-width: 44rem; margin: 2rem auto 0; }
+.prose p, .prose ul, .prose ol, .prose blockquote { max-width: 66ch; }
 .product-page { max-width: 44rem; margin: 0 auto; }
 .product-page .prose { margin-top: 0; }
 .prose pre { background: #050805; border: 1px solid var(--line); border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.85rem; }
@@ -164,6 +176,17 @@ tr.attn td { color: #ffb86b; }
    it covers every sheet and the page comes out blank. Terms, refunds and
    license are exactly the pages a buyer saves as PDF, so pin readable ink
    on white and drop the furniture. */
+/* The cursor blinks forever, which is the point of a cursor and also exactly
+   what a vestibular- or attention-sensitive reader has asked the OS to stop.
+   Reduced motion pins it lit, and kills the scanline shimmer with it. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important; animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important; transition-duration: 0.01ms !important;
+  }
+  .brand::before { animation: none; opacity: 1; }
+}
+
 @media print {
   body::after { display: none; }
   body { background: #fff; color: #111; }
