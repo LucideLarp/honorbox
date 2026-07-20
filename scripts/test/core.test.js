@@ -1793,3 +1793,23 @@ test('redactKeys leaves ordinary error text alone', () => {
   const msg = 'No such checkout session: cs_test_abc123';
   assert.equal(redactKeys(msg), msg);
 });
+
+test('frontmatter strips quotes from list items, not just scalars', () => {
+  const { parseFrontmatter } = require('../lib/fm.js');
+  const { data } = parseFrontmatter([
+    '---',
+    'title: "Widget Pro"',
+    'features:',
+    '  - "A line that needed quoting: it has a colon"',
+    "  - 'single quoted too'",
+    '  - unquoted stays as is',
+    '---',
+    'body',
+  ].join('\n'));
+  assert.equal(data.title, 'Widget Pro');
+  assert.deepEqual(data.features, [
+    'A line that needed quoting: it has a colon',
+    'single quoted too',
+    'unquoted stays as is',
+  ], 'a quoted list item printed its quotes into the storefront');
+});

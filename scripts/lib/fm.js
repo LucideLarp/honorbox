@@ -22,7 +22,7 @@ function parseFrontmatter(src) {
     // under its key. Only consumed while a list is actually open.
     const listItem = /^\s*-\s+(.*)$/.exec(rawLine);
     if (listItem && currentList) {
-      currentList.push(listItem[1].trim());
+      currentList.push(stripQuotes(listItem[1].trim()));
       continue;
     }
     const kv = /^([A-Za-z0-9_-]+):\s*(.*)$/.exec(rawLine);
