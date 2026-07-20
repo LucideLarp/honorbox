@@ -355,7 +355,8 @@ function distinctUsers(pairs) {
 function breakerVerdict(due, entitledPairs, opts = {}) {
   const percent = Number.isFinite(opts.percent) ? opts.percent : DEFAULT_REVOKE_LIMIT_PERCENT;
   const floor = Number.isFinite(opts.floor) ? opts.floor : DEFAULT_REVOKE_LIMIT_FLOOR;
-  const people = distinctUsers(due);
+  const dueSet = distinctUserSet(due);
+  const people = dueSet.size;
   if (people === 0) return { allowed: true, people, limit: 0, sweep: false, reason: 'nothing to revoke' };
 
   // Independent guard, checked first because its CAUSE is different and the
@@ -388,7 +389,7 @@ function breakerVerdict(due, entitledPairs, opts = {}) {
   // lapsed the entitled count is zero, and "would revoke 12 of 0 subscribers"
   // is a sentence that makes a worried seller trust the tool less, which is the
   // opposite of what the most important line in this program should do.
-  const total = new Set([...entitledSet, ...distinctUserSet(due)]).size;
+  const total = new Set([...entitledSet, ...dueSet]).size;
   if (people > limit) {
     if (opts.override) {
       return {
