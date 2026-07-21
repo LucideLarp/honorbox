@@ -90,3 +90,24 @@ test('the button carries an accessible name', () => {
     'the accessible name must follow the resolved theme, not stay fixed'
   );
 });
+
+test('the switch never depends on the animation', () => {
+  // A browser without view transitions, or a reader who asked for less
+  // motion, must still get the theme change. The guard has to come before
+  // the transition call, not after it.
+  const guard = LAYOUT.indexOf("typeof document.startViewTransition !== 'function'");
+  const call = LAYOUT.indexOf('document.startViewTransition(function');
+  assert.ok(guard !== -1, 'no capability check for startViewTransition');
+  assert.ok(call !== -1, 'view transition is never started');
+  assert.ok(guard < call, 'the capability check must precede the transition');
+  assert.match(LAYOUT, /prefers-reduced-motion: reduce[\s\S]{0,400}?apply\(next\);\s*return;/);
+});
+
+test('reduced motion gets no reveal animation', () => {
+  // The view-transition overrides sit inside a no-preference query, so a
+  // reader asking for less motion keeps the browser default and the script
+  // never animates for them either.
+  const i = CSS.indexOf('@media (prefers-reduced-motion: no-preference)');
+  const vt = CSS.indexOf('::view-transition-old(root)');
+  assert.ok(i !== -1 && vt > i, 'view-transition rules are not gated on reduced motion');
+});

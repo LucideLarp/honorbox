@@ -109,6 +109,25 @@
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"] { color-scheme: dark; }
 
+/* Theme switch as a circular reveal. The browser's default is to cross-fade
+   the two snapshots, which reads as a muddy flicker between two grounds this
+   far apart, so both animations are cancelled and the script drives a growing
+   circle on the incoming layer instead. Stacking matters: the new theme sits
+   above the old one and is clipped, so the old page is what shows through
+   until the circle covers it.
+
+   Browsers without view transitions ignore all of this and switch instantly,
+   which is a fine outcome rather than a broken one. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  ::view-transition-old(root) { z-index: 0; }
+  ::view-transition-new(root) { z-index: 1; }
+}
+
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {

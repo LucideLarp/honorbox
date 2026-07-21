@@ -70,11 +70,51 @@
   }
   relabel();
 
-  btn.addEventListener('click', function () {
-    var next = resolved() === 'dark' ? 'light' : 'dark';
+  function apply(next) {
     root.setAttribute('data-theme', next);
     try { localStorage.setItem('hb-theme', next); } catch (e) {}
     relabel();
+  }
+
+  btn.addEventListener('click', function () {
+    var next = resolved() === 'dark' ? 'light' : 'dark';
+    var reduce = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* The switch itself must never depend on the animation. Anything other
+       than a browser that supports view transitions AND a reader who has not
+       asked for less motion gets the theme immediately, which is also the
+       correct outcome rather than a degraded one. */
+    if (reduce || typeof document.startViewTransition !== 'function') {
+      apply(next);
+      return;
+    }
+
+    /* Reveal the new theme through a circle growing from the button. The
+       radius has to reach the furthest corner or the old theme stays visible
+       in the far one, so it is measured rather than guessed. */
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var reach = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    var vt = document.startViewTransition(function () { apply(next); });
+    vt.ready.then(function () {
+      root.animate(
+        { clipPath: [
+          'circle(0px at ' + x + 'px ' + y + 'px)',
+          'circle(' + reach + 'px at ' + x + 'px ' + y + 'px)'
+        ] },
+        {
+          duration: 450,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          pseudoElement: '::view-transition-new(root)'
+        }
+      );
+    }).catch(function () { /* a refused transition already applied the theme */ });
   });
 
   /* Only meaningful before a choice is made; afterwards data-theme wins and
