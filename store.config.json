@@ -4,11 +4,11 @@
   "tagline": "The engine is free and MIT: a static storefront on GitHub Pages, checkout through your own Stripe account, and a GitHub Action that delivers every sale while you sleep. Pro is the $29 suite that checks it is all still working.",
   "subline": "Start free: fork the engine this store runs on",
   "subline_href": "https://github.com/Honorboxx/honorbox",
-  "meta_title": "Sell digital products with Stripe + GitHub, 0% fee \u00b7 HonorBox",
+  "meta_title": "Sell digital products with Stripe + GitHub, 0% fee · HonorBox",
   "meta_description": "Sell digital products with just Stripe and GitHub Pages. 0% platform fee, $0/month, no server to run. MIT engine; buyers pay you directly on your own Stripe account.",
   "url": "https://honorboxx.github.io/honorbox",
   "theme": "stand",
-  "seller": "HonorBox \u00b7 honorbox@proton.me",
+  "seller": "HonorBox · honorbox@proton.me",
   "repo": "Honorboxx/honorbox",
   "sections": [
     {
@@ -39,9 +39,17 @@
     },
     {
       "type": "showcase",
-      "title": "Five themes, one config line",
-      "note": "Real screenshots of this same storefront rebuilt with each theme. Terminal is in the free repo as a full code sample, so Pro adds the other four.",
+      "title": "Change the whole look with one config line",
+      "note": "Real screenshots of this same storefront rebuilt with each theme. Two ship free in the repo, and both are complete Pro themes you can read before paying for anything. Pro adds rail.",
       "items": [
+        {
+          "img": "./assets/previews/stand.webp",
+          "alt": "The same storefront in the stand theme: monochrome type centred on white",
+          "caption": "stand: monochrome and centred, free in the repo",
+          "href": "./honorbox-pro.html",
+          "width": 960,
+          "height": 504
+        },
         {
           "img": "./assets/previews/terminal.webp",
           "alt": "The same storefront in the terminal theme: phosphor green type on black",
@@ -51,33 +59,9 @@
           "height": 504
         },
         {
-          "img": "./assets/previews/atrium.webp",
-          "alt": "The same storefront in the atrium theme: minimal graphite type on a plaster ground",
-          "caption": "atrium: minimal, gallery quiet",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        },
-        {
-          "img": "./assets/previews/brutalist.webp",
-          "alt": "The same storefront in the brutalist theme: loud type, hard shadows",
-          "caption": "brutalist: loud, typographic",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        },
-        {
-          "img": "./assets/previews/editorial.webp",
-          "alt": "The same storefront in the editorial theme: serif type on book white",
-          "caption": "editorial: serif, book calm",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        },
-        {
-          "img": "./assets/previews/midnight.webp",
-          "alt": "The same storefront in the midnight theme: deep indigo with a single amber accent",
-          "caption": "midnight: indigo night, one lamp",
+          "img": "./assets/previews/rail.webp",
+          "alt": "The same storefront in the rail theme: a fixed left navigation column on ink",
+          "caption": "rail: fixed left column, in Pro",
           "href": "./honorbox-pro.html",
           "width": 960,
           "height": 504
@@ -98,9 +82,9 @@
       "rows": [
         [
           "Platform fee",
-          "10% + 50\u00a2",
-          "5% + 50\u00a2",
-          "5% + 50\u00a2 free tier",
+          "10% + 50¢",
+          "5% + 50¢",
+          "5% + 50¢ free tier",
           "0%"
         ],
         [
@@ -112,7 +96,7 @@
         ],
         [
           "Payment processing",
-          "2.9% + 30\u00a2 on top",
+          "2.9% + 30¢ on top",
           "included above",
           "included above",
           "Stripe's standard rate only"

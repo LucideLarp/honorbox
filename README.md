@@ -127,16 +127,15 @@ and the builder adds a public `/trust` page for it. Off by default.
 
 ## The themes
 
-The free core ships `stand` (warm paper) **and `terminal`** (phosphor CRT).
-The latter is a full Pro theme published here as an auditable sample of the
-paid pack's code quality. Pro adds four more, each a complete hand-tuned
-design, switchable with one config line:
+The free core ships `stand` (monochrome and centred, the theme this repo's own
+store runs on) **and `terminal`** (phosphor on glass, for CLI tools). Both carry
+a light and a dark palette built as mirrors, and a toggle that remembers the
+reader's choice. Pro adds `rail`, a fixed left navigation column, switchable
+with one config line:
 
-| | |
-|---|---|
-| ![terminal](assets/previews/terminal.webp) | ![atrium](assets/previews/atrium.webp) |
-| ![brutalist](assets/previews/brutalist.webp) | ![editorial](assets/previews/editorial.webp) |
-| ![midnight](assets/previews/midnight.webp) | |
+| | | |
+|---|---|---|
+| ![stand](assets/previews/stand.webp) | ![terminal](assets/previews/terminal.webp) | ![rail](assets/previews/rail.webp) |
 
 ## Free core vs Pro
 
@@ -158,7 +157,7 @@ full, free, and is worth reading even if you never buy anything.
 
 Pro also adds a store doctor, reconcile (which pairs every paid order back to
 whether that buyer has access *right now*), a refund guard and support bot,
-tracker-free stats, four more themes, an offline ed25519 license-key module, and
+tracker-free stats, the `rail` theme, an offline ed25519 license-key module, and
 a commerce playbook. One-time: **$29** for one developer, **$99** for a team of
 up to five, **$249** for a company. Buying it funds the free core.
 

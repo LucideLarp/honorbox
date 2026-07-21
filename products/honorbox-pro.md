@@ -131,18 +131,20 @@ sells is the part that keeps working after you have stopped thinking about it.
 [See exactly what the suite prints](https://github.com/Honorboxx/honorbox/blob/main/docs/pro-evidence.md#audit-the-standing-guard-on-a-store-that-looks-fine),
 on a store with four ordinary mistakes in it.
 
-**Four more themes.** Each one is a complete, hand-tuned design with fluid
-type, visible focus states and print styles: `atrium` (minimal, gallery-quiet),
-`brutalist` (loud, typographic), `editorial` (serif, book-calm), and `midnight`
-(indigo night, one amber lamp). Switch with one config line. The fifth,
-`terminal` (phosphor-on-black for CLI tools), ships in the free repo instead, as
-a complete Pro theme you can read before paying for the rest.
+**The `rail` theme.** A fixed left navigation column instead of a centred page:
+the store's structure stays on screen while the reader moves through it, which
+is what a catalogue of any size actually needs. Complete and hand-tuned, with
+fluid type, visible focus states, print styles, and a light and dark palette
+built as mirrors. Switch with one config line.
 
-![atrium theme, minimal graphite on plaster](./assets/previews/atrium.webp)
+We shipped one theme here rather than a pack. Four others were built and cut,
+because a theme that does not hold up is worse than no theme in something you
+paid for. The two in the free repo, `stand` and `terminal`, are complete Pro
+themes you can read before paying for anything.
+
+![rail theme, fixed left navigation column on ink](./assets/previews/rail.webp)
+![stand theme, monochrome and centred](./assets/previews/stand.webp)
 ![terminal theme, phosphor CRT](./assets/previews/terminal.webp)
-![brutalist theme, loud type and hard shadows](./assets/previews/brutalist.webp)
-![editorial theme, serif on book white](./assets/previews/editorial.webp)
-![midnight theme, indigo night](./assets/previews/midnight.webp)
 
 **The store doctor.** One read-only command that checks your whole pipe:
 config shape, the pasted-URL-instead-of-id mistake, whether your payment links
