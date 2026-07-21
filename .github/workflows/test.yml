@@ -1,0 +1,50 @@
+# The engine test suite, on pull requests.
+#
+# deploy.yml already runs these tests on push to main, and a failure there stops
+# the deploy, so main is covered. What was NOT covered is a pull request: until
+# this file existed a PR got CodeQL and nothing else, so the suite that guards
+# the fulfillment path never ran before a merge. That gap stopped being
+# theoretical the moment Dependabot started opening PRs that move an action
+# across major versions.
+#
+# Deliberately not triggered on push: duplicating what deploy.yml already does
+# would pay twice for the same answer and add a second check that means nothing
+# new.
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    # GitHub's default job timeout is 360 minutes. Nothing here takes longer
+    # than a few seconds, so anything past a couple of minutes is a hang.
+    timeout-minutes: 10
+    strategy:
+      # One version failing is the interesting result. Cancelling the others
+      # would hide whether it is that version or the change itself.
+      fail-fast: false
+      matrix:
+        # package.json declares `engines: node >= 20` and docs/pro-evidence.md
+        # repeats it to buyers. Every supported major is tested, because a
+        # promise nothing checks is a promise that quietly stops being true.
+        # Quoted so YAML cannot read a version as a float.
+        node: ["20", "22", "24"]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Run engine tests
+        run: node --test scripts/test/*.test.js

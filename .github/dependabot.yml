@@ -1,0 +1,34 @@
+# Keeps the pinned action SHAs current.
+#
+# Every `uses:` in this repo is pinned to a full commit SHA with the version in
+# a trailing comment, which is the right way to pin, but it also means nothing
+# short of a human reading release notes ever moves them. They had drifted
+# several major versions behind before this file existed. Dependabot rewrites
+# the SHA and the comment together, so the pin stays a pin.
+#
+# Only `github-actions`. The engine has no dependencies at all, not one runtime
+# and not one dev, so an `npm` entry here would open nothing, ever, and would
+# only invite someone later to assume it was covering something.
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      # Off the hour, for the same reason the fulfillment poll picked :17 and
+      # :47: the top of the hour is the worst scheduler contention.
+      time: "05:23"
+      timezone: Etc/UTC
+    commit-message:
+      prefix: ci
+    # Minor and patch bumps arrive as one PR: they are the low-risk majority,
+    # and five separate PRs a week for them is how people learn to stop reading
+    # them. Majors are deliberately NOT grouped. Each one is a behaviour change
+    # that deserves its own test run and its own decision, and a grouped major
+    # that fails tells you only that one of four things broke.
+    groups:
+      actions:
+        applies-to: version-updates
+        update-types: [minor, patch]
