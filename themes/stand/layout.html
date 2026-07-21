@@ -14,12 +14,34 @@
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<script>
+/* Runs before first paint, which is the whole point: setting the stored theme
+   from the body or from a deferred script would show the wrong ground colour
+   first and repaint, and a white flash on a dark page is worse than having no
+   toggle. It also marks the document as scripted so CSS can reveal controls
+   that only work with JS. localStorage throws in some privacy modes, hence
+   the try, and an unreadable preference simply falls back to the system. */
+(function () {
+  var d = document.documentElement;
+  d.className += ' js';
+  try {
+    var t = localStorage.getItem('hb-theme');
+    if (t === 'dark' || t === 'light') d.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
 </head>
 <body class="{{body_class}}">
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-head">
   <a class="brand" href="./"><svg class="brand-mark" width="26" height="26" viewBox="0 0 48 48" aria-hidden="true"><g transform="translate(0,-6)"><path fill="currentColor" d="M9,15H39A3,3 0 0 1 42,18V42H6V18A3,3 0 0 1 9,15ZM4.5,39H43.5A1.5,1.5 0 0 1 45,40.5V43.5A1.5,1.5 0 0 1 43.5,45H4.5A1.5,1.5 0 0 1 3,43.5V40.5A1.5,1.5 0 0 1 4.5,39ZM18,24A3,3 0 0 0 15,27A3,3 0 0 0 18,30H30A3,3 0 0 0 33,27A3,3 0 0 0 30,24H18Z"/></g></svg>{{store_name}}</a>
-  <nav class="site-nav">{{nav}}</nav>
+  <div class="head-actions">
+    <nav class="site-nav">{{nav}}</nav>
+    <button class="theme-toggle" type="button" aria-label="Switch theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.36 4.36l1.56 1.56M18.08 18.08l1.56 1.56M2.6 12h2.2M19.2 12h2.2M4.36 19.64l1.56-1.56M18.08 5.92l1.56-1.56"/></svg>
+    </button>
+  </div>
 </header>
 <main id="main">
 {{content}}
@@ -28,6 +50,42 @@
   <p class="foot-links">{{footer}}</p>
   <p class="foot-legal">© {{year}} · {{seller}} · Payments by Stripe · Runs on <a href="https://github.com/Honorboxx/honorbox">HonorBox</a></p>
 </footer>
+<script>
+/* Theme toggle. The stored value is the reader's decision and outranks the
+   system, so once they choose, that choice holds across visits and across
+   later system changes. Until they choose, nothing is stored and the page
+   keeps following the system, including live changes at sunset. */
+(function () {
+  var root = document.documentElement;
+  var btn = document.querySelector('.theme-toggle');
+  if (!btn) return;
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+  function resolved() {
+    return root.getAttribute('data-theme') || (mq && mq.matches ? 'dark' : 'light');
+  }
+  function relabel() {
+    btn.setAttribute('aria-label',
+      resolved() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+  relabel();
+
+  btn.addEventListener('click', function () {
+    var next = resolved() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('hb-theme', next); } catch (e) {}
+    relabel();
+  });
+
+  /* Only meaningful before a choice is made; afterwards data-theme wins and
+     the label is already correct. */
+  if (mq && mq.addEventListener) {
+    mq.addEventListener('change', function () {
+      if (!root.getAttribute('data-theme')) relabel();
+    });
+  }
+})();
+</script>
 <script>
 /* Reveal on arrival: an 8px rise and a fade, once per element, then the
    observer lets go. Inline and dependency free, and deliberately additive.

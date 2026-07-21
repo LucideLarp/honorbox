@@ -76,8 +76,14 @@
   --pill: 999px;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
+/* Dark tokens apply in two situations: the reader's system asks for dark and
+   they have not chosen otherwise, or they picked dark with the toggle. The two
+   blocks below must stay byte identical in their declarations; scripts/test/
+   theme-toggle.test.js fails the build if they drift, because a palette that
+   is right in one path and stale in the other is the worst kind of bug to
+   see, appearing only for readers whose setup differs from yours. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ground: #000000;
     --raised: #0f0f0f;
     --line: #1f1f1f;
@@ -87,6 +93,21 @@
     --on-ink: #000000;
   }
 }
+:root[data-theme="dark"] {
+  --ground: #000000;
+  --raised: #0f0f0f;
+  --line: #1f1f1f;
+  --edge: #2e2e2e;
+  --ink: #fafafa;
+  --ink-soft: #a3a3a3;
+  --on-ink: #000000;
+}
+
+/* Native widgets, scrollbars and form controls read `color-scheme`, not our
+   custom properties, so an explicit choice has to narrow it or the scrollbar
+   keeps the system's colour while the page changes underneath it. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -156,6 +177,34 @@ a:focus-visible, summary:focus-visible {
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 .site-nav a:hover { color: var(--ink); }
+
+/* Theme toggle. Hidden by default and revealed by the script that gives it
+   behaviour, so a reader with JS blocked never sees a control that does
+   nothing. The two glyphs live in one button and swap on the resolved theme,
+   which keeps a single focus target and one accessible name to maintain. */
+.head-actions { display: flex; align-items: center; gap: 1.5rem; }
+.theme-toggle {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0;
+  background: none; border: 1px solid transparent; border-radius: 999px;
+  color: var(--ink-soft); cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.theme-toggle:hover { color: var(--ink); border-color: var(--line); }
+.theme-toggle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.js .theme-toggle { display: inline-flex; }
+.theme-toggle svg { width: 17px; height: 17px; display: block; }
+/* Show the destination, not the current state: in light you see the moon you
+   are heading towards. */
+.theme-toggle .icon-moon { display: block; }
+.theme-toggle .icon-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+}
 
 /* footer: an index, not a paragraph */
 .site-foot {
