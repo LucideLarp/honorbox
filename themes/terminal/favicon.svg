@@ -2,12 +2,12 @@
   <!-- The same honour box as every other mark in the repo, never redrawn, in
        this theme's phosphor. It used to be a ">_" glyph, which was a different
        mark for the same product.
-       This one keeps its plate where the stand favicon drops it. The terminal
-       theme is dark only, so its phosphor green has no light-scheme variant to
-       flip to, and #3dff7c on a light browser tab bar is unreadable. The plate
-       is also the theme's own idea: a CRT is a lit rectangle. -->
+       This one keeps its plate where the stand favicon drops it. The theme
+       carries both schemes but a favicon cannot follow the page's toggle, and
+       phosphor green alone is unreadable on a light tab bar. The plate is
+       also the theme's own idea: a CRT is a lit rectangle, in either room. -->
   <rect width="48" height="48" rx="6" fill="#0a0f0a"/>
   <g transform="translate(4.57,-0.3) scale(0.81)">
-    <path fill="#3dff7c" d="M9,15H39A3,3 0 0 1 42,18V42H6V18A3,3 0 0 1 9,15ZM4.5,39H43.5A1.5,1.5 0 0 1 45,40.5V43.5A1.5,1.5 0 0 1 43.5,45H4.5A1.5,1.5 0 0 1 3,43.5V40.5A1.5,1.5 0 0 1 4.5,39ZM18,24A3,3 0 0 0 15,27A3,3 0 0 0 18,30H30A3,3 0 0 0 33,27A3,3 0 0 0 30,24H18Z"/>
+    <path fill="#4ccc7a" d="M9,15H39A3,3 0 0 1 42,18V42H6V18A3,3 0 0 1 9,15ZM4.5,39H43.5A1.5,1.5 0 0 1 45,40.5V43.5A1.5,1.5 0 0 1 43.5,45H4.5A1.5,1.5 0 0 1 3,43.5V40.5A1.5,1.5 0 0 1 4.5,39ZM18,24A3,3 0 0 0 15,27A3,3 0 0 0 18,30H30A3,3 0 0 0 33,27A3,3 0 0 0 30,24H18Z"/>
   </g>
 </svg>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="dark light">
 <title>{{title}}</title>
 <meta name="description" content="{{description}}">
 <link rel="canonical" href="{{canonical}}">
@@ -12,20 +12,119 @@
 <meta property="og:title" content="{{title}}">
 <meta property="og:description" content="{{description}}">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#0a0f0a" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#f4f8f4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0f0a" media="(prefers-color-scheme: dark)">
+<script>
+/* Runs before first paint, which is the whole point: setting the stored theme
+   from the body or from a deferred script would show the wrong ground colour
+   first and repaint, and a white flash on a dark page is worse than having no
+   toggle. It also marks the document as scripted so CSS can reveal controls
+   that only work with JS. localStorage throws in some privacy modes, hence
+   the try, and an unreadable preference simply falls back to the system. */
+(function () {
+  var d = document.documentElement;
+  d.className += ' js';
+  try {
+    var t = localStorage.getItem('hb-theme');
+    if (t === 'dark' || t === 'light') d.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
 </head>
 <body class="{{body_class}}">
+<a class="skip-link" href="#main">Skip to content</a>
 <header class="site-head">
   <a class="brand" href="./"><svg class="brand-mark" width="26" height="26" viewBox="0 0 48 48" aria-hidden="true"><g transform="translate(0,-6)"><path fill="currentColor" d="M9,15H39A3,3 0 0 1 42,18V42H6V18A3,3 0 0 1 9,15ZM4.5,39H43.5A1.5,1.5 0 0 1 45,40.5V43.5A1.5,1.5 0 0 1 43.5,45H4.5A1.5,1.5 0 0 1 3,43.5V40.5A1.5,1.5 0 0 1 4.5,39ZM18,24A3,3 0 0 0 15,27A3,3 0 0 0 18,30H30A3,3 0 0 0 33,27A3,3 0 0 0 30,24H18Z"/></g></svg>{{store_name}}</a>
-  <nav class="site-nav">{{nav}}</nav>
+  <div class="head-actions">
+    <nav class="site-nav">{{nav}}</nav>
+    <!-- The toggle's visible label is the theme's own dialect, a bracketed
+         word set by CSS on the resolved scheme; the accessible name below is
+         kept current by the script. -->
+    <button class="theme-toggle" type="button" aria-label="Switch theme"></button>
+  </div>
 </header>
-<main>
+<main id="main">
 {{content}}
 </main>
 <footer class="site-foot">
   <p class="foot-links">{{footer}}</p>
   <p class="foot-legal">© {{year}} · {{seller}} · Payments by Stripe · Runs on <a href="https://github.com/Honorboxx/honorbox">HonorBox</a></p>
 </footer>
+<script>
+/* Theme toggle. The stored value is the reader's decision and outranks the
+   system, so once they choose, that choice holds across visits and across
+   later system changes. Until they choose, nothing is stored and the page
+   keeps following the system, including live changes at sunset. */
+(function () {
+  var root = document.documentElement;
+  var btn = document.querySelector('.theme-toggle');
+  if (!btn) return;
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+  function resolved() {
+    return root.getAttribute('data-theme') || (mq && mq.matches ? 'dark' : 'light');
+  }
+  function relabel() {
+    btn.setAttribute('aria-label',
+      resolved() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+  relabel();
+
+  function apply(next) {
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('hb-theme', next); } catch (e) {}
+    relabel();
+  }
+
+  btn.addEventListener('click', function () {
+    var next = resolved() === 'dark' ? 'light' : 'dark';
+    var reduce = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* The switch itself must never depend on the animation. Anything other
+       than a browser that supports view transitions AND a reader who has not
+       asked for less motion gets the theme immediately, which is also the
+       correct outcome rather than a degraded one. */
+    if (reduce || typeof document.startViewTransition !== 'function') {
+      apply(next);
+      return;
+    }
+
+    /* Reveal the new theme through a circle growing from the button. The
+       radius has to reach the furthest corner or the old theme stays visible
+       in the far one, so it is measured rather than guessed. */
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var reach = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    var vt = document.startViewTransition(function () { apply(next); });
+    vt.ready.then(function () {
+      root.animate(
+        { clipPath: [
+          'circle(0px at ' + x + 'px ' + y + 'px)',
+          'circle(' + reach + 'px at ' + x + 'px ' + y + 'px)'
+        ] },
+        {
+          duration: 450,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          pseudoElement: '::view-transition-new(root)'
+        }
+      );
+    }).catch(function () { /* a refused transition already applied the theme */ });
+  });
+
+  /* Only meaningful before a choice is made; afterwards data-theme wins and
+     the label is already correct. */
+  if (mq && mq.addEventListener) {
+    mq.addEventListener('change', function () {
+      if (!root.getAttribute('data-theme')) relabel();
+    });
+  }
+})();
+</script>
 </body>
 </html>

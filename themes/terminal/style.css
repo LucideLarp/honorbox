@@ -1,186 +1,481 @@
-/* HonorBox theme: "terminal", phosphor on glass, for CLI tools.
-   Commits to dark. Mono everywhere. The product IS the aesthetic.
-   This is a full Pro theme published here (MIT) as an auditable sample of
-   what the paid pack's code looks like. Four more live in Pro. */
+/* HonorBox theme: "terminal". Phosphor on glass, for CLI tools.
+
+   The identity is the instrument, not the film grain. What makes this theme
+   itself: monospace for every character, a near-black ground with a green
+   breath in it, phosphor ink, a bracketed nav, one prompt opening the page
+   and a block cursor ending the headline. What it used to wear on top of
+   that, scanlines striping every glyph, a text-shadow bloom on the headline,
+   a neon halo under the buy button, half-drawn ASCII window frames, dashed
+   borders and an amber second hue, was costume, and it cost legibility.
+   All of it is gone. The palette and the type carry the theme now, which is
+   what a real terminal does.
+
+   One accent doing real work. The bright phosphor is spent on the primary
+   action, links, the cursor and focus, and on nothing else. Body text is
+   phosphor too but calmer: the old accent was maximum-saturation green at
+   14.55:1, which is not emphasis, it is glare. Muted text, borders, markers
+   and table furniture all step down from the ink, never sideways into a
+   second hue.
+
+   Dark is this theme's home key, so the root palette is dark and the light
+   scheme is the same instrument inverted: dark-green ink on paper that keeps
+   the green breath. Not a grey site with green links, and not an inverted
+   dark scheme nobody checked. Both schemes are first class and the toggle
+   remembers the choice.
+
+   Palette. Dark: ground #0a0f0a, raised #101710, line #1e2f1e, ink #b8e6b8,
+   muted #7da87d, accent #4ccc7a, label on accent #06130a.
+   Light: ground #f4f8f4, raised #eaf1ea, line #d0ddd0, ink #122712,
+   muted #4c684c, accent #156b37, label on accent #f4f8f4.
+
+   Measured (WCAG 2.1, against the actual grounds). Dark: body 13.86:1 on
+   ground and 13.06:1 on raised; muted 7.16 and 6.74; buy label 9.25:1 on the
+   accent; accent links and focus 9.42:1; control borders 3.25:1. Light: body
+   14.78:1 and 13.79:1; muted 5.77 and 5.39; buy label 6.14:1 on the accent;
+   accent links and focus 6.14:1; control borders 3.35:1. */
 
 :root {
-  --paper: #0a0f0a;
-  --paper-raise: #101710;
+  color-scheme: light dark;
+  --ground: #0a0f0a;
+  --raised: #101710;    /* a panel resting on the glass; the hairline gives it its edge */
+  --line: #1e2f1e;      /* hairlines whisper */
+  --line-ctl: #456d45;  /* control boundaries need 3:1 against the ground */
   --ink: #b8e6b8;
-  --ink-soft: #6f9b6f;
-  --line: #234023;
-  --accent: #3dff7c;
-  --accent-ink: #04140a;
-  --attn: #ffb86b;      /* amber, for the row of the table that is the argument */
-  --line-ctl: #4d7a4d;  /* control boundaries need 3:1 against the ground */
-  --serif: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --sans: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ink-soft: #7da87d;
+  --accent: #4ccc7a;
+  --on-accent: #06130a; /* the label on the primary action */
+
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* One vertical scale so the page keeps a beat. Denser than stand's: a
+     terminal packs its lines. */
+  --gap-section: clamp(3.25rem, 8vw, 5.5rem);
+  --pad-page: clamp(1rem, 4vw, 2rem);
+  --shell: 58rem;
+  --radius: 6px;
+}
+/* The light palette applies in two situations: the reader's system asks for
+   light and they have not chosen otherwise, or they picked light with the
+   toggle. The two blocks must stay identical in their declarations; a palette
+   that is right in one path and stale in the other only shows itself to
+   readers whose setup differs from whoever edited the file last. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --ground: #f4f8f4;
+    --raised: #eaf1ea;
+    --line: #d0ddd0;
+    --line-ctl: #6e8f74;
+    --ink: #122712;
+    --ink-soft: #4c684c;
+    --accent: #156b37;
+    --on-accent: #f4f8f4;
+  }
+}
+:root[data-theme="light"] {
+  --ground: #f4f8f4;
+  --raised: #eaf1ea;
+  --line: #d0ddd0;
+  --line-ctl: #6e8f74;
+  --ink: #122712;
+  --ink-soft: #4c684c;
+  --accent: #156b37;
+  --on-accent: #f4f8f4;
+}
+
+/* Native widgets, scrollbars and form controls read `color-scheme`, not our
+   custom properties, so an explicit choice has to narrow it or the scrollbar
+   keeps the system's colour while the page changes underneath it. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+/* Theme switch as a circular reveal, same mechanics as stand: the browser's
+   default cross-fade reads as a muddy flicker between grounds this far apart,
+   so both snapshots stop animating and the script grows a circle on the
+   incoming layer. Browsers without view transitions switch instantly, which
+   is a fine outcome rather than a broken one. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  ::view-transition-old(root) { z-index: 0; }
+  ::view-transition-new(root) { z-index: 1; }
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
+html { -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0; background: var(--paper); color: var(--ink);
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
   font-family: var(--mono);
-  font-size: clamp(0.95rem, 0.9rem + 0.25vw, 1.05rem);
+  font-size: clamp(0.95rem, 0.92rem + 0.18vw, 1.03rem);
   line-height: 1.65;
 }
-/* faint scanlines */
-body::after {
-  content: ""; position: fixed; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,0.18) 2px 3px);
+
+main { max-width: var(--shell); margin: 0 auto; padding: 0 var(--pad-page) var(--gap-section); }
+
+/* Type scale. Everything is one face and one weight axis, so size and the
+   muted colour do the entire hierarchy. Headings hold 700 because monospace
+   at 400 has no display register to fall back on. */
+h1, h2, h3 { line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
+h1 {
+  font-size: clamp(1.8rem, 1.3rem + 2.4vw, 2.9rem);
+  line-height: 1.12; margin: 0 0 0.4em; text-wrap: balance;
 }
-
-main { max-width: 58rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem) 4rem; }
-h1, h2, h3 { font-family: var(--mono); line-height: 1.2; font-weight: 700; }
-h1 { font-size: clamp(1.6rem, 1.2rem + 2.2vw, 2.6rem); margin: 0.2em 0 0.3em; color: var(--accent); text-shadow: 0 0 18px rgba(61,255,124,0.35); }
-h1::before { content: "$ "; color: var(--ink-soft); }
-h2 { font-size: clamp(1.2rem, 1.05rem + 0.8vw, 1.6rem); margin: 2.4em 0 0.6em; }
+h2 { font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.6rem); margin: 0 0 0.6em; text-wrap: balance; }
+h3 { font-size: 1.05rem; margin: 0 0 0.35em; }
+/* Section grammar, kept from the terminal's own dialect: the storefront and
+   product headline open with a prompt, sections are marked the way a man page
+   or a markdown source marks them. Legal and doc prose gets no prompt; terms
+   of service are not a command. */
+.hero h1::before, .product-page > h1::before { content: "$ "; color: var(--ink-soft); }
 h2::before { content: "## "; color: var(--ink-soft); }
-h3 { font-size: 1.05rem; margin: 0.4em 0; }
-a { color: var(--accent); text-underline-offset: 3px; }
-.muted { color: var(--ink-soft); }
-::selection { background: var(--accent); color: var(--accent-ink); }
 
-a:focus-visible, summary:focus-visible, .btn:focus-visible, .showcase-link:focus-visible {
+/* The cursor. One per site, ending the storefront headline. This is the
+   whole "live terminal" signal now, where a glow and a scanline overlay used
+   to try to be, and unlike them it costs no legibility. Drawn, not a glyph,
+   so no fallback font can turn it into tofu. */
+.hero h1::after {
+  content: ""; display: inline-block;
+  width: 0.5ch; height: 0.9em; margin-left: 0.2ch;
+  background: var(--accent); vertical-align: text-bottom;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero h1::after { animation: caret 1.2s step-end infinite; }
+}
+@keyframes caret { 50% { opacity: 0; } }
+
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible, .table-scroll:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
 }
+::selection { background: var(--accent); color: var(--on-accent); }
+.muted { color: var(--ink-soft); }
 
+.skip-link {
+  position: absolute; left: 1rem; top: -3.5rem; z-index: 20;
+  background: var(--raised); color: var(--ink); font-weight: 700; font-size: 0.9rem;
+  border: 1px solid var(--line-ctl);
+  padding: 0.55rem 1rem; border-radius: var(--radius); text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-link:focus { top: 1rem; }
+
+/* header: the menu bar. The brand sits in ink, not accent; green is for
+   things you can press, and the wordmark is wayfinding. */
 .site-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  max-width: 58rem; margin: 0 auto; padding: 1rem clamp(1rem, 4vw, 2rem);
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem;
+  flex-wrap: wrap;
+  max-width: var(--shell); margin: 0 auto;
+  padding: 1.1rem var(--pad-page) 0.9rem;
   border-bottom: 1px solid var(--line);
 }
-.brand { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--accent); text-decoration: none; }
-/* The mark shows here, in phosphor, like everywhere else. It used to be
-   display:none with a blinking "▮" cursor in its place, which meant a store
-   on this theme carried no HonorBox mark at all: the same drift that had left
-   the product with six different marks, just wearing a costume. The theme's
-   identity is the phosphor, the monospace and the bracketed nav, and all of
-   that is untouched. */
-.brand-mark { width: 20px; height: 20px; flex-shrink: 0; }
-.site-nav { display: flex; gap: 1.1rem; flex-wrap: wrap; }
-.site-nav a { color: var(--ink-soft); text-decoration: none; }
+.brand {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-weight: 700; color: var(--ink); text-decoration: none;
+}
+.brand-mark { color: var(--ink); width: 20px; height: 20px; flex-shrink: 0; }
+.head-actions { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+.site-nav { display: flex; gap: 0.3rem 1rem; flex-wrap: wrap; }
+.site-nav a {
+  color: var(--ink-soft); text-decoration: none; font-size: 0.9rem;
+  transition: color 0.15s ease;
+}
 .site-nav a::before { content: "["; } .site-nav a::after { content: "]"; }
 .site-nav a:hover { color: var(--accent); }
-.site-foot { border-top: 1px solid var(--line); max-width: 58rem; margin: 0 auto; padding: 1.4rem clamp(1rem, 4vw, 2rem) 3rem; color: var(--ink-soft); font-size: 0.85rem; }
-.foot-links a { color: var(--ink-soft); }
 
-.hero { padding: clamp(2rem, 6vw, 4rem) 0 1rem; }
-.kicker { color: var(--ink-soft); margin: 0; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
-.kicker::before { content: "# "; }
-.lede { color: var(--ink); max-width: 66ch; margin: 0 0 1.6rem; text-wrap: pretty; }
-.hero-ctas { display: flex; gap: 0.8rem; flex-wrap: wrap; }
-.hero-sub { font-size: 0.85rem; color: var(--ink-soft); margin-top: 1rem; }
+/* Theme toggle, in this theme's own dialect: a bracketed word, like the nav.
+   It names the destination, not the state. Hidden until the script that gives
+   it behaviour has run, so a reader with JS blocked never sees a control that
+   does nothing. The label swap is pure CSS on the resolved scheme; the
+   accessible name is kept current by the script. */
+.theme-toggle {
+  display: none; padding: 0.2rem 0;
+  background: none; border: none;
+  font: inherit; font-size: 0.9rem; color: var(--ink-soft); cursor: pointer;
+  transition: color 0.15s ease;
+}
+.theme-toggle:hover { color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.js .theme-toggle { display: inline-block; }
+.theme-toggle::after { content: "[light]"; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .theme-toggle::after { content: "[dark]"; }
+}
+:root[data-theme="light"] .theme-toggle::after { content: "[dark]"; }
 
+/* footer: an index, not a paragraph */
+.site-foot {
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft); font-size: 0.85rem;
+  max-width: var(--shell); margin: 0 auto;
+  padding: 1.75rem var(--pad-page) 3rem;
+}
+.foot-links { line-height: 2.2; margin: 0 0 0.9rem; }
+.foot-links a, .foot-legal a { color: var(--ink-soft); }
+.foot-links a:hover, .foot-legal a:hover { color: var(--accent); }
+.foot-legal { margin: 0; font-size: 0.8rem; }
+
+/* hero: left-aligned, deliberately. A prompt starts at column one; centring
+   it would be stand wearing green. */
+.hero { padding: clamp(2.5rem, 7vw, 4.5rem) 0 0.5rem; }
+.hero h1 { max-width: 26ch; }
+.kicker {
+  color: var(--ink-soft); margin: 0 0 0.8em; font-size: 0.8rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+.lede {
+  color: var(--ink-soft); max-width: 62ch; margin: 0 0 2rem; text-wrap: pretty;
+  font-size: clamp(0.98rem, 0.95rem + 0.2vw, 1.08rem);
+}
+.hero-ctas { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
+.hero-sub { font-size: 0.85rem; margin: 1.1rem 0 0; }
+.hero-sub a {
+  color: var(--ink-soft); text-decoration: none;
+  border-bottom: 1px solid var(--line-ctl); padding-bottom: 1px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.hero-sub a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* buttons. The primary action is the only filled object on the page: solid
+   phosphor with a near-black label by night, solid green ink with a paper
+   label by day, 9.25:1 and 6.14:1. It needs no halo to be found, because
+   nothing else is filled. Hover lightens rather than recolours, keeping the
+   label's contrast proportional. */
 .btn {
-  display: inline-block; padding: 0.6rem 1.1rem; border-radius: 4px;
-  font-weight: 700; text-decoration: none; border: 1px solid var(--accent);
-  color: var(--accent); background: transparent;
+  display: inline-block; padding: 0.6rem 1.2rem; border-radius: var(--radius);
+  font-weight: 700; font-size: 0.95rem; text-decoration: none;
+  border: 1px solid var(--line-ctl); color: var(--ink); background: transparent;
+  transition: color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
-.btn-buy { background: var(--accent); color: var(--accent-ink); box-shadow: 0 0 22px rgba(61,255,124,0.3); }
-.btn-buy:hover { box-shadow: 0 0 34px rgba(61,255,124,0.55); }
-.btn-big { padding: 0.8rem 1.5rem; }
-.btn-ghost { border-color: var(--line-ctl); color: var(--ink); }
-.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-.btn-disabled { opacity: 0.4; border-style: dashed; cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.btn-buy { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn-buy:hover { opacity: 0.88; }
+.btn-ghost:hover { border-color: var(--accent); }
+.btn-big { padding: 0.8rem 1.5rem; font-size: 1rem; }
+.btn-disabled { opacity: 0.45; cursor: not-allowed; }
 
-.products { display: grid; gap: 1.5rem; margin-top: 2.2rem; }
-.product-card { border: 1px solid var(--line); border-radius: 6px; background: var(--paper-raise); padding: clamp(1.2rem, 3vw, 1.8rem); position: relative; }
-.product-card::before {
-  content: "┌─ product "; position: absolute; top: -0.7em; left: 1rem;
-  background: var(--paper-raise); padding: 0 0.4em; color: var(--ink-soft); font-size: 0.8rem;
+/* ---------- products ---------- */
+/* Panels. A TUI draws a box around the thing that matters and this is that
+   box: raised ground, a hairline, a radius. The floating "product" label that
+   used to sit on the border promised a drawn frame and delivered a quarter of
+   one, so it is gone; the badge already names what needs naming. */
+.products { display: grid; gap: 1.25rem; margin-top: clamp(2.5rem, 6vw, 4rem); }
+.product-card {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--raised);
+  padding: clamp(1.3rem, 3vw, 2rem);
+  display: flex; flex-direction: column;
 }
-.badge { display: inline-block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); border-radius: 3px; padding: 0.1rem 0.5rem; margin-bottom: 0.6rem; }
-.product-card h3 { margin: 0; font-size: 1.3rem; }
+.badge {
+  display: inline-block; font-size: 0.7rem; letter-spacing: 0.12em;
+  text-transform: uppercase; font-weight: 700; color: var(--ink-soft);
+  border: 1px solid var(--line-ctl); border-radius: 3px;
+  padding: 0.15rem 0.5rem; margin-bottom: 0.8rem;
+}
+.product-card h3 { margin: 0; font-size: clamp(1.2rem, 1.1rem + 0.5vw, 1.45rem); }
 .product-card h3 a { color: var(--ink); text-decoration: none; }
 .product-card h3 a:hover { color: var(--accent); }
-.pc-tagline { color: var(--ink-soft); margin: 0.4rem 0 0; max-width: 66ch; }
-.pc-features { list-style: none; padding: 0; margin: 1rem 0 1.3rem; }
-.pc-features li { margin: 0.3rem 0; padding-left: 1.8em; position: relative; }
-.pc-features li::before { content: "->"; position: absolute; left: 0; color: var(--accent); }
-.pc-buy { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-top: 1px dashed var(--line); padding-top: 1rem; }
-.pc-buy.standalone { border-top: none; padding: 0.4rem 0 1rem; justify-content: flex-start; }
-.price { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
-.price small { font-size: 0.72rem; font-weight: 400; color: var(--ink-soft); display: block; }
+.pc-tagline { color: var(--ink-soft); margin: 0.45rem 0 0; max-width: 62ch; text-wrap: pretty; }
+.pc-features { list-style: none; padding: 0; margin: 1.1rem 0 1.3rem; }
+.pc-features li { margin: 0.45rem 0; padding-left: 1.8em; position: relative; font-size: 0.92rem; }
+.pc-features li::before { content: "->"; position: absolute; left: 0; color: var(--ink-soft); }
+.pc-buy {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.9rem 1.25rem; flex-wrap: wrap;
+  margin-top: auto; border-top: 1px solid var(--line); padding-top: 1.1rem;
+}
+.price { font-size: 1.35rem; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.price small { font-size: 0.72rem; font-weight: 400; color: var(--ink-soft); display: block; margin-top: 0.2rem; }
 
-.steps-list { counter-reset: step; list-style: none; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
-.steps-list li { counter-increment: step; border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1.1rem; background: var(--paper-raise); }
-.steps-list li::before { content: "[" counter(step, decimal-leading-zero) "]"; color: var(--accent); font-size: 0.8rem; }
-.steps-list h3 { margin: 0.2rem 0 0.3rem; }
-.steps-list p { margin: 0; color: var(--ink-soft); font-size: 0.9rem; max-width: 52ch; }
-
-/* min-width is load-bearing: without it the table compresses to one word per
-   line on a phone and overflows anyway. With it the rows stay legible and the
-   overflow becomes an honest horizontal scroll inside .table-scroll. */
-.table-scroll { overflow-x: auto; margin-top: 1.1rem; }
-.table-scroll table { min-width: 36rem; }
-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-th { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
-th, td { text-align: left; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--line); }
-td.rowhead { font-weight: 700; }
-td.num { color: var(--accent); }
-tr.attn td { color: var(--attn); }
-
-.faq details { border-bottom: 1px solid var(--line); padding: 0.7rem 0; }
-.faq summary { font-weight: 700; cursor: pointer; }
-.faq summary::marker { color: var(--accent); }
-.faq p { color: var(--ink-soft); max-width: 66ch; }
-
-.note { border: 1px dashed var(--accent); background: var(--paper-raise); padding: 0.9rem 1.1rem; margin: 2.4rem 0; border-radius: 6px; }
-.note p { margin: 0; color: var(--ink); font-size: 0.9rem; }
-.note p::before { content: "! "; color: var(--accent); font-weight: 700; }
-
-.prose { max-width: 44rem; margin: 2rem auto 0; }
-.prose p, .prose ul, .prose ol, .prose blockquote { max-width: 66ch; }
-.product-page { max-width: 44rem; margin: 0 auto; }
-.product-page .prose { margin-top: 0; }
-.prose pre { background: #050805; border: 1px solid var(--line); border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.85rem; }
-/* overflow-wrap: a long unbroken identifier in inline code (the docs carry
-   `checkout.session.async_payment_succeeded`) otherwise widens the whole page
-   on a phone. Block code keeps its own horizontal scroll. */
-.prose p code, .prose li code, .prose td code { background: var(--paper-raise); border: 1px solid var(--line); border-radius: 3px; padding: 0.05em 0.3em; color: var(--accent); overflow-wrap: anywhere; }
-.prose blockquote { border-left: 2px solid var(--accent); margin: 1.2rem 0; padding: 0.2rem 1.1rem; color: var(--ink-soft); }
-.ledger-total { color: var(--accent); }
-
-/* prose images & preview galleries */
-.prose figure { margin: 1.4rem 0; }
-.prose img, .gallery img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; display: block; }
-.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.8rem; margin: 1.4rem 0; }
-
-/* product variants: the first product carries the weight; companions print small */
-.product-card.companion { padding: 0.9rem 1.2rem 1rem; }
-.product-card.companion::before { content: "┌─ also "; }
+/* companion: a quieter row on the same panel system */
+.product-card.companion { flex-direction: row; align-items: center; gap: 0.5rem 1.5rem; padding: 1rem clamp(1.3rem, 3vw, 2rem); }
 .product-card.companion .badge,
 .product-card.companion .pc-features,
 .product-card.companion .price small { display: none; }
+.product-card.companion .pc-head { flex: 1; min-width: 14rem; margin: 0; }
 .product-card.companion h3 { font-size: 1.05rem; }
-.product-card.companion .pc-tagline { font-size: 0.85rem; }
-.product-card.companion .pc-buy { border-top: none; padding-top: 0.7rem; }
+.product-card.companion .pc-tagline { font-size: 0.85rem; max-width: 52ch; }
+.product-card.companion .pc-buy { margin: 0; border-top: none; padding: 0; align-self: center; flex-wrap: nowrap; gap: 1.1rem; }
 .product-card.companion .price { font-size: 1.1rem; }
+.product-card.companion .btn { padding: 0.45rem 0.9rem; font-size: 0.88rem; }
+
+/* ---------- home sections ---------- */
+/* Space separates them; the ## on the heading is the divider. */
+.steps, .compare, .faq, .showcase, .note { margin-top: var(--gap-section); }
+.steps > .muted, .compare > .muted, .showcase > .muted, .faq > .muted {
+  font-size: 0.92rem; max-width: 62ch; margin: 0 0 1.4rem;
+}
+
+/* steps: bracketed numerals set the order, quietly */
+.steps-list {
+  counter-reset: step; list-style: none; padding: 0; margin: 1.4rem 0 0;
+  display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+}
+.steps-list li {
+  counter-increment: step; position: relative;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--raised); padding: 1.1rem 1.2rem;
+  transition: border-color 0.15s ease;
+}
+.steps-list li::before {
+  content: "[" counter(step, decimal-leading-zero) "]";
+  display: block; margin-bottom: 0.5rem;
+  color: var(--ink-soft); font-size: 0.8rem;
+}
+.steps-list h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+.steps-list p { margin: 0; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.6; max-width: 52ch; }
+/* A tile whose title is a link is a door: the whole panel takes the click,
+   and the border answers the hover. Green title, because green is actuable. */
+.steps-list h3 a { color: var(--accent); text-decoration: none; }
+.steps-list h3 a::after { content: ""; position: absolute; inset: 0; }
+.steps-list li:has(h3 a):hover { border-color: var(--line-ctl); }
+.steps-list li:has(h3 a):hover h3 a { text-decoration: underline; text-underline-offset: 3px; }
+
+/* compare table: hairlines, and our column marked by ground rather than a
+   second hue. The amber row is gone; weight and the raised ground carry it.
+   min-width is load-bearing: without it the table compresses to one word per
+   line on a phone and overflows anyway. Row labels stay put while the rest
+   scrolls, or a scrolled reader sees "0%" with no idea which row it is. */
+.table-scroll { overflow-x: auto; margin-top: 1.4rem; }
+.table-scroll table { min-width: 36rem; }
+.table-scroll th:first-child, .table-scroll td:first-child {
+  position: sticky; left: 0; background: var(--ground);
+}
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th {
+  font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 700;
+}
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { border-bottom: 1px solid var(--line-ctl); }
+td { color: var(--ink-soft); }
+td.rowhead { font-weight: 700; color: var(--ink); }
+tr.attn td { font-weight: 700; background: var(--raised); color: var(--ink); }
+.compare th:last-child, .compare td:last-child { background: var(--raised); }
+.compare th:last-child { color: var(--ink); }
+.compare td:last-child { color: var(--ink); font-weight: 700; }
+
+/* faq */
+.faq details { border-bottom: 1px solid var(--line); }
+.faq details:first-of-type { border-top: 1px solid var(--line); }
+.faq summary {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  padding: 0.95rem 0.1rem; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "+"; color: var(--ink-soft); flex-shrink: 0; line-height: 1;
+  transition: transform 0.2s ease; transform-origin: center;
+}
+.faq summary:hover { color: var(--accent); }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq p { color: var(--ink-soft); margin: 0 0 1.3rem; max-width: 66ch; padding: 0 0.1rem; font-size: 0.92rem; }
+
+/* note: plain speech. It used to be a dashed accent box with a "!" bolted on,
+   which is the typography of a warning label on the one paragraph that talks
+   to the reader straight. A left rule and full ink say it better. */
+.note p {
+  margin: 0; font-size: clamp(0.98rem, 0.95rem + 0.2vw, 1.1rem); line-height: 1.65;
+  max-width: 56ch; color: var(--ink);
+  padding: 0 0 0 clamp(1rem, 2.5vw, 1.4rem);
+  border-left: 2px solid var(--line-ctl);
+}
 
 /* showcase: proof band of real storefront screenshots */
-.showcase { margin-top: 2.4rem; }
-.showcase .muted { font-size: 0.9rem; }
 .showcase-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
-  gap: 1.1rem; margin-top: 1.2rem;
+  gap: 1.1rem; margin-top: 1.4rem;
 }
 .showcase figure { margin: 0; }
-.showcase img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; }
-.showcase figcaption { font-size: 0.78rem; color: var(--ink-soft); margin-top: 0.4rem; }
-.showcase figcaption::before { content: "» "; color: var(--accent); }
-.showcase-link { text-decoration: none; }
-.showcase-link:hover img { border-color: var(--accent); }
-.showcase-link:hover figcaption { color: var(--accent); }
+.showcase img {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--line-ctl); border-radius: 4px;
+  transition: border-color 0.15s ease;
+}
+.showcase figcaption { font-size: 0.8rem; color: var(--ink-soft); margin-top: 0.45rem; }
+.showcase-link { text-decoration: none; display: block; }
+.showcase-link:hover img, .showcase-link:focus-visible img { border-color: var(--accent); }
+.showcase-link:hover figcaption { color: var(--ink); }
+.showcase-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
 
-/* Print: the phosphor look does not survive paper. The scanline overlay is
-   position:fixed, so in the browser's default print path (backgrounds off)
-   it covers every sheet and the page comes out blank. Terms, refunds and
-   license are exactly the pages a buyer saves as PDF, so pin readable ink
-   on white and drop the furniture. */
-/* Kills the scanline shimmer for anyone who has asked the OS to stop motion. */
+/* ---------- prose ---------- */
+.prose { max-width: 44rem; margin: clamp(2rem, 5vw, 3rem) auto 0; }
+.prose p, .prose ul, .prose ol, .prose blockquote { max-width: 66ch; }
+.prose h1 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.1rem); }
+.prose h1 + p { color: var(--ink-soft); }
+.prose h2 { margin: 2.4em 0 0.6em; }
+.prose h3 { margin: 1.8em 0 0.4em; }
+.prose li { margin: 0.35rem 0; }
+.prose li::marker { color: var(--ink-soft); }
+.prose pre {
+  background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1rem 1.1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6;
+}
+/* overflow-wrap is load-bearing: a long unbroken identifier in inline code
+   (the docs carry `checkout.session.async_payment_succeeded`) otherwise
+   widens the whole page on a phone. Block code keeps its own scroll. */
+.prose p code, .prose li code, .prose td code {
+  background: var(--raised); border: 1px solid var(--line);
+  border-radius: 3px; padding: 0.05em 0.3em; color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.prose blockquote {
+  border-left: 2px solid var(--line-ctl); margin: 1.2rem 0; padding: 0.2rem 1.1rem;
+  color: var(--ink-soft);
+}
+.prose figure { margin: 1.4rem 0; }
+.prose img, .gallery img {
+  max-width: 100%; height: auto; display: block;
+  border: 1px solid var(--line-ctl); border-radius: 4px;
+}
+.gallery {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: 0.9rem; margin: 1.4rem 0;
+}
+
+/* trust page: the ledger total reads in ink, like every other number */
+.ledger-total strong { color: var(--ink); }
+
+/* product page */
+.product-page { max-width: 44rem; margin: clamp(2rem, 5vw, 3rem) auto 0; }
+.product-page .kicker { margin-bottom: 0.9em; }
+.product-page .lede { margin-bottom: 1.6rem; }
+.product-page .prose { margin-top: 0; }
+/* The standalone buy block is the product panel again, at the size the page
+   can carry: one way of saying "this is the thing you pay for". The closing
+   CTA has no price and needs no panel. */
+.pc-buy.standalone {
+  margin: 1.8rem 0 2.2rem; padding: 1.1rem 1.3rem;
+  background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.pc-buy.standalone:not(:has(.price)) {
+  background: none; border: none; padding: 0;
+  justify-content: flex-start; margin: 2.4rem 0 0.5rem;
+}
+
+/* ---------- small screens ---------- */
+@media (max-width: 40rem) {
+  .product-card.companion { flex-direction: column; align-items: stretch; }
+  .product-card.companion .pc-head { min-width: 0; }
+  .product-card.companion .pc-tagline { max-width: none; }
+  .product-card.companion .pc-buy {
+    margin-top: 0.9rem; padding-top: 0.9rem; align-self: auto; flex-wrap: wrap;
+    border-top: 1px solid var(--line);
+  }
+}
+@media (max-width: 35rem) {
+  .hero-ctas .btn, .pc-buy .btn { width: 100%; text-align: center; }
+  .pc-buy .price { width: 100%; }
+  .pc-buy.standalone { align-items: flex-start; flex-direction: column; }
+}
+
+/* Kills the caret blink and every transition for anyone who has asked the OS
+   to stop motion. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important; animation-delay: 0ms !important;
@@ -188,10 +483,20 @@ tr.attn td { color: var(--attn); }
   }
 }
 
+/* Print: pin readable ink on white regardless of the screen scheme, and drop
+   the chrome. prefers-color-scheme still reports dark under print media, so
+   without this a dark-scheme reader's saved PDF comes out pale green on
+   unprinted white. Terms, refunds and license are exactly the pages a buyer
+   saves as PDF. */
 @media print {
-  body::after { display: none; }
-  body { background: #fff; color: #111; }
-  h1, h2, h3 { color: #111; text-shadow: none; }
-  a { color: #111; }
-  .site-nav, .skip-link { display: none; }
+  :root {
+    --ground: #ffffff; --raised: #ffffff; --line: #d4d4d4; --line-ctl: #9a9a9a;
+    --ink: #111111; --ink-soft: #555555; --accent: #111111; --on-accent: #ffffff;
+  }
+  body { background: #fff; color: var(--ink); }
+  /* .js .theme-toggle outranks a bare class, so the hide has to match it or
+     the control prints anyway. Observed, not guessed. */
+  .site-nav, .skip-link, .theme-toggle, .js .theme-toggle { display: none; }
+  .hero h1::after { content: none; }
+  .product-card, .steps-list li, .pc-buy.standalone { border: 1px solid var(--line); }
 }
