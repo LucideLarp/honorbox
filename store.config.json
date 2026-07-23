@@ -134,7 +134,7 @@
     {
       "type": "steps",
       "title": "What you can check before you buy",
-      "note": "This project is days old, so it has no track record to point at. These are the substitutes, and every one of them is something you verify yourself rather than something we assert.",
+      "note": "This project has no track record to point at yet. These are the substitutes, and every one of them is something you verify yourself rather than something we assert.",
       "items": [
         {
           "title": "The code that would take your buyer's money",
@@ -206,7 +206,7 @@
         },
         {
           "q": "Who's behind this, and how new is it?",
-          "a": "An independent, MIT-licensed project. It publishes no company name or legal identity, and contact is honorbox@proton.me. It is also new: the first commit is dated 18 July 2026, so there is no track record here and no point pretending otherwise. What there is instead: the engine that takes the money is public, this store is built by it, the release history is dated, and the refund is 30 days no questions. The support page sets out what an anonymous contact does and does not cost you, and what you are left holding if the project stops.",
+          "a": "An independent, MIT-licensed project. It publishes no company name or legal identity, and contact is honorbox@proton.me. There is no long track record here and no point pretending otherwise. What there is instead is a public record: the engine that takes the money is public, this store is built by it, the release history is dated from the first commit on 18 July 2026, and the refund is 30 days no questions. The support page sets out what an anonymous contact does and does not cost you, and what you are left holding if the project stops.",
           "href": "./support.html",
           "href_label": "Support and what you can check"
         }

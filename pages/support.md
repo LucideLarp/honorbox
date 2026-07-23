@@ -10,11 +10,11 @@ ways to reach a person.
 
 ## Where this project is
 
-HonorBox is an independent, MIT-licensed project, and it is new. The first
-commit is dated 18 July 2026. It has not been through a real-world week yet,
-let alone a quarter, and nothing on this page is going to argue otherwise. If
-you are weighing $29 against that, the honest framing is that you are not
-buying a track record, because there is not one to buy.
+HonorBox is an independent, MIT-licensed project with a public, dated history.
+The first commit is dated 18 July 2026. It has no long track record behind it
+yet, and nothing on this page is going to argue otherwise. If you are weighing
+$29 against that, the honest framing is that you are not buying a track record,
+because there is not one to buy.
 
 What exists instead of age is a public record. Every change ships as a tagged
 release with notes that name the limits as well as the features, and the
