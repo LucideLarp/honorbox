@@ -342,9 +342,30 @@ function ledgerRow(session, grant) {
 }
 
 // Advance the poll cursor to the newest session seen, never backwards.
-function nextCursor(sessions, prevCursor) {
+//
+// `deferredCreated`: created-times of sessions this run saw and deliberately
+// did NOT settle (a transient invite failure, or a repo at the invitation
+// cap). Those sessions are only ever retried or escalated by a later poll
+// SEEING them again, and the scan window is created > cursor - OVERLAP, so a
+// cursor that advances past created + OVERLAP drops them from every future
+// scan: no retry, no escalation, no needs_attention row. A launch that queues
+// buyers behind the invitation cap for more than the overlap window used to
+// lose every one of them exactly this way, silently. So the cursor never
+// advances past the point that would push a deferred session out of the
+// window. The hold is bounded: retries stop at the retry window (6h, 26h for
+// the cap), the poll after that escalates and settles the session, and the
+// cursor is free again.
+function nextCursor(sessions, prevCursor, deferredCreated = []) {
   const newest = sessions.reduce((acc, s) => Math.max(acc, s.created || 0), 0);
-  return Math.max(prevCursor || 0, newest);
+  let next = Math.max(prevCursor || 0, newest);
+  for (const created of deferredCreated) {
+    // Strictly newer than cursor - OVERLAP stays visible, so created +
+    // OVERLAP - 1 is the last cursor value that still scans this session.
+    if (Number.isFinite(created)) next = Math.min(next, created + OVERLAP_SECONDS - 1);
+  }
+  // Never backwards, even under hold: freezing at prevCursor keeps the scan
+  // window fixed, which keeps every session currently visible visible.
+  return Math.max(prevCursor || 0, next);
 }
 
 // A grant matches a session by payment link ID (plink_...) or price ID

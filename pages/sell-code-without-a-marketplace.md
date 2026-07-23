@@ -84,7 +84,7 @@ carrying the buyer's username. Something has to read it and send the invite:
 3. **A scheduled poll from CI** *(the section where we sell you something:
    this is what [HonorBox](https://github.com/Honorboxx/honorbox) does)*. A
    GitHub Action runs every few minutes, lists recent paid sessions, and
-   invites each buyer. The engine is MIT, 844 dependency-free lines of
+   invites each buyer. The engine is MIT, 870 dependency-free lines of
    Node you can read before trusting it. It also builds the storefront: a static
    site on GitHub Pages with your products, checkout buttons, and this same
    guide layout. Delivery lands in minutes rather than seconds; an opt-in

@@ -944,3 +944,30 @@ test('no part of the key is ever printed', () => {
     }
   }
 });
+
+test('a deferred session holds the cursor so the next poll can still see it', async () => {
+  // The invite fails transiently, so the session is deferred to the next
+  // poll. If a newer sale in the same scan were allowed to advance the
+  // cursor past created + OVERLAP, the deferred session would leave the
+  // scan window and no poll would ever retry OR escalate it: a paid order,
+  // lost in silence. The cursor must hold just inside the window instead.
+  const { OVERLAP_SECONDS } = require('../lib/fulfill-core.js');
+  const dir = tmp();
+  const t0 = 1_700_000_000;
+  const stuck = paidSession('cs_stuck', t0); // invites octocat -> 502
+  const fresh = paidSession('cs_fresh', t0 + 26 * 3600, {
+    custom_fields: [{ key: 'github_username', text: { value: 'goodbuyer' } }],
+  });
+  const { readState } = await runMain(dir, [
+    { match: 'collaborators/octocat', res: () => jsonRes({ message: 'bad gateway' }, 502) },
+    { match: 'collaborators/goodbuyer', res: () => jsonRes({}, 201) },
+    { match: 'api.stripe.com', res: () => jsonRes({ data: [stuck, fresh], has_more: false }) },
+  ]);
+  const state = readState('fulfill-state.json');
+  assert.deepEqual(state.processed, ['cs_fresh'], 'the healthy sale still settles');
+  assert.ok(state.failures.some((f) => f.session === 'cs_stuck' && f.transient), 'the stuck one is deferred');
+  assert.ok(
+    state.cursor - OVERLAP_SECONDS < t0,
+    `cursor ${state.cursor} pushes the deferred session out of the created > cursor - ${OVERLAP_SECONDS} scan window`
+  );
+});

@@ -429,6 +429,30 @@ test('re-scan overlap covers the full 24h checkout-session lifetime', () => {
   );
 });
 
+test('cursor holds for deferred sessions so they stay inside the scan window', () => {
+  // A session deferred to a later poll (invitation cap, transient invite
+  // failure) is only ever retried or escalated by a poll that still SEES it.
+  // The scan is created > cursor - OVERLAP, so a cursor that advances past
+  // created + OVERLAP drops the deferred session from every future scan and
+  // the paid order is lost in silence: no retry, no needs_attention row.
+  const { OVERLAP_SECONDS } = require('../lib/fulfill-core.js');
+  const t0 = 1_700_000_000;
+  const stuck = session({ id: 'cs_stuck', created: t0 });
+  const sale = session({ id: 'cs_new', created: t0 + 26 * 3600 }); // past the 25h overlap
+  // without the hold the new sale pushes cs_stuck out of the window
+  assert.ok(nextCursor([stuck, sale], t0) - OVERLAP_SECONDS > t0, 'precondition: this scenario really does drop the session');
+  // with the hold it must not
+  const held = nextCursor([stuck, sale], t0, [t0]);
+  assert.ok(held - OVERLAP_SECONDS < t0, `cursor ${held} pushes a deferred session out of the scan window`);
+  // never backwards, even under hold: freezing the cursor keeps the window fixed
+  const prev = t0 + OVERLAP_SECONDS - 1;
+  assert.equal(nextCursor([sale], prev, [t0]), prev);
+  // and a hold can only slow the cursor, never reverse it
+  assert.ok(nextCursor([sale], t0 + 5, [t0]) >= t0 + 5);
+  // no deferrals: exactly the old behaviour
+  assert.equal(nextCursor([stuck, sale], t0, []), t0 + 26 * 3600);
+});
+
 test('grant matching is by payment link', () => {
   assert.equal(matchGrant(session(), GRANTS).repo, 'o/r');
   assert.equal(matchGrant(session({ payment_link: null }), GRANTS), null);

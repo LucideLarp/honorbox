@@ -228,6 +228,10 @@ async function main(sleep = defaultSleep) {
   const state = readJson(statePath, { cursor: 0, processed: [], failures: [] });
   const ledger = readJson(ledgerPath, { rows: [] });
   const newSales = []; // usernames fulfilled THIS run (for license issuing etc.)
+  // created-times of sessions deferred to a later poll (transient failure or
+  // invitation cap). The cursor must not advance them out of the scan window:
+  // a deferred session a poll can no longer see is a paid order lost silently.
+  const deferred = [];
 
   // One shared in-run retry budget for the whole cycle. Per-session budgets
   // would let ten failing buyers serialize into ten separate waits and stretch
@@ -289,6 +293,7 @@ async function main(sleep = defaultSleep) {
       if (shouldRetryInvite(cap.err, state.failures, s.id)) {
         console.log(`queued ${s.id}: ${grant.repo} is at its daily invitation cap, delivery deferred to a later poll`);
         state.failures.push({ ...entry, error: `deferred: ${grant.repo} at invitation cap`, transient: true });
+        deferred.push(s.created);
         continue; // NOT marked processed: the next poll delivers it
       }
       // Waited longer than a cap can explain. Fall through so the shared catch
@@ -341,7 +346,7 @@ async function main(sleep = defaultSleep) {
       const retry = shouldRetryInvite(err, state.failures, s.id);
       console.error(`FAILED ${s.id} (attempt ${attempt}${retry ? ', will retry next poll' : ''}): ${err.message}`);
       state.failures.push({ ...entry, error: String(err.message), ...(retry ? { transient: true } : {}) });
-      if (retry) continue; // NOT marked processed: the next poll retries it
+      if (retry) { deferred.push(s.created); continue; } // NOT marked processed: the next poll retries it
       ledger.rows.push({ ...row, needs_attention: true });
       ledgerRefs.add(row.ref);
     }
@@ -359,7 +364,7 @@ async function main(sleep = defaultSleep) {
     );
   }
 
-  state.cursor = nextCursor(sessions, state.cursor);
+  state.cursor = nextCursor(sessions, state.cursor, deferred);
   // Prune BEFORE trimming processed, so the settled set is at its largest and
   // the prune is as effective as it can be. Rows for sessions still awaiting a
   // retry are kept at any size — they date the 6h window.
