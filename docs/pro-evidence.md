@@ -2,9 +2,9 @@
 
 Pro is delivered as a private repo, which fairly reads as "blind purchase."
 This document is what you can check before paying: what the conformance suite,
-doctor, reconcile, the ops bots, stats and the license module each print and how
-to read it, the license module's complete API surface, and the playbook's full
-table of contents. The `stand` theme this store runs on is published whole in
+doctor, reconcile, the scheduled guard, the ops bots, stats and the license
+module each print and how to read it, the license module's complete API
+surface, and the playbook's full table of contents. The `stand` theme this store runs on is published whole in
 this repo (`themes/stand/`), so the code standard is checkable before you pay
 for the rest. The failure catalogue the suite is built from is published in full, free,
 at [docs/failure-catalogue.md](failure-catalogue.md).
@@ -297,6 +297,42 @@ Scope note in the same spirit: our store has never had a pending or expired
 invitation, so those verdicts are covered by the module's test suite over
 fixtures (18 tests) rather than by a live catch. The test that matters most
 there pins that GitHub's own `expired` flag decides expiry, never our clock.
+
+## guard: what the alarm issue says
+
+The suite above gates pushes, but the failures worth fearing do not arrive by
+push: a link gets deactivated in a dashboard, an invitation ages toward
+GitHub's 7-day expiry, and the repo never changes. The guard is a drop-in
+Actions workflow for your private ops repo that runs audit and reconcile four
+times a day and turns anything red into one GitHub issue there, so the alarm
+arrives the way GitHub already notifies you of everything. Its dry run on the
+same synthetic store, carrying one deliberate mistake and no keys:
+
+```
+guard: 2 red, 3 unchecked, 0 to watch.
+
+DRY RUN: the alarm issue would carry this:
+title: Store guard: 2 red, 3 unchecked
+
+## Red
+
+- **audit: grant-shape** fulfillment[0] ("Widget Pro") payment_link is a checkout URL, not an id
+  Fix: the matcher compares against session.payment_link, which Stripe reports
+  as a plink_ id. As written, every sale of this product is silently skipped.
+
+## The guard could not see
+
+These reads never happened, so this store is unwatched in exactly the
+places listed. A check that could not run is not a check that passed.
+
+- **audit: Stripe** no STRIPE_SECRET_KEY
+- **reconcile: the reconcile run** reconcile: STRIPE_SECRET_KEY is not set. There is nothing to reconcile against.
+```
+
+One issue, ever: the same failures on the next run refresh its body without
+notifying, a changed picture posts a comment, and the first green run closes
+it with a resolution note. A run that could not reach Stripe is an alarm, not
+a pass, which is the difference between a monitor and a checklist.
 
 ## ops bots: real issue, real ack
 

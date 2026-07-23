@@ -4,7 +4,7 @@ order: 1
 name: HonorBox Pro
 meta_title: "HonorBox Pro ($29): find out if your store is broken"
 description: A suite that checks your Stripe + GitHub store against the known ways it silently loses sales, on every push. Plus reconcile, a doctor, bots and themes. $29.
-tagline: An empty ledger looks the same whether nobody came or your store is silently broken. Pro is the suite that tells those apart, before your first sale and on every push after it.
+tagline: An empty ledger looks the same whether nobody came or your store is silently broken. Pro is the suite that tells those apart, before your first sale, on every push after it, and on a clock in between.
 price: $29
 price_note: one developer, one-time · team and company licences below
 payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
@@ -16,6 +16,7 @@ og_image: ./assets/previews/stand.png
 features:
   - "Conformance suite: 16 checks for the known ways this architecture loses money quietly, each proven able to fail, wired to a CI gate that goes red when your setup drifts"
   - "Catches a dead buy button (a deactivated link still answers HTTP 200), a price on the page that differs from what the link charges, a pasted URL that makes every sale unmatchable, and a live 100%-off coupon"
+  - "Scheduled guard: a drop-in Actions workflow that runs the suite and reconcile four times a day and raises one self-closing GitHub issue in your ops repo naming exactly what went red. A run that could not reach Stripe alarms too; it never reads as healthy"
   - "Store doctor: preflight your config, payment links, and fulfillment permissions before launch"
   - "Reconcile: cross-checks Stripe against GitHub to prove every paid order actually reached its buyer, and names the ones that didn't"
   - "Ops bots: auto-acknowledge new support issues, auto-revoke repo access when Stripe refunds"
@@ -49,6 +50,13 @@ the known ways a Stripe-plus-GitHub store loses money without telling you, run
 against your own account, wired to a CI gate. Most of its checks need no orders
 at all, which is the point: they are useful on the day you launch, not after
 you have lost something.
+
+And because the ways a store breaks do not arrive by push, the asking runs on
+a clock as well as a gate: a scheduled guard re-runs the suite and the
+reconciler four times a day and raises an issue in your own repo the day
+something goes red, so a silently broken store becomes a loud notification
+within hours instead of a theory you form weeks later from an absence of
+sales.
 
 Around it sits the operational half: reconcile walks the money and names the
 paid order that is still undelivered, the store doctor catches setup mistakes
@@ -184,6 +192,18 @@ instead of remembering it. Read-only.
 It also separates revenue from fulfillments: a $0 order fulfilled by a coupon
 is a delivery, not a sale, and reconcile reports them apart so your revenue line
 means money that actually arrived.
+
+**The scheduled guard.** The suite and the reconciler exit non-zero when
+something is wrong, and an exit code is only an alarm if something watches it.
+The guard is a ready-to-copy GitHub Actions workflow for your private ops
+repo: on a schedule it runs both against your live store, and when anything
+goes red it opens **one** GitHub issue naming the exact failing checks and
+undelivered orders, with the fixes. The same issue updates while things stay
+red, a change posts a comment so it notifies, and it closes itself on the
+first green run. A run where Stripe or GitHub did not answer is reported as
+"the guard could not see", never as a green run. No server, no webhook, no
+third-party monitor holding your keys: GitHub already notifies you about
+issues in your own repo, and the guard gives it something true to say.
 
 **Ops bots.** Two workflows for the unattended hours. One acknowledges and
 labels every new support issue within minutes. The other watches Stripe for
