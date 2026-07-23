@@ -36,7 +36,7 @@ const {
   normalizeUser,
 } = require('./lib/subs-core.js');
 const { recordRevocation, revocationFor, revocationSource, clearLapse, inviteKey } = require('./lib/access-record.js');
-const { REQUEST_TIMEOUT_MS, validUsername, extractGithubUsername, inviteStatusHint } = require('./lib/fulfill-core.js');
+const { REQUEST_TIMEOUT_MS, validUsername, extractGithubUsername, inviteStatusHint, redactKeys } = require('./lib/fulfill-core.js');
 
 const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const STRIPE_RETRY_DELAYS_MS = [500, 2_000];
@@ -184,7 +184,9 @@ async function stripeGet(pathname, params, key, sleep = defaultSleep) {
     if (res.ok) return res.json();
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= STRIPE_RETRY_DELAYS_MS.length) {
-      throw new Error(`Stripe ${pathname} -> ${res.status}: ${await res.text()}`);
+      // Stripe echoes the API key back in a 401 body; same redaction as
+      // fulfill.js, or this lane leaks what that one scrubs.
+      throw new Error(`Stripe ${pathname} -> ${res.status}: ${redactKeys(await res.text())}`);
     }
     console.error(`RETRY Stripe ${pathname} -> ${res.status} (attempt ${attempt + 1})`);
     await sleep(STRIPE_RETRY_DELAYS_MS[attempt]);

@@ -709,6 +709,31 @@ test('a Stripe failure aborts the pass rather than revoking on partial data', as
   );
 });
 
+test('a Stripe error body has key material redacted before it can reach a log', async () => {
+  // Stripe answers a bad key with `Invalid API Key provided: sk_live_...` in
+  // the body, and stripeGet's error message carries that body into the log.
+  // fulfill.js redacts it; this pins that the reconciler's copy does too,
+  // because the two drifting apart is exactly how one lane leaks what the
+  // other scrubs.
+  const key = 'sk_live_' + 'A1b2C3d4'.repeat(3);
+  const f = stubFetch([{
+    match: '/v1/subscriptions',
+    res: () => ({ ok: false, status: 401, text: async () => `{"error":{"message":"Invalid API Key provided: ${key}"}}` }),
+  }]);
+  try {
+    await assert.rejects(
+      driver.stripeGet('/v1/subscriptions', {}, key),
+      (err) => {
+        assert.ok(!err.message.includes(key), 'the key survived into the error message');
+        assert.match(err.message, /sk_live_<redacted>/);
+        return true;
+      }
+    );
+  } finally {
+    f.restore();
+  }
+});
+
 test('an unreadable subscriptions response is refused, not read as an empty store', async () => {
   const dir = tmpdir();
   await assert.rejects(
