@@ -1335,6 +1335,28 @@ test('workflow templates: deploy template runs the whole test suite, pins match 
   }
 });
 
+test('workflow templates: action pins agree across every setup/ template', () => {
+  // fulfill.yml.example and fulfill-on-sale.yml land in the SAME forker ops
+  // repo. A major bump that takes one template and not its sibling ships a
+  // fork whose workflows pin two different majors of the same action, which
+  // is exactly what the 2026-07-23 bump did (checkout v7 next to v4).
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const dir = path.join(__dirname, '..', '..', 'setup', 'workflows');
+  const pins = (src) => [...src.matchAll(/uses:\s*([^@\s]+)@(\S+)/g)].map((m) => [m[1], m[2]]);
+  const seen = {}; // action -> { sha, file }
+  for (const f of fs.readdirSync(dir).sort()) {
+    for (const [action, sha] of pins(fs.readFileSync(path.join(dir, f), 'utf8'))) {
+      if (seen[action]) {
+        assert.equal(sha, seen[action].sha, `${f} pins ${action}@${sha} but ${seen[action].file} pins @${seen[action].sha}`);
+      } else {
+        seen[action] = { sha, file: f };
+      }
+    }
+  }
+  assert.ok(Object.keys(seen).length >= 2, 'the templates should pin at least checkout and setup-node');
+});
+
 test('themeProblems: a missing theme is a named config problem, not an ENOENT', () => {
   assert.deepEqual(themeProblems('stand', ['stand', 'terminal']), []);
   assert.deepEqual(themeProblems(undefined, ['stand', 'terminal']), [], 'unset falls back to stand');
