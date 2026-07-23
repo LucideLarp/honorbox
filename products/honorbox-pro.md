@@ -12,7 +12,7 @@ payment_link: https://buy.stripe.com/aFa9ATaRhaZp3PC1SYa7C00
 # which link-preview scrapers do not reliably render, so the card keeps a PNG.
 # This was previously whatever image happened to be first in the body; naming
 # it makes it a decision rather than a side effect of editing the gallery.
-og_image: ./assets/previews/terminal.png
+og_image: ./assets/previews/stand.png
 features:
   - "Conformance suite: 16 checks for the known ways this architecture loses money quietly, each proven able to fail, wired to a CI gate that goes red when your setup drifts"
   - "Catches a dead buy button (a deactivated link still answers HTTP 200), a price on the page that differs from what the link charges, a pasted URL that makes every sale unmatchable, and a live 100%-off coupon"
@@ -20,7 +20,7 @@ features:
   - "Reconcile: cross-checks Stripe against GitHub to prove every paid order actually reached its buyer, and names the ones that didn't"
   - "Ops bots: auto-acknowledge new support issues, auto-revoke repo access when Stripe refunds"
   - "Stats: tracker-free sales analytics rendered from your Stripe data, one command"
-  - "The rail storefront theme, a fixed left navigation column; the terminal theme is published in the free repo as a full code sample"
+  - "The rail storefront theme, a fixed left navigation column, built to the same class contract as the free theme"
   - "License-key module: ed25519 keys signed in CI, verified offline in your app (JS + Python)"
   - "Commerce playbook: pricing, the first ten sales, EU VAT, multi-product catalogs (table of contents is public)"
   - Priority support label on the issue tracker
@@ -72,9 +72,7 @@ buyers can see. One thing to know before you fork: the suite reads a HonorBox
 config, so it checks a store built on the engine rather than any arbitrary setup.
 
 Delivery is a private repo, so read the box before you buy it. Public and
-checkable right now: a complete Pro theme
-([`terminal`](https://github.com/Honorboxx/honorbox/tree/main/themes/terminal),
-shipped in this repo), the license module's
+checkable right now: the license module's
 [full API surface](https://github.com/Honorboxx/honorbox/blob/main/docs/pro-evidence.md#the-license-module-api-surface)
 with the key format and both verify snippets, the playbook's complete table of
 contents, and
@@ -141,12 +139,11 @@ built as mirrors. Switch with one config line.
 
 We shipped one theme here rather than a pack. Four others were built and cut,
 because a theme that does not hold up is worse than no theme in something you
-paid for. The two in the free repo, `stand` and `terminal`, are complete Pro
-themes you can read before paying for anything.
+paid for. The free repo's `stand`, the theme this store runs on, is built to
+the same class contract and can be read in full before paying for anything.
 
 ![rail theme, fixed left navigation column on ink](./assets/previews/rail.webp)
 ![stand theme, monochrome and centred](./assets/previews/stand.webp)
-![terminal theme, phosphor CRT](./assets/previews/terminal.webp)
 
 **The store doctor.** One read-only command that checks your whole pipe:
 config shape, the pasted-URL-instead-of-id mistake, whether your payment links

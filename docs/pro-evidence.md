@@ -4,9 +4,9 @@ Pro is delivered as a private repo, which fairly reads as "blind purchase."
 This document is what you can check before paying: what the conformance suite,
 doctor, reconcile, the ops bots, stats and the license module each print and how
 to read it, the license module's complete API surface, and the playbook's full
-table of contents. The `terminal` theme is published whole in this repo
-(`themes/terminal/`), so the code standard is checkable before you pay for the
-rest. The failure catalogue the suite is built from is published in full, free,
+table of contents. The `stand` theme this store runs on is published whole in
+this repo (`themes/stand/`), so the code standard is checkable before you pay
+for the rest. The failure catalogue the suite is built from is published in full, free,
 at [docs/failure-catalogue.md](failure-catalogue.md).
 
 Themes are shown as [previews](../assets/previews/) rather than transcripts,
