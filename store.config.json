@@ -40,20 +40,12 @@
     {
       "type": "showcase",
       "title": "Change the whole look with one config line",
-      "note": "Real screenshots of this same storefront rebuilt with each theme. Two ship free in the repo, and both are complete Pro themes you can read before paying for anything. Pro adds rail.",
+      "note": "Real screenshots of this same storefront rebuilt with each theme. stand ships free in the repo, a complete theme you can read before paying for anything. Pro adds rail.",
       "items": [
         {
           "img": "./assets/previews/stand.webp",
           "alt": "The same storefront in the stand theme: monochrome type centred on white",
           "caption": "stand: monochrome and centred, free in the repo",
-          "href": "./honorbox-pro.html",
-          "width": 960,
-          "height": 504
-        },
-        {
-          "img": "./assets/previews/terminal.webp",
-          "alt": "The same storefront in the terminal theme: phosphor green type on black",
-          "caption": "terminal: phosphor on black, free in the repo",
           "href": "./honorbox-pro.html",
           "width": 960,
           "height": 504
