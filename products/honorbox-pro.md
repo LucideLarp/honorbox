@@ -21,7 +21,7 @@ features:
   - "Reconcile: cross-checks Stripe against GitHub to prove every paid order actually reached its buyer, and names the ones that didn't"
   - "Ops bots: auto-acknowledge new support issues, auto-revoke repo access on a Stripe refund or a lost chargeback"
   - "Stats: tracker-free sales analytics rendered from your Stripe data, one command"
-  - "The rail storefront theme, a fixed left navigation column, built to the same class contract as the free theme"
+  - "The rail storefront theme, a fixed left navigation column, built to the same class contract as the free themes"
   - "License-key module: ed25519 keys signed in CI, verified offline in your app (JS + Python)"
   - "Commerce playbook: pricing, the first ten sales, EU VAT, multi-product catalogs (table of contents is public)"
   - Priority support label on the issue tracker
@@ -147,11 +147,12 @@ built as mirrors. Switch with one config line.
 
 We shipped one theme here rather than a pack. Four others were built and cut,
 because a theme that does not hold up is worse than no theme in something you
-paid for. The free repo's `stand`, the theme this store runs on, is built to
-the same class contract and can be read in full before paying for anything.
+paid for. The free repo's `stand` and `terminal` are built to the same class
+contract and can be read in full before paying for anything.
 
 ![rail theme, fixed left navigation column on ink](./assets/previews/rail.webp)
 ![stand theme, monochrome and centred](./assets/previews/stand.webp)
+![terminal theme, phosphor on green glass](./assets/previews/terminal.webp)
 
 **The store doctor.** One read-only command that checks your whole pipe:
 config shape, the pasted-URL-instead-of-id mistake, whether your payment links
