@@ -1299,7 +1299,6 @@ test('decoratePage: a theme that ships its own skip link does not get a second o
 
 test('ledger dedup: a session already in the ledger is not re-appended', () => {
   // simulates the local-runner + Actions safety-net overlap window
-  const { pickNewPaidSessions, ledgerRow } = require('../lib/fulfill-core.js');
   const grants = [{ payment_link: 'plink_1', product: 'P', repo: 'o/r' }];
   const s = {
     id: 'cs_dup', status: 'complete', payment_status: 'paid', payment_link: 'plink_1',
