@@ -8,7 +8,7 @@ no separate maintenance branch for older tags.
 
 | Version | Supported |
 |---|---|
-| latest release (currently 0.5.0) | yes |
+| latest release (currently 0.5.1) | yes |
 | older | no; update to the latest release |
 
 The engine requires Node.js 20 or newer (`engines.node` in `package.json`).
