@@ -15,7 +15,7 @@ const {
 const { parseFrontmatter } = require('../lib/fm.js');
 const { renderMarkdown, excerpt, firstRasterImage, safeUrl } = require('../lib/md.js');
 const {
-  section, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems, isUpstreamStore,
+  section, buyButton, productCard, hero, productProblems, configProblems, slugProblems, templateProblems, isUpstreamStore,
   usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs, trustArticle,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
 } = require('../build.js');
@@ -1521,6 +1521,52 @@ test('faq: an answer that promises a doc renders a real link to it', () => {
 test('faq: a hostile href in config cannot become a javascript: link', () => {
   const out = section({ type: 'faq', title: 'Q', items: [{ q: 'k', a: 'a', href: 'javascript:alert(1)' }] });
   assert.ok(!out.includes('javascript:'), out);
+});
+
+test('hero: a hostile subline_href cannot become a live link', () => {
+  // The subline is the one hero element carrying an author-supplied url. It
+  // shipped with attribute escaping only, which preserves a javascript: value
+  // intact, so the scheme gate every other href already had was missing here.
+  // A store page is where the buy button lives: script on this origin can
+  // repoint checkout, so this is not decoration.
+  for (const bad of ['javascript:alert(1)', 'JaVaScRiPt:alert(1)', 'data:text/html,<script>alert(1)</script>', 'vbscript:msgbox(1)', '//evil.example/x', '/\\evil.example/x']) {
+    const out = hero({ name: 'S', tagline: 't', subline: 'Free engine', subline_href: bad }, []);
+    assert.ok(!/javascript:/i.test(out), `${bad}: ${out}`);
+    assert.ok(!out.includes('data:') && !out.includes('vbscript:'), `${bad}: ${out}`);
+    assert.ok(!out.includes('evil.example'), `${bad}: ${out}`);
+    assert.ok(!out.includes('<a '), `${bad}: ${out}`);
+    // the sentence still reads: only the link is withheld
+    assert.ok(out.includes('Free engine'), `${bad}: ${out}`);
+  }
+});
+
+test('hero: a good subline_href still renders as a link', () => {
+  const ok = hero({ name: 'S', tagline: 't', subline: 'Free engine', subline_href: 'https://github.com/octocat/x' }, []);
+  assert.ok(ok.includes('<a href="https://github.com/octocat/x">Free engine</a>'), ok);
+  // relative and anchor targets are legitimate too
+  assert.ok(hero({ name: 'S', tagline: 't', subline: 's', subline_href: './docs.html' }, []).includes('href="./docs.html"'));
+  assert.ok(hero({ name: 'S', tagline: 't', subline: 's', subline_href: '#buy' }, []).includes('href="#buy"'));
+  // no href at all stays plain text, with no empty <p> when there is no subline
+  assert.ok(!hero({ name: 'S', tagline: 't', subline: 's' }, []).includes('<a '));
+  assert.ok(!hero({ name: 'S', tagline: 't' }, []).includes('hero-sub'));
+});
+
+test('config: "url" must be an absolute http(s) origin', () => {
+  // canonical is a real href, and og:url, the sitemap and the JSON-LD are all
+  // built from this one value, so a bad scheme here is sitewide, not local.
+  for (const bad of ['javascript:alert(1)', 'honorbox.example', '//evil.example', 'https://']) {
+    const out = configProblems({ name: 'S', tagline: 't', url: bad });
+    assert.ok(out.some((p) => p.includes('"url"')), `${bad}: ${JSON.stringify(out)}`);
+  }
+  assert.deepEqual(configProblems({ name: 'S', tagline: 't', url: 'https://widgets.example' }), []);
+  // a scheme is case-insensitive, so this is a real url and must not fail a build
+  assert.deepEqual(configProblems({ name: 'S', tagline: 't', url: 'HTTPS://widgets.example' }), []);
+});
+
+test('config: an unusable subline_href is reported, not silently swallowed', () => {
+  const bad = configProblems({ name: 'S', tagline: 't', url: 'https://widgets.example', subline_href: 'javascript:alert(1)' });
+  assert.ok(bad.some((p) => p.includes('subline_href')), JSON.stringify(bad));
+  assert.deepEqual(configProblems({ name: 'S', tagline: 't', url: 'https://widgets.example', subline_href: '#buy' }), []);
 });
 
 test('steps: a section note is rendered rather than silently dropped', () => {

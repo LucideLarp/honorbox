@@ -290,6 +290,20 @@ function configProblems(c) {
   for (const key of ['name', 'tagline', 'url']) {
     if (typeof c[key] !== 'string' || !c[key].trim()) out.push(`missing "${key}" (a non-empty string)`);
   }
+  // Everything absolute on the site is built from "url": the canonical link,
+  // og:url, the sitemap and the JSON-LD. Anything that is not an absolute
+  // http(s) origin poisons all four at once, and the canonical is a real href,
+  // so it fails the build here rather than shipping a broken scheme sitewide.
+  // Case-insensitive: a scheme is case-insensitive per RFC 3986, and failing a
+  // forker's build over "HTTPS://" would be a papercut, not a protection.
+  if (typeof c.url === 'string' && c.url.trim() && !/^https?:\/\/[^/\s]+/i.test(c.url.trim())) {
+    out.push(`"url" must be an absolute http(s) url (got ${JSON.stringify(c.url)})`);
+  }
+  // A subline_href the gate rejects still renders, as plain text. Say so,
+  // rather than let a typo quietly cost the seller the link they asked for.
+  if (c.subline_href != null && !safeUrl(c.subline_href, { anchor: true })) {
+    out.push(`"subline_href" is not a usable link (${JSON.stringify(c.subline_href)}); use an http(s), root-relative or "#" url`);
+  }
   if (c.sections != null && !Array.isArray(c.sections)) out.push('"sections" must be a list');
   (Array.isArray(c.sections) ? c.sections : []).forEach((s, i) => {
     // An unrecognized type used to render as '', so a seller's typo
@@ -460,6 +474,38 @@ function productCard(p, variant = '') {
     ${buyButton(p)}
   </div>
 </article>`;
+}
+
+// The hero carries a headline, one line of explanation and one action.
+// kicker and subline are optional and omitted entirely when unset, rather
+// than emitting an empty <p> for a theme to style around. The repo link is
+// not repeated here: it is already in the nav, and two buttons side by side
+// make neither of them the primary one.
+//
+// subline_href gets the scheme gate, not just attribute escaping, which alone
+// would keep a javascript: value intact. safeUrl decides whether the link is
+// usable at all; safeHref emits it, so this href stays visible to a grep for
+// the funnel every other url in this file goes through. A rejected scheme
+// degrades to plain text, the way md.js degrades a rejected image: the
+// sentence still reads, and the scheme never reaches the page. A dead
+// href="#" would instead leave a link that looks alive and goes nowhere.
+function hero(config, products) {
+  const subline = config.subline
+    ? `<p class="hero-sub">${
+        safeUrl(config.subline_href, { anchor: true })
+          ? `<a href="${safeHref(config.subline_href)}">${escapeHtml(config.subline)}</a>`
+          : escapeHtml(config.subline)
+      }</p>`
+    : '';
+  return `<section class="hero">
+  ${config.kicker ? `<p class="kicker">${escapeHtml(config.kicker)}</p>` : ''}
+  <h1>${escapeHtml(config.headline || config.name)}</h1>
+  <p class="lede">${escapeHtml(config.tagline)}</p>
+  <div class="hero-ctas">
+    ${products[0] ? buyButton(products[0], true) : ''}
+  </div>
+  ${subline}
+</section>`;
 }
 
 function section(s, sizeOf = sizeOfLocal) {
@@ -675,25 +721,8 @@ function main() {
   }
 
   // ---------- home ----------
-  // The hero carries a headline, one line of explanation and one action.
-  // kicker and subline are optional and omitted entirely when unset, rather
-  // than emitting an empty <p> for a theme to style around. The repo link is
-  // not repeated here: it is already in the nav, and two buttons side by side
-  // make neither of them the primary one.
-  const hero = `<section class="hero">
-  ${config.kicker ? `<p class="kicker">${escapeHtml(config.kicker)}</p>` : ''}
-  <h1>${escapeHtml(config.headline || config.name)}</h1>
-  <p class="lede">${escapeHtml(config.tagline)}</p>
-  <div class="hero-ctas">
-    ${products[0] ? buyButton(products[0], true) : ''}
-  </div>
-  ${config.subline ? `<p class="hero-sub">${config.subline_href
-      ? `<a href="${escapeHtml(config.subline_href)}">${escapeHtml(config.subline)}</a>`
-      : escapeHtml(config.subline)}</p>` : ''}
-</section>`;
-
   const home =
-    hero +
+    hero(config, products) +
     `<section class="products">${products.map((p, i) => productCard(p, i === 0 ? 'flagship' : 'companion')).join('')}</section>` +
     (config.sections || []).map(section).join('\n');
 
@@ -869,7 +898,7 @@ files that ship in the repo.</p>
 }
 
 module.exports = {
-  escapeHtml, buyButton, productCard, productProblems, configProblems, slugProblems, templateProblems, isUpstreamStore, section,
+  escapeHtml, buyButton, productCard, hero, productProblems, configProblems, slugProblems, templateProblems, isUpstreamStore, section,
   usdPrice, absUrl, tpl, injectHead, setMeta, jsonLdScript, guideSlugs, trustArticle,
   productJsonLd, homeJsonLd, articleJsonLd, sitemapXml, decoratePage,
   PUBLISHED_DOCS, docTitle, rewriteDocLinks,

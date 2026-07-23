@@ -11,7 +11,12 @@ account and an activated Stripe account (charges enabled).
    free on public repos and the open store *is* your credibility.
 2. Edit `store.config.json`:
    - `name`, `kicker`, `headline`, `tagline`, `subline`: your store's voice.
+   - `subline_href`: optional. Makes the subline a link. http(s),
+     root-relative or `#` only, so a config can never point a storefront
+     link at something that runs script instead of navigating.
    - `url`: `https://<user>.github.io/<repo>` (or your custom domain later).
+     Must be an absolute http(s) origin: the canonical link, `og:url`, the
+     sitemap and the JSON-LD are all built from it.
    - `seller`: who the merchant is. Use your real name or entity; it builds
      trust and it's the law in most places.
    - `repo`: **your** storefront repo, as `owner/name`. This one is not
