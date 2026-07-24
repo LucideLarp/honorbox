@@ -517,7 +517,11 @@ function sizeClaims() {
 }
 
 test('every published line count matches the file it describes', () => {
-  const wrong = sizeClaims().filter((c) => !flat(read(c.file)).includes(flat(c.text)));
+  // A fork that followed the README has deleted our pages/, and a claim about
+  // prose that no longer ships has nothing to be wrong about. The upstream
+  // store ships every registered file, so the filter passes everything there.
+  const shipped = sizeClaims().filter((c) => fs.existsSync(path.join(ROOT, c.file)));
+  const wrong = shipped.filter((c) => !flat(read(c.file)).includes(flat(c.text)));
   assert.deepEqual(wrong.map((c) => `${c.file} must say: ${c.text}`), [],
     'a file changed size and its description did not. Update the prose to the ' +
     'measured value (this list is generated from wc -l, so it is the truth):\n  ' +

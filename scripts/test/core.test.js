@@ -1800,7 +1800,21 @@ test('the social card is a decision, and a fallback is never silent', () => {
   assert.equal(firstRasterImage('![l](./logo.svg)', { ext: OG_SAFE }), null);
 });
 
-test('a named social card must be real and scraper-safe, or the build stops', () => {
+// The two social-card guards below pin THIS repo's own store: the Pro
+// product's explicitly named card, and the theme showcase in our config. A
+// fork that followed the README has deleted both files, so anywhere but the
+// upstream store they skip instead of failing the forker's first build.
+const upstreamStore = (() => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  try {
+    return isUpstreamStore(JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'store.config.json'), 'utf8')));
+  } catch {
+    return false;
+  }
+})();
+
+test('a named social card must be real and scraper-safe, or the build stops', { skip: !upstreamStore && "pins the upstream store's own Pro card" }, () => {
   // og_image is an explicit choice, so a broken one is an error rather than
   // something to paper over. The whole point is to stop cards changing by
   // accident. Driven through the real builder in a child process, because the
@@ -1852,7 +1866,7 @@ test('a named social card must be real and scraper-safe, or the build stops', ()
   }
 });
 
-test('a social card never shows a theme the store has stopped selling', () => {
+test('a social card never shows a theme the store has stopped selling', { skip: !upstreamStore && "pins the upstream store's own showcase" }, () => {
   // Link unfurlers cache og:image for days, so a card may only ever show what
   // the store currently sells: a theme-preview card must name a theme the home
   // showcase still carries. Non-theme cards are not this test's business.
