@@ -52,4 +52,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Run engine tests
+        # bash on every OS: the default Windows shell is pwsh, which passes the
+        # glob through unexpanded, and Node 20's test runner cannot expand it.
+        shell: bash
         run: node --test scripts/test/*.test.js

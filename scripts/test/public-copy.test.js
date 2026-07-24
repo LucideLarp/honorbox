@@ -25,7 +25,10 @@ function publicSources() {
     const d = path.join(ROOT, dir);
     if (!fs.existsSync(d)) continue;
     for (const f of fs.readdirSync(d)) {
-      if (f.endsWith('.md')) out.push(path.join(dir, f));
+      // Repo-relative names keep forward slashes on every OS: claims are
+      // registered under 'pages/x.md', and path.join would hand back
+      // 'pages\x.md' on Windows, which matches no registered claim.
+      if (f.endsWith('.md')) out.push(`${dir}/${f}`);
     }
   }
   out.push('store.config.json', 'README.md');
