@@ -178,7 +178,8 @@ node --test scripts/test/core.test.js   # one file, while iterating
 node scripts/build.js                   # build storefront -> dist/
 ```
 
-No dependencies. Node ≥ 20.
+No dependencies. Node ≥ 20. CI runs the suite on Linux, Windows and macOS,
+across Node 20, 22 and 24.
 
 ## Support
 
